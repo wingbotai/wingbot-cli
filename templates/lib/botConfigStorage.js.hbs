@@ -1,0 +1,18 @@
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+
+{{#if dynamodbStorage}}
+const { BotConfigStorage } = require('wingbot-dynamodb');
+const config = require('../config');
+const dynamodb = require('./dynamodb');
+
+module.exports = new BotConfigStorage(`${config.prefix}-botconfig`, dynamodb);
+{{/if}}
+{{#if mongodbStorage}}
+const { BotConfigStorage } = require('wingbot-mongodb');
+const mongodb = require('./mongodb');
+
+module.exports = new BotConfigStorage(mongodb, 'botconfig');
+{{/if}}

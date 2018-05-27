@@ -1,0 +1,30 @@
+{{#if express}}
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+
+const { Router } = require('express');
+
+const bot = require('./bot');
+{{#if analytics}}
+const tracker = require('./tracker');
+{{/if}}
+{{#unless withoutDesigner}}
+const update = require('./update');
+const validate = require('./validate');
+{{/unless}}
+
+const app = Router();
+
+app.use('/bot', ...bot);
+{{#unless withoutDesigner}}
+app.post('/validate', ...validate);
+app.post('/update', ...update);
+{{/unless}}
+{{#if analytics}}
+app.get('/tracker', ...tracker);
+{{/if}}
+
+module.exports = app;
+{{/if}}

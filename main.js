@@ -3,17 +3,15 @@
  */
 'use strict';
 
-const jsonToText = require('./src/jsonToText');
-const wikiToText = require('./src/wikiToText');
-const EntitiesFromJson = require('./src/EntitiesFromJson');
-const MultiplicatorStream = require('./src/MultiplicatorStream');
-const Pipeline = require('./src/Pipeline');
-const { normalize } = require('./src/filters');
+const jsonToText = require('./src/textTools/jsonToText');
+const EntitiesFromJson = require('./src/textTools/EntitiesFromJson');
+const MultiplicatorStream = require('./src/textTools/MultiplicatorStream');
+const Pipeline = require('./src/textTools/Pipeline');
+const { normalize } = require('./src/textTools/filters');
 
 
 module.exports = {
     jsonToText,
-    wikiToText,
     EntitiesFromJson,
     MultiplicatorStream,
     Pipeline,

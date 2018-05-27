@@ -1,0 +1,80 @@
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+
+{{#if express}}
+const express = require('express');
+{{/if}}
+const { Facebook } = require('wingbot-facebook');
+const wrapRoute = require('../lib/wrapRoute');
+const { createProcessor } = require('../bot');
+const config = require('../config');
+{{#if storeConversationHistory}}
+{{#if dynamodbStorage}}
+const { ChatLogStorage } = require('wingbot-dynamodb');
+const dynamodb = require('../lib/dynamodb');
+{{/if}}
+{{#if mongodbStorage}}
+const { ChatLogStorage } = require('wingbot-mongodb');
+const mongodb = require('../lib/mongodb');
+{{/if}}
+const log = require('../lib/log');
+
+{{#if dynamodbStorage}}
+const chatLogStorage = new ChatLogStorage(`${config.prefix}-states`, dynamodb, log);
+{{/if}}
+{{#if mongodbStorage}}
+const chatLogStorage = new ChatLogStorage(mongodb, 'chatlogs', log);
+{{/if}}
+{{/if}}
+
+const facebook = new Facebook(createProcessor(), config.facebook{{#if storeConversationHistory}}, chatLogStorage{{/if}});
+
+{{#if awsServerless}}
+module.exports.handler = wrapRoute(async (event) => {
+    if (event.httpMethod === 'GET') {
+        const { queryStringParameters } = event;
+        const body = await facebook.verifyWebhook(queryStringParameters);
+
+        return {
+            statusCode: 200,
+            headers: { 'Content-Type': 'text/plain' },
+            body
+        };
+    }
+
+    facebook.verifyRequest(event.body, event.headers);
+
+    const parsedBody = JSON.parse(event.body);
+
+    await facebook.processEvent(parsedBody);
+
+    return {
+        statusCode: 200,
+        headers: {
+            'Content-Type': 'text/plain'
+        },
+        body: 'OK'
+    };
+});
+{{/if}}
+{{#if express}}
+module.exports = [
+    express.json({
+        verify: (req, res, buf) =>
+            facebook.verifyRequest(buf, req.headers)
+    }),
+    wrapRoute(async (req, res) => {
+        if (req.method === 'GET') {
+            const body = await facebook.verifyWebhook(req.query);
+            res.send(body);
+            return;
+        }
+
+        await facebook.processEvent(req.body);
+
+        res.send('OK');
+    })
+];
+{{/if}}

@@ -1,0 +1,23 @@
+{{#if mongodbStorage}}
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+
+const { MongoClient } = require('mongodb');
+const config = require('../config');
+
+let connection;
+
+async function getDatabase () {
+    if (!connection) {
+        connection = MongoClient.connect(config.db.url, config.db.options);
+    }
+
+    const c = await connection;
+
+    return c.db(config.db.db);
+}
+
+module.exports = getDatabase;
+{{/if}}

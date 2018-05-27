@@ -3,21 +3,39 @@
  */
 'use strict';
 
+const inquirer = require('inquirer');
+const chalk = require('chalk');
 const api = require('./api');
 const credentials = require('./credentials');
+const spinAndCatch = require('./cli/spinAndCatch');
 
-function login (email, password) {
-    let token = null;
-    return api.auth.login(email, password)
-        .then((data) => {
-            const cfg = credentials.loadData();
-            token = data.token; // eslint-disable-line prefer-destructuring
-            const newConfig = Object.assign({}, cfg, {
-                token
-            });
-            return credentials.saveData(newConfig);
-        })
-        .then(() => token);
+async function login () {
+
+    const cfg = credentials.loadData();
+
+    const {
+        email, password
+    } = await inquirer.prompt([{
+        type: 'input',
+        message: chalk.cyan(' What is your email? '),
+        name: 'email',
+        default: cfg.email
+    }, {
+        type: 'password',
+        message: chalk.cyan(' What is your password? '),
+        name: 'password',
+        mask: '*'
+    }]);
+
+    const data = await spinAndCatch(() => api.auth.login(email, password));
+
+
+    const { token } = data;
+
+    return credentials.saveData(Object.assign({}, cfg, {
+        email,
+        token
+    }));
 }
 
 module.exports = login;

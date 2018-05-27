@@ -1,0 +1,57 @@
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+
+const { Router{{#unless withoutDesigner}}, BuildRouter{{/unless}}{{#unless withoutDesigner}}, ai{{/unless}} } = require('wingbot');
+{{#if fbLoadProfile}}
+const { userLoader } = require('wingbot-facebook');
+{{/if}}
+const config = require('../config');
+{{#unless withoutDesigner}}
+const plugins = require('./plugins');
+{{#if express}}
+const configStorage = require('../lib/botConfigStorage');
+{{/if}}
+
+ai.register(config.wingbot.ai);
+{{/unless}}
+
+function botFactory () {
+{{#if withoutDesigner}}
+    const bot = new Router();
+{{else}}
+    const routerOptions = {
+{{#if analytics}}
+        linksTranslator (senderId, linkText, linkUrl) {
+            const url = encodeURIComponent(linkUrl);
+            const text = encodeURIComponent(linkText);
+            const sender = encodeURIComponent(senderId);
+            return `${config.apiUrl}/tracker?url=${url}&text=${text}&sender=${sender}`;
+        }{{/if}}{{#if express}},
+        configStorage
+{{/if}}
+    };
+    const bot = new BuildRouter(config.wingbot, plugins, routerOptions);
+{{/if}}
+
+{{#if fbLoadProfile}}
+    // load user profile from Facebook
+    bot.use(userLoader(config.facebook.pageToken));
+
+{{/if}}
+    // store previous action for analytics purposes
+    bot.use((req, res) => {
+        const action = req.action();
+        if (action) {
+            res.setState({ previousAction: action });
+        }
+        return Router.CONTINUE;
+    });
+
+    // attach router middlewares here
+
+    return bot;
+}
+
+module.exports = botFactory;

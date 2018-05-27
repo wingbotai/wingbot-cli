@@ -7,21 +7,20 @@ const xmlNodes = require('xml-nodes');
 const xmlObjects = require('xml-objects');
 const eventStream = require('event-stream');
 const fs = require('fs');
-const filters = require('./filters');
-const Pipeline = require('./Pipeline');
+const path = require('path');
+const filters = require('./textTools/filters');
+const Pipeline = require('./textTools/Pipeline');
 
-/**
- * Create a pretrained word vectors learning set from Wikipedia XML dump
- *
- * @param {string|ReadableStream} input - path of Rasa intent set or stream
- * @param {string|Writable} output - path or stream to write fast-text learning set
- * @param {Function} [mapFn] - text normalizer function
- * @returns {Promise}
- */
-function wikiToText (input, output, mapFn = null) {
+
+async function wikiToText (fromJson, toText) {
+
+    const input = path.resolve(process.cwd(), fromJson);
+    const output = path.resolve(process.cwd(), toText);
+
+
     let inp;
     let out;
-    const map = mapFn || filters.normalize;
+    const map = filters.normalize;
 
     if (typeof input === 'string') {
         inp = fs.createReadStream(input);

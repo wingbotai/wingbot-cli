@@ -6,12 +6,12 @@
 const api = require('./api');
 const credentials = require('./credentials');
 
-function deploy (file, name, token = null) {
+function deploy (id, name, token = null) {
     let usetoken = token;
     if (!usetoken) {
         usetoken = credentials.loadData().token;
     }
-    return api.deployments.deploy(usetoken, file, name);
+    return api.deployments.deploy(usetoken, id, name);
 }
 
 function list () {

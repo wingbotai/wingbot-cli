@@ -1,0 +1,69 @@
+{{#unless withoutDesigner}}
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+{{#if express}}
+const express = require('express');
+const createError = require('http-errors');{{/if}}
+const { validateBot } = require('wingbot');
+const wrapRoute = require('../lib/wrapRoute');
+const config = require('../config');
+const { botFactory } = require('../bot');
+
+const { token } = config.wingbot;
+{{#if awsServerless}}
+module.exports.handler = wrapRoute(async (event) => {
+    const body = event.body ? JSON.parse(event.body) : null;
+    const authHeader = event.headers && event.headers.Authorization;
+
+    if (token !== authHeader) {
+        return {
+            statusCode: 403,
+            headers: { 'Content-Type': 'text/plain' },
+            body: 'Wrong authorization'
+        };
+    }
+
+    if (!Array.isArray(body.blocks)) {
+        return {
+            statusCode: 400,
+            headers: { 'Content-Type': 'text/plain' },
+            body: 'Bad input data'
+        };
+    }
+
+    const bot = botFactory();
+
+    await validateBot(bot, body, 'start', 'hello');
+
+    return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'text/plain' },
+        body: 'OK'
+    };
+});
+{{/if}}{{#if express}}
+module.exports = [
+    express.json(),
+    wrapRoute(async (req, res) => {
+        const { body } = req;
+        const authHeader = req.get('Authorization');
+
+        if (token !== authHeader) {
+            throw createError(403);
+        }
+
+        if (!Array.isArray(body.blocks)) {
+            throw createError(400);
+        }
+
+        const bot = botFactory();
+
+        await validateBot(bot, body, 'start', 'hello');
+
+        res.send('OK');
+    })
+];
+{{/if}}
+{{/unless}}

@@ -1,0 +1,65 @@
+{{#if express}}
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+
+const express = require('express');
+const createError = require('http-errors');
+const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
+const config = require('./config');
+const log = require('./lib/log');
+const routes = require('./routes');
+
+const app = express();
+
+// setup template caching
+if (!config.debugEnabled) {
+    app.enable('view cache');
+}
+
+// setup basic middlewares
+app.use(morgan('dev'));
+app.use(cookieParser());
+
+// serve static files
+// app.use('/', express.static(path.join(__dirname, 'public'));
+
+// attach routes
+app.use(routes);
+
+// catch 404 and forward to error handler
+app.use((req, res, next) => {
+    log.warn('Page not found', req);
+    next(createError(404));
+});
+
+const esc = str => (str ? `${str}`.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '');
+
+// error handler
+app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
+    // set locals, only providing error in development
+    const { message } = err;
+    const error = req.app.get('env') === 'development' ? err : {};
+    const status = err.status || 500;
+
+    log.error(err);
+
+    // render the error page
+    res.status(status);
+    res.send(`<!doctype html>
+    <html>
+        <head>
+            <meta charset="utf-8"><meta http-equiv="x-ua-compatible" content="ie=edge">
+            <title>Error: ${esc(message)}</title><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        </head>
+        <body>
+            <h1>${esc(message)} [${esc(status)}]</h1>
+            <pre>${esc(error.stack)}</pre>
+        </body>
+    </html>`);
+});
+
+module.exports = app;
+{{/if}}

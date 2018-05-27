@@ -4,7 +4,7 @@
 'use strict';
 
 const assert = require('assert');
-const { multiplicator } = require('../src/multiplicator');
+const { multiplicator } = require('../../src/textTools/multiplicator');
 
 function getTexts () {
     return ['fox', 'dog', 'cat', 'mouse'];

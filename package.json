@@ -1,6 +1,6 @@
 {
   "name": "wingbot-cli",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Wingbot.ai CLI tool",
   "main": "main.js",
   "bin": {
@@ -9,10 +9,10 @@
   "scripts": {
     "doc": "node ./bin/makeApiDoc.js",
     "test": "npm run test:lint && npm run test:coverage && npm run test:coverage:threshold",
-    "test:coverage": "istanbul cover ./node_modules/mocha/bin/_mocha -- --opts ./mocha.opts ./test",
+    "test:coverage": "istanbul cover ./node_modules/mocha/bin/_mocha -- ./test",
     "test:coverage:threshold": "istanbul check --branches 80 --functions 80 --statements 80 --lines 80  ./coverage/coverage.json",
     "test:backend": "mocha --opts ./mocha.opts ./test ./src",
-    "test:lint": "eslint --ext .js src test *.js"
+    "test:lint": "eslint --ext .js bin src test *.js"
   },
   "repository": {
     "type": "git",
@@ -29,11 +29,15 @@
   "license": "MIT",
   "dependencies": {
     "JSONStream": "^1.3.2",
+    "chalk": "^2.4.1",
     "cli-spinner": "^0.2.8",
+    "commander": "^2.15.1",
     "event-stream": "^3.3.4",
-    "request": "^2.85.0",
-    "request-promise": "^4.2.2",
-    "vorpal": "^1.12.0",
+    "glob": "^7.1.2",
+    "handlebars": "^4.0.11",
+    "inquirer": "^5.2.0",
+    "request": "^2.86.0",
+    "request-promise-native": "^1.0.5",
     "xml-nodes": "^0.1.5",
     "xml-objects": "^1.0.1",
     "xml-stream": "^0.4.5"

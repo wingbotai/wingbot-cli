@@ -1,0 +1,91 @@
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+
+const config = {
+
+    environment: process.env.NODE_ENV || 'development',
+
+    isProduction: false,
+
+    prefix: process.env.PREFIX || '{{projectName}}-development',
+
+    appUrl: 'http://localhost:3000',
+
+    facebook: {
+        appId: '{{fbAppId}}',
+        pageId: '{{fbPageId}}',
+        appSecret: '{{fbAppSecret}}',
+        pageToken: '{{fbPageToken}}',
+        botToken: '{{fbBotToken}}'
+    },
+
+{{#unless withoutDesigner}}
+    wingbot: {
+        bot: '{{wingbotBotName}}',
+        botId: '{{wingbotBotId}}',
+        snapshot: 'development',
+        token: '{{wingbotDevelopmentToken}}',
+        ai: '{{wingbotBotName}}-development'
+    },
+
+{{/unless}}
+{{#if mongodbStorage}}
+    db: {
+        url: 'mongodb://127.0.0.1:27017/{{mongodbName}}',
+        db: '{{mongodbName}}',
+        options: {
+            poolSize: 3,
+            autoReconnect: true,
+            connectTimeoutMS: 8000,
+            keepAlive: 3000,
+            socketTimeoutMS: 8000
+        }
+    },
+
+{{/if}}
+{{#if jwtTokenStorage}}
+    jwt: {
+        secret: '{{jwtTokenSecret}}',
+        options: {
+            expiresIn: '30d'
+        }
+    },
+
+{{/if}}
+    gaCode: ''
+};
+
+/**
+ * initialize config file
+ *
+ * @param {Object} cfg
+ * @param {string} env
+ */
+function initialize (cfg, env = 'development') {
+    try {
+        const configuration = module.require(`./config.${env}`);
+
+        // deeper object assign
+        Object.keys(configuration)
+            .forEach((key) => {
+                if (typeof cfg[key] === 'object'
+                    && typeof configuration[key] === 'object') {
+
+                    Object.assign(cfg[key], configuration[key]);
+                } else {
+                    Object.assign(cfg, { [key]: configuration[key] });
+                }
+            });
+    } catch (e) {
+        console.info(`No configuration for ENV: ${env}`); // eslint-disable-line
+    }
+
+    return cfg;
+}
+
+initialize(config, process.env.NODE_ENV);
+
+module.exports = config;
+

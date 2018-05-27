@@ -1,0 +1,58 @@
+{{#if analytics}}
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+
+{{#if express}}
+const createError = require('http-errors');
+{{/if}}
+const analytics = require('universal-analytics');
+const { replaceDiacritics } = require('webalize');
+const wrapRoute = require('../lib/wrapRoute');
+const config = require('../config');
+
+function trackEvent (sender, text, url) {
+    const tracker = analytics(config.gaCode, sender, { strictCidFormat: false });
+
+    const word = replaceDiacritics(text).replace(/\s+/g, ' ').toLowerCase().trim();
+
+    tracker.event('ButtonClick', word, url, 1);
+
+    tracker.send();
+}
+{{#if awsServerless}}
+module.exports.tracker = wrapRoute((event) => {
+    const { url = null, text = null, sender = null } = event.queryStringParameters || {};
+
+    if (!url || !text || !sender) {
+        return {
+            statusCode: 404
+        };
+    }
+
+    trackEvent(sender, text, url);
+
+    return {
+        statusCode: 301,
+        headers: {
+            Location: url
+        }
+    };
+});
+{{/if}}{{#if express}}
+module.exports = [
+    wrapRoute(async (req, res) => {
+        const { url = null, text = null, sender = null } = req.query || {};
+
+        if (!url || !text || !sender) {
+            throw createError(404);
+        }
+
+        trackEvent(sender, text, url);
+
+        res.redirect(301, url);
+    })
+];
+{{/if}}
+{{/if}}

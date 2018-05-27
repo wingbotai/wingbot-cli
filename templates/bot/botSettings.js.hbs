@@ -1,0 +1,25 @@
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+{{#if messenger}}
+const { Settings } = require('wingbot-facebook');{{/if}}
+const config = require('../config');
+
+async function botSettings () {
+    if (config.isProduction) {
+        // runs, when bot is updated
+{{#if messenger}}
+        const settings = new Settings(config.facebook.pageToken);
+
+        await settings.getStartedButton('/start');
+
+        /* eslint-disable indent */
+        await settings.menu()
+            .addPostBack('Back to start', '/start')
+            .done();
+{{/if}}
+    }
+}
+
+module.exports = botSettings;

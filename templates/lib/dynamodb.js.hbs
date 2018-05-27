@@ -1,0 +1,25 @@
+{{#if dynamodbStorage}}
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+
+
+const AWS = require('aws-sdk');
+const config = require('../config');
+
+let params = {
+    apiVersion: '2012-08-10'
+};
+
+if (config.environment === 'development'
+    || config.environment === 'test') {
+
+    params = {
+        endpoint: new AWS.Endpoint('http://localhost:8000'),
+        region: 'eu-west-1'
+    };
+}
+
+module.exports = new AWS.DynamoDB(params);
+{{/if}}

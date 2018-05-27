@@ -1,0 +1,26 @@
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+
+const { Tester } = require('wingbot');
+// const assert = require('assert');
+const { botFactory } = require('../../bot');
+
+describe('Bot', function () {
+
+    this.timeout(10000);
+
+    let bot;
+
+    before(() => {
+        bot = botFactory();
+    });
+
+    it('should be able to run', async () => {
+        const t = new Tester(bot);
+
+        await t.postBack('start');
+    });
+
+});

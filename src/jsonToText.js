@@ -3,72 +3,34 @@
  */
 'use strict';
 
-const fs = require('fs');
-const JSONStream = require('JSONStream');
-const eventStream = require('event-stream');
-const filters = require('./filters');
-const Pipeline = require('./Pipeline');
+const chalk = require('chalk');
+const path = require('path');
+const EntitiesFromJson = require('./textTools/EntitiesFromJson');
+const MultiplicatorStream = require('./textTools/MultiplicatorStream');
+const jsonToText = require('./textTools/jsonToText');
+const spinAndCatch = require('./cli/spinAndCatch');
 
-/**
- * Create fast-text learning set from Rasa intents json
- *
- * @param {string|ReadableStream} input - path of Rasa intent set or stream
- * @param {string|Writable} output - path or stream to write fast-text learning set
- * @param {Array} [pipeline] - array of transform streams to modify the learning set
- * @param {Function} [mapFn] - text normalizer function
- * @returns {Promise}
- *
- * @example
- * const path = require('path');
- * const { jsonToText } = require('wingbot');
- *
- * const from = path.resolve(process.cwd(), 'sample.json');
- * const to = path.resolve(process.cwd(), 'trainingData.txt');
- *
- * main.jsonToText(from, to)
- *     .catch(e => console.error(e));
- */
-function jsonToText (input, output, pipeline = [], mapFn = null) {
-    let inp;
-    let out;
-    const map = mapFn || filters.normalize;
+const { log } = console;
 
-    if (typeof input === 'string') {
-        inp = fs.createReadStream(input, { encoding: 'utf8' });
-    } else {
-        inp = input;
+async function jsonToTextFn (fromJson, toText, cmd) {
+
+    const from = path.resolve(process.cwd(), fromJson);
+    const to = path.resolve(process.cwd(), toText);
+
+    const pipeline = [];
+
+    if (cmd.options.multiply) {
+        const entities = new EntitiesFromJson(from);
+
+        await spinAndCatch(() => entities.loadEntities());
+
+        const getVariants = (cat, w) => entities.getWordList(cat, w);
+        pipeline.push(new MultiplicatorStream(getVariants));
     }
 
-    if (typeof output === 'string') {
-        out = fs.createWriteStream(output);
-    } else {
-        out = output;
-    }
+    await spinAndCatch(() => jsonToText(from, to, pipeline));
 
-    const pipes = new Pipeline();
-    let tag;
-    let mapped;
-
-    pipes.add(inp);
-
-    pipes.add(eventStream.mapSync(data => data.toString().replace(/^\s|\s+$/g, ' ')));
-
-    pipes.add(JSONStream.parse('rasa_nlu_data.common_examples.*'));
-
-
-    if (pipeline) {
-        pipes.add(pipeline);
-    }
-
-    pipes.add(eventStream.mapSync((data) => {
-        tag = `__label__${data.intent}`;
-        mapped = map(data.text);
-        return `${tag} ${mapped}\n`;
-    }));
-
-    pipes.add(out);
-
-    return pipes.promise();
+    log(chalk.green('Done!'));
 }
 
-module.exports = jsonToText;
+module.exports = jsonToTextFn;

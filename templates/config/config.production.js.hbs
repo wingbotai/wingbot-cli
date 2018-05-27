@@ -1,0 +1,45 @@
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+
+module.exports = {
+
+    isProduction: true,
+
+    // override to set page url
+    // appUrl: 'https://foo.com',
+
+    // set production facebook credentials
+    // facebook: {
+    //     appId: '-',
+    //     pageId: '-',
+    //     appSecret: '-',
+    //     pageToken: '-',
+    //     botToken: '-'
+    // },
+
+{{#unless withoutDesigner}}
+    wingbot: {
+        snapshot: 'production',
+        token: '{{wingbotProductionToken}}',
+        ai: '{{wingbotBotName}}-production'
+    },
+
+{{/unless}}
+{{#if mongodbStorage}}
+    db: {
+        db: '{{mongodbName}}',
+        url: '{{{mongodbConnectionString}}}',
+        options: {
+            poolSize: 5,
+            autoReconnect: true,
+            reconnectTries: 1200,
+            reconnectInterval: 500
+        }
+    },
+
+{{/if}}
+    gaCode: '{{gaCode}}'
+
+};

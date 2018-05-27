@@ -1,0 +1,33 @@
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+{{#if awsServerless}}const log = require('./log');{{/if}}
+
+function wrapRoute (fn) {
+    {{#if express}}
+    return (req, res, next) => {
+        Promise.resolve(fn(req, res, next))
+            .catch(next);
+    };
+    {{/if}}{{#if awsServerless}}
+    return async (event, context) => {
+{{#if mongodbStorage}}
+        context.callbackWaitsForEmptyEventLoop = false;{{/if}}
+        try {
+            return await Promise.resolve(fn(event, context));
+        } catch (e) {
+            log.error(e, event);
+            return {
+                statusCode: e.status || 500,
+                headers: {
+                    'Content-Type': 'text/plain'
+                },
+                body: e.message
+            };
+        }
+    };
+    {{/if}}
+}
+
+module.exports = wrapRoute;
