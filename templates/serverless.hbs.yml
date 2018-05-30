@@ -22,7 +22,7 @@ custom:
   company: {{projectName}}
   stage: ${opt:stage, self:provider.stage}{{#if dynamodbStorage}}
   botDbReservations:
-    test: 1
+    staging: 1
     production: 10
   botDbReservation: ${self:custom.botDbReservations.${self:custom.stage}}{{/if}}
   prefix: ${self:service}-${self:custom.stage}
