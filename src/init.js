@@ -15,11 +15,15 @@ const { log } = console;
 
 const SERVERLESS_AWS = 'awsServerless';
 const EXPRESS = 'express';
+const EXPRESS_AZURE = 'azureExpress';
+const SERVERLESS_AZURE = 'azureServerless';
 
 const MESSENGER = 'messenger';
+const BOT_SERVICE = 'botService';
 
 const AWS_DYNAMO_DB = 'dynamodbStorage';
 const MONGODB = 'mongodbStorage';
+const AZURE_COSMOS_DB = 'cosmosdbStorage';
 // const MEMORY_STORAGE = 'memoryStorage';
 
 const DB_TOKEN_STORAGE = 'dbTokenStorage';
@@ -33,21 +37,30 @@ const frontendTokenStorages = {
 
 const infrastructures = {
     'Express application': EXPRESS,
-    'Serverless AWS': SERVERLESS_AWS
+    'Serverless AWS': SERVERLESS_AWS,
+    'Azure Functions': SERVERLESS_AZURE,
+    'Azure App Service': EXPRESS_AZURE
 };
 
 const platforms = {
-    'Facebook messenger': MESSENGER
+    'Facebook messenger': MESSENGER,
+    'Azure Bot Service': BOT_SERVICE
 };
 
 const databases = {
     MongoDB: MONGODB,
-    'AWS DynamoDB': AWS_DYNAMO_DB
+    'AWS DynamoDB': AWS_DYNAMO_DB,
+    'Azure Cosmos DB (MongoDB protocol)': AZURE_COSMOS_DB
 };
 
 const analytics = {
     None: null,
     'Universal Analytics': 'googleAnalytics'
+};
+
+const bsBotSkus = {
+    'F0 (Free)': 'F0',
+    'S1 (Standard)': 'S1'
 };
 
 const defaults = {
@@ -211,7 +224,8 @@ module.exports = async function init () {
 
     switch (data.database) {
         case AWS_DYNAMO_DB:
-        case MONGODB: {
+        case MONGODB:
+        case AZURE_COSMOS_DB: {
             res = await inquirer.prompt(usePreviousValues([
                 {
                     type: 'list',
@@ -267,6 +281,26 @@ module.exports = async function init () {
 
             break;
         }
+        case AZURE_COSMOS_DB: {
+            res = await inquirer.prompt(usePreviousValues([
+                {
+                    type: 'input',
+                    message: group(
+                        'Cosmos DB connection',
+                        'you can fill this information later into config files, but it\'s recommended to keep connection string in ENV variable (COSMOSDB_CONNECTION_STRING)',
+                        label('Database name (wil be created if not existing)')
+                    ),
+                    name: 'cosmosdbName'
+                },
+                {
+                    type: 'input',
+                    message: label('Connection string', 'for production environment', true),
+                    name: 'cosmosdbConnectionString'
+                }
+            ], previousData));
+
+            break;
+        }
         case AWS_DYNAMO_DB:
         default:
             break;
@@ -316,12 +350,56 @@ module.exports = async function init () {
                 }
             ], previousData));
             break;
+        case BOT_SERVICE:
+            res = await inquirer.prompt(usePreviousValues([
+                {
+                    type: 'input',
+                    message: group(
+                        'Bot Service settings',
+                        'Each Bot Service bot needs to have a corresponding app registered with Microsoft.\nRegister your bot at https://aka.ms/msaappid and use Application Id and Password here.',
+                        label('Bot name (handle)', 'Global bot identification, must be unique')
+                    ),
+                    name: 'bsBotName',
+                    default: path.basename(destination)
+                }
+            ], previousData));
+
+            Object.assign(rememberData, res);
+
+            res = await inquirer.prompt(usePreviousValues([
+                {
+                    type: 'input',
+                    message: label('Bot display name', 'This name is shown to users on most channels'),
+                    name: 'bsBotDisplayName',
+                    default: rememberData.bsBotName
+                },
+                {
+                    type: 'input',
+                    message: label('Bot Application Id', 'Microsoft App Id or Client ID of your bot application. You can set it later in config or ENV variable BOT_APP_ID', true),
+                    name: 'bsAppplicationId'
+                },
+                {
+                    type: 'input',
+                    message: label('Bot Application Password', 'Microsoft App Password or Client Secret of your bot application. You can set it later in config or ENV variable BOT_APP_PASSWORD', true),
+                    name: 'bsAppplicationPassword'
+                },
+                {
+                    type: 'list',
+                    message: label('Bot SKU', 'SKU defines price and performance of your Bot Service. Choose F0 for development and switch to S1 for production'),
+                    name: 'bsBotSku',
+                    choices: Object.keys(bsBotSkus),
+                    default: 'F0'
+                }
+            ], previousData));
+            break;
         default:
             break;
     }
 
     Object.assign(rememberData, res);
-    Object.assign(data, res);
+    Object.assign(data, res, {
+        bsBotSku: bsBotSkus[res.bsBotSku]
+    });
 
     switch (data.infrastructure) {
         case SERVERLESS_AWS:
@@ -344,6 +422,27 @@ module.exports = async function init () {
                 }
             ], previousData));
             break;
+        case SERVERLESS_AZURE:
+            res = await inquirer.prompt(usePreviousValues([
+                {
+                    type: 'input',
+                    message: group(
+                        'Azure Functions deployment settings',
+                        'We will prepare an ARM template where you will be able to edit this information later',
+                        label('Resource Group name')
+                    ),
+                    name: 'azureRgName',
+                    default: `${rememberData.bsBotName}-rg`
+                },
+                {
+                    type: 'input',
+                    message: label('Function App name'),
+                    name: 'azureFunctionAppName',
+                    default: rememberData.bsBotName
+                }
+            ], previousData));
+            break;
+        case EXPRESS_AZURE:
         case EXPRESS:
         default:
             break;
@@ -377,6 +476,10 @@ module.exports = async function init () {
         // noop
     }
     const root = path.resolve(__dirname, path.join('..', 'templates'));
+
+    Object.assign(data, {
+        isMongoOrCosmos: data[MONGODB] || data[AZURE_COSMOS_DB]
+    });
 
     const tr = new TemplateRenderer(root, destination, data);
 
