@@ -66,7 +66,8 @@ function preprocessData (data) {
     return Object.assign({
         eslint: true
     }, data, {
-        isMongoOrCosmos: data[MONGODB] || data[AZURE_COSMOS_DB]
+        isMongoOrCosmos: data[MONGODB] || data[AZURE_COSMOS_DB],
+        isAwsOrAzure: data[SERVERLESS_AWS] || data[SERVERLESS_AZURE]
     });
 }
 
@@ -89,6 +90,16 @@ async function init () {
     form.data.jwtTokenSecret = previousData.jwtTokenSecret || form.randomSha();
 
     await form.ask([
+        {
+            type: 'input',
+            name: 'projectName',
+            message: form.group(
+                'Project settings',
+                'We have to set up the basics: name, desired infrastructure, database and messaging platform',
+                form.label('Choose a name for your project')
+            ),
+            default: path.basename(destination)
+        },
         form.list('infrastructure', form.group(
             'Project settings',
             'We have to set up the basics: desired infrastructure, database and messaging platform',
@@ -255,12 +266,12 @@ async function init () {
                 {
                     type: 'input',
                     message: form.label('Bot Application Id', 'Microsoft App Id or Client ID of your bot application. You can set it later in config or ENV variable BOT_APP_ID', true),
-                    name: 'bsAppplicationId'
+                    name: 'bsAppId'
                 },
                 {
                     type: 'input',
                     message: form.label('Bot Application Password', 'Microsoft App Password or Client Secret of your bot application. You can set it later in config or ENV variable BOT_APP_PASSWORD', true),
-                    name: 'bsAppplicationPassword'
+                    name: 'bsAppPassword'
                 },
                 form.list('bsBotSku', form.label('Bot SKU', 'SKU defines price and performance of your Bot Service. Choose F0 for development and switch to S1 for production'))
             ]);
@@ -304,6 +315,12 @@ async function init () {
                 },
                 {
                     type: 'input',
+                    message: form.label('Azure region'),
+                    name: 'azureRegion',
+                    default: 'northeurope'
+                },
+                {
+                    type: 'input',
                     message: form.label('Function App name'),
                     name: 'azureFunctionAppName',
                     default: form.data.bsBotName
@@ -339,7 +356,6 @@ async function init () {
     const root = path.resolve(__dirname, path.join('..', 'templates'));
 
     const data = preprocessData(form.data);
-
     const tr = new TemplateRenderer(root, destination, data);
 
     await spinAndCatch(() => tr.render());

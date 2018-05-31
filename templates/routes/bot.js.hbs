@@ -6,7 +6,12 @@
 {{#if express}}
 const express = require('express');
 {{/if}}
+{{#if messenger}}
 const { Facebook } = require('wingbot-facebook');
+{{/if}}
+{{#if botService}}
+const { BotService } = require('wingbot-botservice');
+{{/if}}
 const wrapRoute = require('../lib/wrapRoute');
 const { createProcessor } = require('../bot');
 const config = require('../config');
@@ -15,7 +20,7 @@ const config = require('../config');
 const { ChatLogStorage } = require('wingbot-dynamodb');
 const dynamodb = require('../lib/dynamodb');
 {{/if}}
-{{#if mongodbStorage}}
+{{#if isMongoOrCosmos}}
 const { ChatLogStorage } = require('wingbot-mongodb');
 const mongodb = require('../lib/mongodb');
 {{/if}}
@@ -24,12 +29,17 @@ const log = require('../lib/log');
 {{#if dynamodbStorage}}
 const chatLogStorage = new ChatLogStorage(`${config.prefix}-states`, dynamodb, log);
 {{/if}}
-{{#if mongodbStorage}}
+{{#if isMongoOrCosmos}}
 const chatLogStorage = new ChatLogStorage(mongodb, 'chatlogs', log);
 {{/if}}
 {{/if}}
 
+{{#if messenger}}
 const facebook = new Facebook(createProcessor(), config.facebook{{#if storeConversationHistory}}, chatLogStorage{{/if}});
+{{/if}}
+{{#if botService}}
+const botService = new BotService(createProcessor(), config.botService{{#if storeConversationHistory}}, chatLogStorage{{/if}});
+{{/if}}
 
 {{#if awsServerless}}
 module.exports.handler = wrapRoute(async (event) => {
@@ -58,6 +68,16 @@ module.exports.handler = wrapRoute(async (event) => {
         body: 'OK'
     };
 });
+{{/if}}
+{{#if azureServerless}}
+module.exports = async function (context, req) {
+    await botService.processEvent(req.body);
+
+    return {
+        status: 200,
+        body: '{ "message": "OK" }'
+    };
+};
 {{/if}}
 {{#if express}}
 module.exports = [
