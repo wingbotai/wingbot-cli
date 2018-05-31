@@ -1,0 +1,4 @@
+{{#if serverlessAzure}}
+az group create -n "{{azureRgName}}" -l "{{azureRegion}}"
+az deployment create -g "{{azureRgName}}" --template-file .\template.json --parameters .\parameters.json
+{{/if}}

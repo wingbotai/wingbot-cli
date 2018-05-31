@@ -445,6 +445,12 @@ module.exports = async function init () {
                 },
                 {
                     type: 'input',
+                    message: label('Azure region'),
+                    name: 'azureRegion',
+                    default: 'northeurope'
+                },
+                {
+                    type: 'input',
                     message: label('Function App name'),
                     name: 'azureFunctionAppName',
                     default: rememberData.bsBotName
