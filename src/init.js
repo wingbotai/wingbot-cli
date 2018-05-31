@@ -128,13 +128,19 @@ module.exports = async function init () {
 
     res = await inquirer.prompt(usePreviousValues([
         {
-            type: 'list',
-            name: 'infrastructure',
+            type: 'input',
+            name: 'projectName',
             message: group(
                 'Project settings',
-                'We have to set up the basics: desired infrastructure, database and messaging platform',
-                label('Choose a deployment infrastructure')
+                'We have to set up the basics: name, desired infrastructure, database and messaging platform',
+                label('Choose a name for your project')
             ),
+            default: path.basename(destination)
+        },
+        {
+            type: 'list',
+            name: 'infrastructure',
+            message: label('Choose a deployment infrastructure'),
             choices: Object.keys(infrastructures)
         },
         {
@@ -167,12 +173,14 @@ module.exports = async function init () {
     Object.assign(rememberData, res);
 
     const {
+        projectName,
         infrastructure,
         platform,
         database,
         analytic
     } = res;
 
+    const projName = projectName;
     const infr = infrastructures[infrastructure];
     const platf = platforms[platform];
     const db = databases[database];
@@ -183,6 +191,7 @@ module.exports = async function init () {
         [platf]: true,
         [db]: true,
         [anal]: true,
+        projectName: projName,
         infrastructure: infr,
         database: db,
         analytics: anal,
