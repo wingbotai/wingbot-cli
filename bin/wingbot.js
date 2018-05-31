@@ -7,7 +7,7 @@
 const commander = require('commander');
 const chalk = require('chalk');
 const attach = require('../src/cli/attach');
-const init = require('../src/init');
+const { init } = require('../src/init');
 const login = require('../src/login');
 const wikiToText = require('../src/wikiToText');
 const jsonToText = require('../src/jsonToText');

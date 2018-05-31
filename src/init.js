@@ -67,7 +67,7 @@ function preprocessData (data) {
         eslint: true
     }, data, {
         isMongoOrCosmos: data[MONGODB] || data[AZURE_COSMOS_DB],
-        isAwsOrAzure: data[SERVERLESS_AWS] || data[SERVERLESS_AZURE]
+        isAwsOrAzure: data[SERVERLESS_AWS] || data[SERVERLESS_AZURE] || data[EXPRESS_AZURE]
     });
 }
 

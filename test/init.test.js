@@ -114,7 +114,8 @@ function generateTests (keysStack = Object.keys(useOptions).reverse()) {
             .map(variant => Object.assign({}, option, {
                 _testName: `${option._testName}, ${variant}`,
                 _opts: `${option._opts}${variants[variant] ? `-${variants[variant].substr(0, 5)}` : ''}`,
-                [key]: variants[variant]
+                [key]: variants[variant],
+                [variants[variant]]: true
             }))
             .filter(newOption => !isSkipped(newOption));
 
