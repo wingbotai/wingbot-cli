@@ -376,12 +376,12 @@ module.exports = async function init () {
                 {
                     type: 'input',
                     message: label('Bot Application Id', 'Microsoft App Id or Client ID of your bot application. You can set it later in config or ENV variable BOT_APP_ID', true),
-                    name: 'bsAppplicationId'
+                    name: 'bsAppId'
                 },
                 {
                     type: 'input',
                     message: label('Bot Application Password', 'Microsoft App Password or Client Secret of your bot application. You can set it later in config or ENV variable BOT_APP_PASSWORD', true),
-                    name: 'bsAppplicationPassword'
+                    name: 'bsAppPassword'
                 },
                 {
                     type: 'list',
