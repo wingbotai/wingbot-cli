@@ -1,5 +1,4 @@
-{{#if azureServerless}}
-{
+{{#if azureServerless}}{
   "bindings": [
     {
       "type": "httpTrigger",
@@ -16,6 +15,7 @@
       "name": "$return"
     }
   ],
-  "disabled": false
+  "disabled": false,
+  "scriptFile": "bot.js"
 }
 {{/if}}
