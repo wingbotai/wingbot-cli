@@ -397,7 +397,9 @@ module.exports = async function init () {
     }
 
     Object.assign(rememberData, res);
-    Object.assign(data, res);
+    Object.assign(data, res, {
+        bsBotSku: bsBotSkus[res.bsBotSku]
+    });
 
     switch (data.infrastructure) {
         case SERVERLESS_AWS:
@@ -474,6 +476,10 @@ module.exports = async function init () {
         // noop
     }
     const root = path.resolve(__dirname, path.join('..', 'templates'));
+
+    Object.assign(data, {
+        isMongoOrCosmos: data[MONGODB] || data[AZURE_COSMOS_DB]
+    });
 
     const tr = new TemplateRenderer(root, destination, data);
 

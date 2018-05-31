@@ -13,6 +13,7 @@ const config = {
 
     appUrl: 'http://localhost:3000',
 
+{{#if messenger}}
     facebook: {
         appId: '{{fbAppId}}',
         pageId: '{{fbPageId}}',
@@ -21,6 +22,14 @@ const config = {
         botToken: '{{fbBotToken}}'
     },
 
+{{/if}}
+{{#if botService}}    
+    botService: {
+        appId: process.env.BOT_APP_ID || '{{bsAppId}}',
+        appPassword: process.env.BOT_APP_PASSWORD || '{{bsAppSecret}}'
+    },
+
+{{/if}}
 {{#unless withoutDesigner}}
     wingbot: {
         bot: '{{wingbotBotName}}',
@@ -31,10 +40,13 @@ const config = {
     },
 
 {{/unless}}
-{{#if mongodbStorage}}
+{{#if isMongoOrCosmos}}
     db: {
-        url: 'mongodb://127.0.0.1:27017/{{mongodbName}}',
-        db: '{{mongodbName}}',
+        {{#if mongodbStorage}}url: process.env.MONGODB_CONNECTION_STRING || 'mongodb://127.0.0.1:27017/{{mongodbName}}',
+        {{else}}{{#if cosmosdbStorage}}url: process.env.COSMOSDB_CONNECTION_STRING || 'mongodb://localhost:C2y6yDjf5%2FR%2Bob0N8A7Cgv30VRDJIWEHLM%2B4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw%2FJw%3D%3D@localhost:10255/admin?ssl=true',{{/if}}{{/if}}
+        {{#if mongodbStorage}}db: '{{mongodbName}}',
+        {{else}}{{#if cosmosdbStorage}}db: '{{cosmosdbName}}',
+        {{/if}}{{/if}}
         options: {
             poolSize: 3,
             autoReconnect: true,

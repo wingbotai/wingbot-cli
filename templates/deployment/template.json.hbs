@@ -53,7 +53,7 @@
         "storageAccountid": "[concat(resourceGroup().id,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
     },
     "resources": [
-        {
+        {{#if azureServerless}}{
             "type": "microsoft.insights/components",
             "kind": "Node.JS",
             "name": "[variables('insightsName')]",
@@ -138,7 +138,7 @@
                     ]
                 }
             }
-        },
+        },{{/if}}{{#if botService}}
         {
             "type": "Microsoft.BotService/botServices",
             "sku": {
@@ -167,7 +167,7 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', variables('appName'))]"
             ]
-        }
+        }{{/if}}
     ]
 }
 {{/if}}
