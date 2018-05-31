@@ -28,6 +28,13 @@ module.exports = {
     },
 
 {{/if}}
+{{#if cosmosdbStorage}}
+    db: {
+        db: '{{cosmosdbName}}',
+        url: process.env.COSMOSDB_CONNECTION_STRING || '{{{cosmosdbConnectionString}}}'
+    },
+
+{{/if}}
     gaCode: '{{gaCode}}'
 
 };

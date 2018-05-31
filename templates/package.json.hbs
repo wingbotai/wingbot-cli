@@ -5,7 +5,7 @@
   "main": "handler.js",
   "scripts": {
     "start": {{#if isAwsOrAzure}}"echo \"Error: start command not available\" && exit 1",
-{{/if}}{{#if express}}"node ./bin/www.js",{{/if}}
+{{/if}}{{#if expressOrAppService}}"node ./bin/www.js",{{/if}}
     "test": "npm run test:lint && npm run test:coverage",
     "test:coverage": "nyc --reporter=html mocha ./test && nyc report",
     "test:coverage:threshold": "nyc check-coverage --lines 80 --functions 80 --branches 75",
@@ -34,18 +34,18 @@
     "mocha": "^5.1.1",
     "nyc": "^11.7.3"
   },
-  "dependencies": { {{#if express}}
+  "dependencies": { {{#if expressOrAppService}}
     "cookie-parser": "^1.4.3",
     "express": "^4.16.3",
     "http-errors": "^1.6.3",
     "morgan": "^1.9.0",{{/if}}{{#if isMongoOrCosmos}}
     "mongodb": "^3.0.8",
     "mongodb-core": "^3.0.8",{{/if}}
-    "wingbot": "^1.0.0-"{{#if dynamodbStorage}},
+    "wingbot": "^1.0.0"{{#if dynamodbStorage}},
     "wingbot-dynamodb": "*"{{/if}}{{#if jwtTokenStorage}},
     "wingbot-jwt": "*"{{/if}}{{#if messenger}},
     "wingbot-facebook": "^1.0.0"{{/if}}{{#if botService}},
-    "wingbot-botservice": "^1.0.0-alpha.7"{{/if}}{{#if isMongoOrCosmos}},
+    "wingbot-botservice": "^1.0.0-alpha.10"{{/if}}{{#if isMongoOrCosmos}},
     "wingbot-mongodb": "*"{{/if}}{{#if googleAnalytics}},
     "universal-analytics": "^0.4.16"{{/if}}{{#if analytics}},
     "webalize": "^0.1.0"{{/if}}

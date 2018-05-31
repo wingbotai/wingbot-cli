@@ -3,7 +3,7 @@
  */
 'use strict';
 
-{{#if express}}
+{{#if expressOrAppService}}
 const express = require('express');
 {{/if}}
 {{#if messenger}}
@@ -79,21 +79,32 @@ module.exports = async function (context, req) {
     };
 };
 {{/if}}
-{{#if express}}
+{{#if expressOrAppService}}
 module.exports = [
-    express.json({
+    express.json({{#if messenger}}{
         verify: (req, res, buf) =>
             facebook.verifyRequest(buf, req.headers)
-    }),
+    }{{/if}}),
     wrapRoute(async (req, res) => {
         if (req.method === 'GET') {
+{{#if messenger}}
             const body = await facebook.verifyWebhook(req.query);
             res.send(body);
+{{/if}}
+{{#if botService}}
+            res.send('RUNNING');
+{{/if}}
             return;
         }
 
+{{#if messenger}}
         await facebook.processEvent(req.body);
-
+{{/if}}
+{{#if botService}}
+        console.log(req.headers);
+        // await botService.verifyRequest(req.body, req.headers);
+        await botService.processEvent(req.body);
+{{/if}}
         res.send('OK');
     })
 ];

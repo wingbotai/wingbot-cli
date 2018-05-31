@@ -67,7 +67,15 @@ function preprocessData (data) {
         eslint: true
     }, data, {
         isMongoOrCosmos: data[MONGODB] || data[AZURE_COSMOS_DB],
-        isAwsOrAzure: data[SERVERLESS_AWS] || data[SERVERLESS_AZURE] || data[EXPRESS_AZURE]
+        isAwsOrAzure: data[SERVERLESS_AWS] || data[SERVERLESS_AZURE],
+        expressOrAppService: data[EXPRESS_AZURE] || data[EXPRESS],
+        cosmosdbConnectionString: data.cosmosdbConnectionString
+            ? data.cosmosdbConnectionString
+                .replace(
+                    /mongodb:\/\/[^:]+:[^@=]+(=+)/,
+                    x => x.replace(/=+$/, z => encodeURIComponent(z))
+                )
+            : null
     });
 }
 
@@ -361,7 +369,7 @@ async function init () {
     await spinAndCatch(() => tr.render());
 
     log(`\n${chalk.green.bold('Your project is ready!')}\n\n${chalk.white('do not forget to run')} ${chalk.magenta('npm install')}`);
-
+    log(`${chalk.white('do not forget to set')} ${chalk.magenta('NODE_ENV = production')} ${chalk.white('on production environment')}`);
     switch (data.infrastructure) {
         case SERVERLESS_AWS:
             log(`${chalk.white('for deployment use')} ${chalk.magenta('npm run deploy:production')}`);

@@ -3,7 +3,7 @@
  * @author wingbot.ai
  */
 'use strict';
-{{#if express}}
+{{#if expressOrAppService}}
 const express = require('express');
 const createError = require('http-errors');{{/if}}
 const { validateBot } = require('wingbot');
@@ -43,7 +43,7 @@ module.exports.handler = wrapRoute(async (event) => {
         body: 'OK'
     };
 });
-{{/if}}{{#if express}}
+{{/if}}{{#if expressOrAppService}}
 module.exports = [
     express.json(),
     wrapRoute(async (req, res) => {

@@ -4,7 +4,7 @@
  */
 'use strict';
 
-{{#if express}}
+{{#if expressOrAppService}}
 const createError = require('http-errors');
 {{/if}}
 const analytics = require('universal-analytics');
@@ -40,7 +40,7 @@ module.exports.tracker = wrapRoute((event) => {
         }
     };
 });
-{{/if}}{{#if express}}
+{{/if}}{{#if expressOrAppService}}
 module.exports = [
     wrapRoute(async (req, res) => {
         const { url = null, text = null, sender = null } = req.query || {};

@@ -5,7 +5,7 @@
 {{#if awsServerless}}const log = require('./log');{{/if}}
 
 function wrapRoute (fn) {
-    {{#if express}}
+    {{#if expressOrAppService}}
     return (req, res, next) => {
         Promise.resolve(fn(req, res, next))
             .catch(next);

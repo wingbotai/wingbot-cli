@@ -4,15 +4,18 @@
 'use strict';
 
 const { Router{{#unless withoutDesigner}}, BuildRouter{{/unless}}{{#unless withoutDesigner}}, ai{{/unless}} } = require('wingbot');
+{{#if botService}}
+const { botServiceQuickReplyPatch } = require('wingbot-botservice');
+{{/if}}
 {{#if fbLoadProfile}}
 const { userLoader } = require('wingbot-facebook');
 {{/if}}
 const config = require('../config');
 {{#unless withoutDesigner}}
 const plugins = require('./plugins');
-{{#if express}}
+{{#unless awsServerless}}
 const configStorage = require('../lib/botConfigStorage');
-{{/if}}
+{{/unless}}
 
 ai.register(config.wingbot.ai);
 {{/unless}}
@@ -28,13 +31,16 @@ function botFactory () {
             const text = encodeURIComponent(linkText);
             const sender = encodeURIComponent(senderId);
             return `${config.apiUrl}/tracker?url=${url}&text=${text}&sender=${sender}`;
-        }{{/if}}{{#if express}},
-        configStorage
-{{/if}}
+        }{{/if}}{{#unless awsServerless}},
+        configStorage{{/unless}}
     };
     const bot = new BuildRouter(config.wingbot, plugins, routerOptions);
 {{/if}}
 
+{{#if botService}}
+    bot.use(botServiceQuickReplyPatch(bot, 'start'));
+
+{{/if}}
 {{#if fbLoadProfile}}
     // load user profile from Facebook
     bot.use(userLoader(config.facebook.pageToken));

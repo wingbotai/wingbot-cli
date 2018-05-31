@@ -34,7 +34,7 @@ function reuseNodeModules (cwd) {
     }
 
     return new Promise((resolve, reject) => {
-        exec(`mv ${prevousCwd}/node_modules ${cwd}/`, (err, stdout, stderr) => {
+        exec(`mv ${prevousCwd}/node_modules ${cwd}/node_modules`, (err, stdout, stderr) => {
 
             if (err) {
                 // node couldn't execute the command
@@ -60,13 +60,13 @@ function test (cwd) {
             console.log(`stdout: ${stdout}`); // eslint-disable-line
             console.log(`stderr: ${stderr}`); // eslint-disable-line
 
+            prevousCwd = cwd;
+
             if (err) {
                 // node couldn't execute the command
                 reject(err);
                 return;
             }
-
-            prevousCwd = cwd;
 
             // the *entire* stdout and stderr (buffered)
             resolve(stdout);
