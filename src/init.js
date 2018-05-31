@@ -478,7 +478,8 @@ module.exports = async function init () {
     const root = path.resolve(__dirname, path.join('..', 'templates'));
 
     Object.assign(data, {
-        isMongoOrCosmos: data[MONGODB] || data[AZURE_COSMOS_DB]
+        isMongoOrCosmos: data[MONGODB] || data[AZURE_COSMOS_DB],
+        isAwsOrAzure: data[SERVERLESS_AWS] || data[SERVERLESS_AZURE]
     });
 
     const tr = new TemplateRenderer(root, destination, data);
