@@ -2,17 +2,17 @@
  * @author wingbot.ai
  */
 'use strict';
-{{#if jwtTokenStorage}}
-const { BotTokenStorage } = require('wingbot-jwt');{{/if}}
+
 const { Processor{{#if memoryStorage}}, MemoryStateStorage{{/if}} } = require('wingbot');{{#if dynamodbStorage}}
-const { StateStorage{{#if dbTokenStorage}}, BotTokenStorage{{/if}} } = require('wingbot-dynamodb');{{/if}}{{#if isMongoOrCosmos}}
-const { StateStorage{{#if dbTokenStorage}}, BotTokenStorage{{/if}} } = require('wingbot-mongodb');{{/if}}
+const { StateStorage } = require('wingbot-dynamodb');{{/if}}{{#if isMongoOrCosmos}}
+const { StateStorage } = require('wingbot-mongodb');{{/if}}
 const config = require('../config');
 const log = require('../lib/log');{{#if dynamodbStorage}}
 const dynamodb = require('../lib/dynamodb');{{/if}}{{#if isMongoOrCosmos}}
-const mongodb = require('../lib/mongodb');{{/if}}
+const mongodb = require('../lib/mongodb');{{/if}}{{#if frontendTokenStorage}}
+const tokenStorage = require('../lib/botTokenStorage');{{/if}}
 const onAction = require('./onAction');
-const botFactory = require('./botFactory');
+const botFactory = require('./bot');
 const botSettings = require('./botSettings');
 
 function createProcessor () {
@@ -22,21 +22,18 @@ function createProcessor () {
 
 {{#if memoryStorage}}
     const stateStorage = new MemoryStateStorage();
-    const tokenStorage = null;
 {{/if}}{{#if dynamodbStorage}}
-    const stateStorage = new StateStorage(`${config.prefix}-states`, dynamodb);{{#if dbTokenStorage}}
-    const tokenStorage = new BotTokenStorage(`${config.prefix}-tokens`, 'token', dynamodb);{{/if}}
+    const stateStorage = new StateStorage(`${config.prefix}-states`, dynamodb);
 {{/if}}{{#if isMongoOrCosmos}}
-    const stateStorage = new StateStorage(mongodb, 'states');{{#if dbTokenStorage}}
-    const tokenStorage = new BotTokenStorage(mongodb, 'tokens');{{/if}}
-{{/if}}{{#if jwtTokenStorage}}
-    const tokenStorage = new BotTokenStorage(config.jwt.secret, config.jwt.options);
+    const stateStorage = new StateStorage(mongodb, 'states');
 {{/if}}
+
     return new Processor(bot, {
         appUrl: config.appUrl,
         stateStorage,{{#if frontendTokenStorage}}
         tokenStorage,{{/if}}
-        log
+        log,
+        autoTyping: true
     });
 }
 

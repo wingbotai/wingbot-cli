@@ -9,12 +9,16 @@ const config = require('../config');
 
 let connection;
 
-async function getDatabase () {
+async function getDatabase (needConnection = false) {
     if (!connection) {
         connection = MongoClient.connect(config.db.url, config.db.options);
     }
 
     const c = await connection;
+
+    if (needConnection) {
+        return c;
+    }
 
     return c.db(config.db.db);
 }

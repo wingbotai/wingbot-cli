@@ -11,7 +11,11 @@ const config = {
 
     prefix: process.env.PREFIX || '{{projectName}}-development',
 
+    // where the assets or html views are stored
     appUrl: 'http://localhost:3000',
+
+    // where the application API lays
+    apiUrl: 'http://localhost:3000',
 
 {{#if messenger}}
     facebook: {
@@ -30,7 +34,7 @@ const config = {
     },
 
 {{/if}}
-{{#unless withoutDesigner}}
+{{#if withDesigner}}
     wingbot: {
         bot: '{{wingbotBotName}}',
         botId: '{{wingbotBotId}}',
@@ -39,7 +43,7 @@ const config = {
         ai: '{{wingbotBotName}}-development'
     },
 
-{{/unless}}
+{{/if}}
 {{#if isMongoOrCosmos}}
     db: {
         {{#if mongodbStorage}}url: process.env.MONGODB_CONNECTION_STRING || 'mongodb://127.0.0.1:27017/{{mongodbName}}',

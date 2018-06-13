@@ -1,0 +1,28 @@
+{{#if frontendTokenStorage}}
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+{{#if jwtTokenStorage}}
+const { BotTokenStorage } = require('wingbot-jwt');
+const config = require('../config');
+{{else}}{{#if dynamodbStorage}}
+const config = require('../config');
+const { BotTokenStorage } = require('wingbot-dynamodb');{{/if}}{{#if isMongoOrCosmos}}
+const { BotTokenStorage } = require('wingbot-mongodb');{{/if}}
+{{/if}}{{#if dynamodbStorage}}
+const dynamodb = require('../lib/dynamodb');{{/if}}{{#if isMongoOrCosmos}}
+const mongodb = require('../lib/mongodb');{{/if}}
+
+{{#if jwtTokenStorage}}
+const tokenStorage = new BotTokenStorage(config.jwt.secret, config.jwt.options);
+{{else}}
+{{#if dynamodbStorage}}
+const tokenStorage = new BotTokenStorage(`${config.prefix}-tokens`, 'token', dynamodb);
+{{/if}}{{#if isMongoOrCosmos}}
+const tokenStorage = new BotTokenStorage(mongodb, 'tokens');
+{{/if}}
+{{/if}}
+
+module.exports = tokenStorage;
+{{/if}}

@@ -14,6 +14,8 @@ async function botSettings () {
 
         await settings.getStartedButton('/start');
 
+        // await settings.whitelistDomain([config.appUrl, config.apiUrl]);
+
         /* eslint-disable indent */
         await settings.menu()
             .addPostBack('Back to start', '/start')

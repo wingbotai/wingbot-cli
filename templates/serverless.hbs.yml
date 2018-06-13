@@ -102,7 +102,7 @@ functions:
       - http: POST /validate
 {{#if analytics}}
   tracker:
-    handler: handler.tracker
+    handler: routes/tracker.handler
     maxRetries: 1
     memorySize: 128
     timeout: 15
@@ -164,9 +164,13 @@ resources:
         AttributeDefinitions:
           - AttributeName: senderId
             AttributeType: S
+          - AttributeName: pageId
+            AttributeType: S
         KeySchema:
           - AttributeName: senderId
             KeyType: HASH
+          - AttributeName: pageId
+            KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: ${self:custom.botDbReservation}

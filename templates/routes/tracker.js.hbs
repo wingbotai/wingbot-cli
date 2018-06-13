@@ -22,7 +22,7 @@ function trackEvent (sender, text, url) {
     tracker.send();
 }
 {{#if awsServerless}}
-module.exports.tracker = wrapRoute((event) => {
+module.exports.handler = wrapRoute((event) => {
     const { url = null, text = null, sender = null } = event.queryStringParameters || {};
 
     if (!url || !text || !sender) {

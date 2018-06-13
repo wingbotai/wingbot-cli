@@ -6,7 +6,7 @@
   "scripts": {
     "start": {{#if isAwsOrAzure}}"echo \"Error: start command not available\" && exit 1",
 {{/if}}{{#if expressOrAppService}}"node ./bin/www.js",{{/if}}
-    "test": "npm run test:lint && npm run test:coverage",
+    "test": "npm run test:lint && npm run test:bot",
     "test:coverage": "nyc --reporter=html mocha ./test && nyc report",
     "test:coverage:threshold": "nyc check-coverage --lines 80 --functions 80 --branches 75",
     "test:bot": "mocha ./test",
@@ -22,7 +22,7 @@
   ],
   "author": "Wingbot.ai",
   "devDependencies": { {{#if awsServerless}}
-    "aws-sdk": "^2.101.0",{{else}}{{#if mongodbStorage}}"aws-sdk": "^2.101.0",{{/if}}{{/if}}
+    "aws-sdk": "^2.101.0",{{else}}{{#if dynamodbStorage}}"aws-sdk": "^2.101.0",{{/if}}{{/if}}
     "env-test": "^1.0.0",
     "eslint": "^4.16.0",{{#if eslint}}
     "eslint-config-airbnb": "^16.1.0",
@@ -41,12 +41,12 @@
     "morgan": "^1.9.0",{{/if}}{{#if isMongoOrCosmos}}
     "mongodb": "^3.0.8",
     "mongodb-core": "^3.0.8",{{/if}}
-    "wingbot": "^1.0.0"{{#if dynamodbStorage}},
-    "wingbot-dynamodb": "*"{{/if}}{{#if jwtTokenStorage}},
-    "wingbot-jwt": "*"{{/if}}{{#if messenger}},
-    "wingbot-facebook": "^1.0.0"{{/if}}{{#if botService}},
-    "wingbot-botservice": "^1.0.0-alpha.10"{{/if}}{{#if isMongoOrCosmos}},
-    "wingbot-mongodb": "*"{{/if}}{{#if googleAnalytics}},
+    "wingbot": "^1.1.0"{{#if dynamodbStorage}},
+    "wingbot-dynamodb": "^1.1.0"{{/if}}{{#if jwtTokenStorage}},
+    "wingbot-jwt": "^1.1.0"{{/if}}{{#if messenger}},
+    "wingbot-facebook": "^1.1.0"{{/if}}{{#if botService}},
+    "wingbot-botservice": "^1.1.0"{{/if}}{{#if isMongoOrCosmos}},
+    "wingbot-mongodb": "^1.1.0"{{/if}}{{#if googleAnalytics}},
     "universal-analytics": "^0.4.16"{{/if}}{{#if analytics}},
     "webalize": "^0.1.0"{{/if}}
   }

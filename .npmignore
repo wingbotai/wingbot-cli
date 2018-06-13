@@ -1,6 +1,11 @@
-/build
-/data
-/node_modules
-/test
+build
+data
+node_modules
+test
 .vscode
 .git
+.nyc_output
+.circleci
+temp
+wingbotInit.png
+coverage

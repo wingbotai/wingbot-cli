@@ -42,6 +42,7 @@ const botService = new BotService(createProcessor(), config.botService{{#if stor
 {{/if}}
 
 {{#if awsServerless}}
+{{#if messenger}}
 module.exports.handler = wrapRoute(async (event) => {
     if (event.httpMethod === 'GET') {
         const { queryStringParameters } = event;
@@ -54,11 +55,25 @@ module.exports.handler = wrapRoute(async (event) => {
         };
     }
 
-    facebook.verifyRequest(event.body, event.headers);
-
     const parsedBody = JSON.parse(event.body);
+    const { botToken = null, senderId = null } = event.queryStringParameters || {};
 
-    await facebook.processEvent(parsedBody);
+    if (botToken && senderId) {
+        const tokenObj = await botTokenStorage.findByToken(botToken);
+
+        if (tokenObj.senderId !== parsedBody.sender.id) {
+            return {
+                statusCode: 401,
+                body: 'Unauthorized'
+            };
+        }
+
+        await facebook.processMessage(parsedBody, tokenObj.senderId, tokenObj.pageId);
+    } else {
+        facebook.verifyRequest(event.body, event.headers);
+
+        await facebook.processEvent(parsedBody);
+    }
 
     return {
         statusCode: 200,
@@ -69,43 +84,143 @@ module.exports.handler = wrapRoute(async (event) => {
     };
 });
 {{/if}}
+{{#if botService}}
+module.exports.handler = wrapRoute(async (event) => {
+    const parsedBody = JSON.parse(event.body);
+    const { botToken = null, senderId = null } = event.queryStringParameters || {};
+
+    if (botToken && senderId) {
+        const tokenObj = await botTokenStorage.findByToken(botToken);
+
+        if (tokenObj.senderId !== parsedBody.sender.id) {
+            return {
+                statusCode: 401,
+                body: 'Unauthorized'
+            };
+        }
+
+        await facebook.processMessage(parsedBody, tokenObj.senderId, tokenObj.pageId);
+    } else {
+        await botService.verifyRequest(parsedBody, event.headers);
+        await botService.processEvent(parsedBody);
+    }
+
+    return {
+        statusCode: 200,
+        headers: {
+            'Content-Type': 'text/plain'
+        },
+        body: 'OK'
+    };
+});
+{{/if}}
+{{/if}}
 {{#if azureServerless}}
+{{#if messenger}}
 module.exports = async function (context, req) {
-    await botService.processEvent(req.body);
+    if (req.method === 'GET') {
+        const body = await facebook.verifyWebhook(req.query);
+
+        return {
+            status: 200,
+            headers: { 'content-type': 'text/plain' },
+            body
+        };
+    }
+
+    const { botToken = null, senderId = null } = req.query || {};
+
+    if (botToken && senderId) {
+        const tokenObj = await botTokenStorage.findByToken(botToken);
+
+        if (tokenObj.senderId !== req.body.sender.id) {
+            return {
+                status: 401,
+                headers: { 'content-type': 'text/plain' },
+                body: 'Unauthorized'
+            };
+        }
+
+        await facebook.processMessage(req.body, tokenObj.senderId, tokenObj.pageId);
+    } else {
+        facebook.verifyRequest(event.rawBody, event.headers);
+
+        await facebook.processEvent(req.body);
+    }
 
     return {
         status: 200,
-        body: '{ "message": "OK" }'
+        body: '{"message":"OK"}'
     };
 };
 {{/if}}
+{{#if botService}}
+module.exports = async function (context, req) {
+    if (req.method === 'GET') {
+        return {
+            status: 200,
+            body: '{"message":"RUNNING"}'
+        };
+    }
+
+    const { botToken = null, senderId = null } = req.query || {};
+
+    if (botToken && senderId) {
+        const tokenObj = await botTokenStorage.findByToken(botToken);
+
+        if (tokenObj.senderId !== req.body.sender.id) {
+            return {
+                status: 401,
+                headers: { 'content-type': 'text/plain' },
+                body: 'Unauthorized'
+            };
+        }
+
+        await facebook.processMessage(req.body, tokenObj.senderId, tokenObj.pageId);
+    } else {
+        await botService.verifyRequest(req.body, req.headers);
+        await botService.processEvent(req.body);
+    }
+
+    return {
+        status: 200,
+        body: '{"message":"OK"}'
+    };
+};
+{{/if}}
+{{/if}}
 {{#if expressOrAppService}}
+{{#if messenger}}
 module.exports = [
-    express.json({{#if messenger}}{
+    express.json({
         verify: (req, res, buf) =>
             facebook.verifyRequest(buf, req.headers)
-    }{{/if}}),
+    }),
     wrapRoute(async (req, res) => {
         if (req.method === 'GET') {
-{{#if messenger}}
             const body = await facebook.verifyWebhook(req.query);
             res.send(body);
-{{/if}}
-{{#if botService}}
-            res.send('RUNNING');
-{{/if}}
             return;
         }
 
-{{#if messenger}}
         await facebook.processEvent(req.body);
-{{/if}}
-{{#if botService}}
-        console.log(req.headers);
-        // await botService.verifyRequest(req.body, req.headers);
-        await botService.processEvent(req.body);
-{{/if}}
         res.send('OK');
     })
 ];
+{{/if}}
+{{#if botService}}
+module.exports = [
+    express.json(),
+    wrapRoute(async (req, res) => {
+        if (req.method === 'GET') {
+            res.send('RUNNING');
+            return;
+        }
+
+        await botService.verifyRequest(req.body, req.headers);
+        await botService.processEvent(req.body);
+        res.send('OK');
+    })
+];
+{{/if}}
 {{/if}}

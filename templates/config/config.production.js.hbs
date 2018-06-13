@@ -7,14 +7,20 @@ module.exports = {
 
     isProduction: true,
 
-{{#unless withoutDesigner}}
+    // where the assets or html views are stored
+    // appUrl: 'putUrlHereAfterDeploy',
+
+    // where the application API lays
+    // apiUrl: 'putUrlHereAfterDeploy',
+
+{{#if withDesigner}}
     wingbot: {
         snapshot: 'production',
         token: '{{wingbotProductionToken}}',
         ai: '{{wingbotBotName}}-production'
     },
 
-{{/unless}}
+{{/if}}
 {{#if mongodbStorage}}
     db: {
         db: '{{mongodbName}}',

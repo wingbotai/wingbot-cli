@@ -52,7 +52,7 @@ const options = {
         'JWT token storage': JWT_TOKEN_STORAGE,
         'Use database as token storage': DB_TOKEN_STORAGE
     },
-    withoutDesigner: Form.NO_YES,
+    withDesigner: Form.NO_YES,
     storeConversationHistory: Form.NO_YES,
     fbLoadProfile: Form.NO_YES,
     bsBotSku: {
@@ -80,7 +80,6 @@ function preprocessData (data) {
 }
 
 async function init () {
-
 
     const inputsStorage = path.resolve(process.cwd(), '.wingbot');
     let previousData;
@@ -116,10 +115,10 @@ async function init () {
         form.list('platform', form.label('Choose a messaging platform')),
         form.list('database', form.label('Choose a database')),
         form.list('analytics', form.label('Choose an analytic tool')),
-        form.yesNo('withoutDesigner', form.label('Use without wingbot.ai chatbot designer', 'for experimental purposes you can omit designer connection'), Form.NO_YES)
+        form.yesNo('withDesigner', form.label('Use with wingbot.ai chatbot designer', 'for experimental purposes you can omit connection with designer'), Form.YES_NO)
     ]);
 
-    if (!form.data.withoutDesigner) {
+    if (form.data.withDesigner) {
         await form.ask([
             {
                 type: 'input',

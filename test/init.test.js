@@ -23,10 +23,21 @@ delete useOptions.bsBotSku;
 
 const skipOptions = [
     { azureExpress: true, dynamodbStorage: true },
-    { azureServerless: true, dynamodbStorage: true }
+    { azureServerless: true, dynamodbStorage: true },
+    { botService: true, fbLoadProfile: true }
 ];
 
 let prevousCwd;
+
+
+function rmdir (dir) {
+    return new Promise((resolve) => {
+        exec(`rm -rf ${dir}`, (err, stdout) => {
+            resolve(stdout);
+        });
+    });
+}
+
 
 function reuseNodeModules (cwd) {
     if (!prevousCwd) {
@@ -34,7 +45,7 @@ function reuseNodeModules (cwd) {
     }
 
     return new Promise((resolve, reject) => {
-        exec(`mv ${prevousCwd}/node_modules ${cwd}/node_modules`, (err, stdout, stderr) => {
+        exec(`mv ${prevousCwd}/node_modules ${cwd}/`, (err, stdout, stderr) => {
 
             if (err) {
                 // node couldn't execute the command
@@ -52,17 +63,27 @@ function reuseNodeModules (cwd) {
     });
 }
 
-function test (cwd) {
-    return new Promise((resolve, reject) => {
-        exec('npm i && npm test', {
+function npmI (cwd) {
+    return new Promise((resolve) => {
+        exec('npm i', {
             cwd
-        }, (err, stdout, stderr) => {
-            console.log(`stdout: ${stdout}`); // eslint-disable-line
-            console.log(`stderr: ${stderr}`); // eslint-disable-line
-
+        }, (err, stdout) => {
             prevousCwd = cwd;
 
+            resolve(stdout);
+        });
+    });
+}
+
+function test (cwd) {
+    return new Promise((resolve, reject) => {
+        exec('npm test', {
+            cwd
+        }, (err, stdout, stderr) => {
+
             if (err) {
+                console.log(`stdout: ${stdout}`); // eslint-disable-line
+                console.log(`stderr: ${stderr}`); // eslint-disable-line
                 // node couldn't execute the command
                 reject(err);
                 return;
@@ -88,7 +109,8 @@ function generateTests (keysStack = Object.keys(useOptions).reverse()) {
     if (nextStack.length === 0) {
         ret = [Object.assign({
             _testName: '',
-            _opts: ''
+            _opts: 't',
+            _x: []
         }, defaultData)];
     } else {
         ret = generateTests(nextStack);
@@ -100,7 +122,8 @@ function generateTests (keysStack = Object.keys(useOptions).reverse()) {
             arr.push(...[true, false]
                 .map(variant => Object.assign({}, option, {
                     _testName: `${option._testName}${variant ? `, ${key}` : ''}`,
-                    _opts: `${variant ? `-${option._opts}${key.substr(0, 5)}` : ''}`,
+                    _x: [...option._x, { variant, key }],
+                    _opts: `${option._opts}${variant ? `-${key.substr(0, 9)}` : ''}`,
                     [key]: variant
                 }))
                 .filter(newOption => !isSkipped(newOption)));
@@ -113,7 +136,8 @@ function generateTests (keysStack = Object.keys(useOptions).reverse()) {
         const newOptions = Object.keys(variants)
             .map(variant => Object.assign({}, option, {
                 _testName: `${option._testName}, ${variant}`,
-                _opts: `${option._opts}${variants[variant] ? `-${variants[variant].substr(0, 5)}` : ''}`,
+                _x: [...option._x, { v: variants[variant], variant }],
+                _opts: `${option._opts}${variants[variant] ? `-${variants[variant].substr(0, 9)}` : ''}`,
                 [key]: variants[variant],
                 [variants[variant]]: true
             }))
@@ -127,13 +151,17 @@ function generateTests (keysStack = Object.keys(useOptions).reverse()) {
 const tempDir = path.resolve(__dirname, path.join('..', 'temp'));
 const templateRoot = path.resolve(__dirname, path.join('..', 'templates'));
 
-describe.only('$ init', () => {
+describe('$ init', function () {
+
+    this.timeout(0);
 
     generateTests()
         .forEach((t) => {
 
             it(t._testName.substr(2), async () => {
                 const data = preprocessData(t); // eslint-disable-line
+
+                console.log(`    temp/${data._opts}`); // eslint-disable-line no-console
 
                 const botDir = path.join(tempDir, data._opts);
 
@@ -146,11 +174,10 @@ describe.only('$ init', () => {
                 const tr = new TemplateRenderer(templateRoot, botDir, data);
 
                 await tr.render();
-
+                await rmdir(path.join(botDir, 'node_modules'));
                 await reuseNodeModules(botDir);
+                await npmI(botDir);
                 await test(botDir);
-
-                fs.rmdirSync(botDir);
             });
 
         });

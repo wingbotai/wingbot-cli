@@ -3,38 +3,51 @@
  */
 'use strict';
 
-const { Router{{#unless withoutDesigner}}, BuildRouter{{/unless}}{{#unless withoutDesigner}}, ai{{/unless}} } = require('wingbot');
+const { Router{{#if withDesigner}}, BuildRouter, ai{{/if}} } = require('wingbot');
 {{#if botService}}
 const { botServiceQuickReplyPatch } = require('wingbot-botservice');
 {{/if}}
 {{#if fbLoadProfile}}
 const { userLoader } = require('wingbot-facebook');
 {{/if}}
-const config = require('../config');
-{{#unless withoutDesigner}}
+const config = require('../config'); // eslint-disable-line no-unused-vars
+{{#if withDesigner}}
 const plugins = require('./plugins');
 {{#unless awsServerless}}
 const configStorage = require('../lib/botConfigStorage');
 {{/unless}}
 
 ai.register(config.wingbot.ai);
-{{/unless}}
+{{/if}}
 
-function botFactory () {
-{{#if withoutDesigner}}
-    const bot = new Router();
-{{else}}
+function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
+{{#if withDesigner}}
+    {{#if analytics}}
     const routerOptions = {
-{{#if analytics}}
         linksTranslator (senderId, linkText, linkUrl) {
+            if (`${linkUrl}`.startsWith(config.apiUrl)
+                || `${linkUrl}`.startsWith(config.appUrl)) {
+                return linkUrl;
+            }
+
             const url = encodeURIComponent(linkUrl);
             const text = encodeURIComponent(linkText);
             const sender = encodeURIComponent(senderId);
             return `${config.apiUrl}/tracker?url=${url}&text=${text}&sender=${sender}`;
-        }{{/if}}{{#unless awsServerless}},
-        configStorage{{/unless}}
+        }
     };
+    {{else}}
+    const routerOptions = {};
+    {{/if}}
+    {{#unless awsServerless}}
+    if (!forTest) {
+        Object.assign(routerOptions, { configStorage });
+    }
+    {{/unless}}
+
     const bot = new BuildRouter(config.wingbot, plugins, routerOptions);
+{{else}}
+    const bot = new Router();
 {{/if}}
 
 {{#if botService}}
