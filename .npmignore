@@ -1,7 +1,7 @@
 build
 data
 node_modules
-test
+/test
 .vscode
 .git
 .nyc_output
