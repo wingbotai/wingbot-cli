@@ -4,5 +4,5 @@ npm run pack
 
 az group create -n "{{azureRgName}}" -l "{{azureRegion}}"
 az group deployment create -g "{{azureRgName}}" --template-file .\template.json --parameters .\parameters.json
-az functionapp deployment source config-zip  -g "{{azureRgName}}" -n "{{azureFunctionAppName}}" --src "..\{{projectName}}.zip"
+az functionapp deployment source config-zip  -g "{{azureRgName}}" -n "{{azureFunctionAppName}}" --src "..\\{{projectName}}.zip"
 {{/if}}
