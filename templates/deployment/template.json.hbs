@@ -40,7 +40,7 @@
             "defaultValue": "",
             "type": "string",
             "metadata": {
-                "description": "Name of the Cosmos DB database."
+                "description": "Name of the Cosmos DB database to be created."
             }
         },
         "cosmosDbConnectionString": {
@@ -136,7 +136,7 @@
                         },
                         {
                             "name": "FUNCTIONS_EXTENSION_VERSION",
-                            "value": "~beta"
+                            "value": "beta"
                         },
                         {
                             "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
@@ -161,6 +161,10 @@
                         {
                             "name": "COSMOSDB_CONNECTION_STRING",
                             "value": "[concat('mongodb://', parameters('cosmosDbName'), ':', uriComponent(listKeys(resourceId('Microsoft.DocumentDb/databaseAccounts', parameters('cosmosDbName')), '2015-04-08').primaryMasterKey), '@', parameters('cosmosDbName'), '.documents.azure.com:10250/?ssl=true')]"
+                        },
+                        {
+                            "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+                            "value": "true"
                         }
                     ]
                 }
