@@ -195,13 +195,13 @@ async function init () {
                     message: form.group(
                         'Cosmos DB connection',
                         'you can fill this information later into config files, but it\'s recommended to keep connection string in ENV variable (COSMOSDB_CONNECTION_STRING)',
-                        form.label('Database name (wil be created if not existing)')
+                        form.label('Database name', 'Leave empty if you don\'t want to create new database.', true)
                     ),
                     name: 'cosmosdbName'
                 },
                 {
                     type: 'input',
-                    message: form.label('Connection string', 'for production environment', true),
+                    message: form.label('Connection string', 'For existing database. Will be ignored if you specified Database name.', true),
                     name: 'cosmosdbConnectionString'
                 }
             ]);
@@ -272,15 +272,21 @@ async function init () {
                 },
                 {
                     type: 'input',
-                    message: form.label('Bot Application Id', 'Microsoft App Id or Client ID of your bot application. You can set it later in config or ENV variable BOT_APP_ID', true),
+                    message: form.label(
+                        'Bot Application Id', 
+                        'Microsoft App Id or Client ID of your bot application. Reqired to create channels registration'),
                     name: 'bsAppId'
                 },
                 {
                     type: 'input',
-                    message: form.label('Bot Application Password', 'Microsoft App Password or Client Secret of your bot application. You can set it later in config or ENV variable BOT_APP_PASSWORD', true),
+                    message: form.label(
+                        'Bot Application Password',
+                        'Microsoft App Password or Client Secret of your bot application. You can set it later in config or ENV variable BOT_APP_PASSWORD', true),
                     name: 'bsAppPassword'
                 },
-                form.list('bsBotSku', form.label('Bot SKU', 'SKU defines price and performance of your Bot Service. Choose F0 for development and switch to S1 for production'))
+                form.list('bsBotSku', form.label(
+                    'Bot SKU', 
+                    'SKU defines price and performance of your Bot Service. Choose F0 for development and switch to S1 for production'))
             ]);
             break;
         default:
