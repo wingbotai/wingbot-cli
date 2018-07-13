@@ -1,8 +1,8 @@
 {{#if azureServerless}}
-npm install
-npm run pack
+call npm install
+call npm run pack
 
-az group create -n "{{azureRgName}}" -l "{{azureRegion}}"
-az group deployment create -g "{{azureRgName}}" --template-file .\template.json --parameters .\parameters.json
-az functionapp deployment source config-zip  -g "{{azureRgName}}" -n "{{azureFunctionAppName}}" --src "..\\{{projectName}}.zip"
+call az group create -n "{{azureRgName}}" -l "{{azureRegion}}"
+call az group deployment create -g "{{azureRgName}}" --template-file ..\deployment\template.json --parameters ..\deployment\parameters.json
+call az functionapp deployment source config-zip  -g "{{azureRgName}}" -n "{{azureFunctionAppName}}" --src "..\\{{projectName}}.zip"
 {{/if}}
