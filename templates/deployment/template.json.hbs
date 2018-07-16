@@ -1,4 +1,4 @@
-{{#if azureServerless}}
+{{#if isAzure}}
 {
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
@@ -56,7 +56,8 @@
         "hostingPlanName": "[parameters('appName')]",
         "insightsName": "[concat(parameters('appName'), '-insights')]",
         "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'azfunctions')]",
-        "storageAccountid": "[concat(resourceGroup().id,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+        "storageAccountid": "[concat(resourceGroup().id,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "appServicePlanName": "[concat(parameters('appName'), '-plan')]"
     },
     "resources": [
         {{#if cosmosdbName}}{
@@ -170,7 +171,61 @@
                     ]
                 }
             }
-        },{{/if}}{{#if botService}}
+        },{{/if}}{{#if azureExpress}}
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2015-08-01",
+            "name": "[variables('appServicePlanName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "F1",
+                "tier": "Free",
+                "capacity": 1
+            }
+        },
+        {
+            "type": "Microsoft.Web/Sites",
+            "apiVersion": "2015-08-01",
+            "name": "[variables('appName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Web/serverFarms/', variables('appServicePlanName'))]",
+                "[resourceId('Microsoft.insights/components', variables('insightsName'))]"{{#if cosmosdbName}},
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbName'))]"{{/if}}     
+            ],
+            "properties": {
+                "name": "[parameters('webAppName')]",
+                "serverFarmId": "[variables('appServicePlanName')]",
+                "siteConfig": {
+                    "phpVersion": "off",
+                    "appSettings": [
+                        {
+                            "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                            "value": "8.11.1"
+                        },
+                        {
+                            "name": "BOT_APP_ID",
+                            "value": "[parameters('botAppId')]"
+                        },
+                        {
+                            "name": "BOT_APP_SECRET",
+                            "value": "[parameters('botAppPassword')]"
+                        },
+                        {
+                            "name": "COSMOSDB_CONNECTION_STRING",
+                            {{#if cosmosdbName}}"value": "[concat('mongodb://', parameters('cosmosDbName'), ':', uriComponent(listKeys(resourceId('Microsoft.DocumentDb/databaseAccounts', parameters('cosmosDbName')), '2015-04-08').primaryMasterKey), '@', parameters('cosmosDbName'), '.documents.azure.com:10250/?ssl=true')]"
+                            {{else}}"value": "[parameters('cosmosDbConnectionString')]"{{/if}}
+                        },
+                        {
+                            "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+                            "value": "true"
+                        }
+                    ]
+                }
+            }
+        }
+        {{/if}}
+        {{#if botService}}
         {
             "type": "Microsoft.BotService/botServices",
             "sku": {

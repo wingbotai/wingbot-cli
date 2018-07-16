@@ -68,6 +68,7 @@ function preprocessData (data) {
     }, data, {
         isMongoOrCosmos: data[MONGODB] || data[AZURE_COSMOS_DB],
         isAwsOrAzure: data[SERVERLESS_AWS] || data[SERVERLESS_AZURE],
+        isAzure: data[SERVERLESS_AZURE] || data[EXPRESS_AZURE],
         expressOrAppService: data[EXPRESS_AZURE] || data[EXPRESS],
         cosmosdbConnectionString: data.cosmosdbConnectionString
             ? data.cosmosdbConnectionString
