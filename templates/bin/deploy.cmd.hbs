@@ -1,8 +1,24 @@
 {{#if azureServerless}}
+@echo off
+echo Installing NPM packages...
 call npm install
+
+if exist "..\\{{projectName}}.zip" (
+    echo ZIP package exists, deleting.
+    del "..\\{{projectName}}.zip"
+)
+
+echo Creating ZIP package...
 call npm run pack
 
+echo Creating resource group...
 call az group create -n "{{azureRgName}}" -l "{{azureRegion}}"
+
+echo Creating resources...
 call az group deployment create -g "{{azureRgName}}" --template-file ..\deployment\template.json --parameters ..\deployment\parameters.json
+
+echo Deploying...
 call az functionapp deployment source config-zip  -g "{{azureRgName}}" -n "{{azureFunctionAppName}}" --src "..\\{{projectName}}.zip"
+
+echo Done.
 {{/if}}
