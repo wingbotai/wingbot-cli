@@ -80,7 +80,7 @@
             "kind": "Node.JS",
             "name": "[variables('insightsName')]",
             "apiVersion": "2014-04-01",
-            "location": "eastus",
+            "location": "[resourceGroup().location]",
             "properties": {
                 "ApplicationId": "[variables('insightsName')]"
             }
@@ -183,7 +183,7 @@
             "properties": {
                 "name": "[parameters('botName')]",
                 "displayName": "[parameters('botDisplayName')]",
-                "endpoint": "[concat('https://', variables('appName'), '.azurewebsites.net/api/bot')]",
+                "endpoint": "[concat('https://', variables('appName'), '.azurewebsites.net/api/routes')]",
                 "enabledChannels": [
                     "webchat",
                     "directline",
@@ -194,7 +194,8 @@
                     "directline",
                     "facebook"
                 ],
-                "msaAppId": "[parameters('botAppId')]"
+                "msaAppId": "[parameters('botAppId')]",
+                "developerAppInsightKey": "[reference(resourceId('Microsoft.Insights/components', variables('insightsName')), '2014-04-01').InstrumentationKey]"
             },
             "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', variables('appName'))]"
