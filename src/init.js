@@ -316,11 +316,12 @@ async function init () {
             ]);
             break;
         case SERVERLESS_AZURE:
+        case EXPRESS_AZURE:
             await form.ask([
                 {
                     type: 'input',
                     message: form.group(
-                        'Azure Functions deployment settings',
+                        'Azure deployment settings',
                         'We will prepare an ARM template where you will be able to edit this information later',
                         form.label('Resource Group name')
                     ),
@@ -335,13 +336,12 @@ async function init () {
                 },
                 {
                     type: 'input',
-                    message: form.label('Function App name'),
-                    name: 'azureFunctionAppName',
+                    message: form.label('App Service name'),
+                    name: 'azureAppName',
                     default: form.data.bsBotName
                 }
             ]);
             break;
-        case EXPRESS_AZURE:
         case EXPRESS:
         default:
             break;

@@ -76,7 +76,7 @@
             },
             "dependsOn": []
         },{{/if}}
-        {{#if azureServerless}}{
+        {
             "type": "microsoft.insights/components",
             "kind": "Node.JS",
             "name": "[variables('insightsName')]",
@@ -86,7 +86,7 @@
                 "ApplicationId": "[variables('insightsName')]"
             }
         },
-        {
+        {{#if azureServerless}}{
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('storageAccountName')]",
             "apiVersion": "2015-06-15",
@@ -171,7 +171,7 @@
                     ]
                 }
             }
-        },{{/if}}{{#if azureExpress}}
+        }{{/if}}{{#if azureExpress}},
         {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2015-08-01",
@@ -194,7 +194,7 @@
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbName'))]"{{/if}}     
             ],
             "properties": {
-                "name": "[parameters('webAppName')]",
+                "name": "[parameters('appName')]",
                 "serverFarmId": "[variables('appServicePlanName')]",
                 "siteConfig": {
                     "phpVersion": "off",
@@ -223,9 +223,7 @@
                     ]
                 }
             }
-        }
-        {{/if}}
-        {{#if botService}}
+        }{{/if}}{{#if botService}},
         {
             "type": "Microsoft.BotService/botServices",
             "sku": {
@@ -238,7 +236,7 @@
             "properties": {
                 "name": "[parameters('botName')]",
                 "displayName": "[parameters('botDisplayName')]",
-                "endpoint": "[concat('https://', variables('appName'), '.azurewebsites.net/api/routes')]",
+                "endpoint": "[concat('https://', variables('appName'), '.azurewebsites.net/bot')]",
                 "enabledChannels": [
                     "webchat",
                     "directline",

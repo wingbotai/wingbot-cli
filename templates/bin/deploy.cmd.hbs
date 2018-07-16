@@ -1,4 +1,4 @@
-{{#if azureServerless}}
+{{#if isAzure}}
 @echo off
 echo Installing NPM packages...
 call npm install
@@ -18,7 +18,7 @@ echo Creating resources...
 call az group deployment create -g "{{azureRgName}}" --template-file ..\deployment\template.json --parameters ..\deployment\parameters.json
 
 echo Deploying...
-call az functionapp deployment source config-zip  -g "{{azureRgName}}" -n "{{azureFunctionAppName}}" --src "..\\{{projectName}}.zip"
+call az {{#if azureServerless}}functionapp{{else}}webapp{{/if}} deployment source config-zip -g "{{azureRgName}}" -n "{{azureAppName}}" --src "..\\{{projectName}}.zip"
 
 echo Done.
 {{/if}}

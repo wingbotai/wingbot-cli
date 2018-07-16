@@ -14,7 +14,7 @@
     "build:test": ":",
     "build:production": ":"{{#if awsServerless}},
     "deploy:test": "npm run build:test && sls deploy -s test",
-    "deploy:production": "npm run build:production && sls deploy -s production"{{/if}}{{#if azureServerless}},
+    "deploy:production": "npm run build:production && sls deploy -s production"{{/if}}{{#if isAzure}},
     "pack": "npm-pack-zip"{{/if}}
   },
   "keywords": [
@@ -33,7 +33,7 @@
     "eslint-plugin-mocha": "^4.11.0",
     "eslint-plugin-react": "^7.6.1",{{/if}}
     "mocha": "^5.1.1",
-    "nyc": "^11.7.3"{{#if azureServerless}},
+    "nyc": "^11.7.3"{{#if isAzure}},
     "npm-pack-zip": "^1.2.6"{{/if}}
   },
   "dependencies": { {{#if expressOrAppService}}
