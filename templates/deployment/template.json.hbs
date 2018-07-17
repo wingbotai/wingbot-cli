@@ -150,7 +150,7 @@
                         {
                             "name": "WEBSITE_NODE_DEFAULT_VERSION",
                             "value": "8.11.1"
-                        },
+                        }{{#if botService}},
                         {
                             "name": "BOT_APP_ID",
                             "value": "[parameters('botAppId')]"
@@ -158,7 +158,7 @@
                         {
                             "name": "BOT_APP_SECRET",
                             "value": "[parameters('botAppPassword')]"
-                        },
+                        }{{/if}},
                         {
                             "name": "COSMOSDB_CONNECTION_STRING",
                             {{#if cosmosdbName}}"value": "[concat('mongodb://', parameters('cosmosDbName'), ':', uriComponent(listKeys(resourceId('Microsoft.DocumentDb/databaseAccounts', parameters('cosmosDbName')), '2015-04-08').primaryMasterKey), '@', parameters('cosmosDbName'), '.documents.azure.com:10250/?ssl=true')]"
