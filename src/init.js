@@ -32,7 +32,7 @@ const options = {
         'Express application': EXPRESS,
         'Serverless AWS': SERVERLESS_AWS,
         'Azure Functions': SERVERLESS_AZURE,
-        'Azure App Service': EXPRESS_AZURE
+        'Azure Web Apps': EXPRESS_AZURE
     },
     platform: {
         'Facebook messenger': MESSENGER,
