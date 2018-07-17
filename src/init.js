@@ -326,7 +326,7 @@ async function init () {
                         form.label('Resource Group name')
                     ),
                     name: 'azureRgName',
-                    default: `${form.data.bsBotName}-rg`
+                    default: `${form.data.bsBotName || form.data.projectName}-rg`
                 },
                 {
                     type: 'input',
