@@ -85,8 +85,8 @@
             "properties": {
                 "ApplicationId": "[variables('insightsName')]"
             }
-        },
-        {{#if azureServerless}}{
+        }{{#if azureServerless}},
+        {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('storageAccountName')]",
             "apiVersion": "2015-06-15",
