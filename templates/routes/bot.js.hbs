@@ -99,7 +99,7 @@ module.exports.handler = wrapRoute(async (event) => {
             };
         }
 
-        await facebook.processMessage(parsedBody, tokenObj.senderId, tokenObj.pageId);
+        await botService.processMessage(parsedBody, tokenObj.senderId, tokenObj.pageId);
     } else {
         await botService.verifyRequest(parsedBody, event.headers);
         await botService.processEvent(parsedBody);
