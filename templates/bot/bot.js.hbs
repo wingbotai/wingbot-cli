@@ -69,6 +69,25 @@ function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
     });
 
     // attach router middlewares here
+{{#unless withDesigner}}
+
+     bot.use('start', (req, res) => {
+        res.text('Hello!', {
+            continue: 'What is next?'
+        });
+    });
+
+    bot.use('continue', (req, res) => {
+        res.text('Nothing :)');
+    });
+
+    // fallback
+    bot.use((req, res) => {
+        res.text('Sorry, I don\'t understand', {
+            start: 'Back to start'
+        });
+    });
+{{/unless}}
 
     return bot;
 }

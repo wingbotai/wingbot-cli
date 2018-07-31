@@ -176,7 +176,7 @@ module.exports = async function (context, req) {
             };
         }
 
-        await facebook.processMessage(req.body, tokenObj.senderId, tokenObj.pageId);
+        await botService.processMessage(req.body, tokenObj.senderId, tokenObj.pageId);
     } else {
         await botService.verifyRequest(req.body, req.headers);
         await botService.processEvent(req.body);

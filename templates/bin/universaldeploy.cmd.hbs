@@ -1,0 +1,5 @@
+{{#if isAzure}}
+:; sh ./bin/deploy.sh; exit $?
+@ECHO OFF
+call ./bin/deploy.cmd
+{{/if}}

@@ -32,7 +32,7 @@ const options = {
         'Express application': EXPRESS,
         'Serverless AWS': SERVERLESS_AWS,
         'Azure Functions': SERVERLESS_AZURE,
-        'Azure App Service': EXPRESS_AZURE
+        'Azure Web Apps': EXPRESS_AZURE
     },
     platform: {
         'Facebook messenger': MESSENGER,
@@ -68,6 +68,7 @@ function preprocessData (data) {
     }, data, {
         isMongoOrCosmos: data[MONGODB] || data[AZURE_COSMOS_DB],
         isAwsOrAzure: data[SERVERLESS_AWS] || data[SERVERLESS_AZURE],
+        isAzure: data[SERVERLESS_AZURE] || data[EXPRESS_AZURE],
         expressOrAppService: data[EXPRESS_AZURE] || data[EXPRESS],
         cosmosdbConnectionString: data.cosmosdbConnectionString
             ? data.cosmosdbConnectionString
@@ -115,7 +116,7 @@ async function init () {
         form.list('platform', form.label('Choose a messaging platform')),
         form.list('database', form.label('Choose a database')),
         form.list('analytics', form.label('Choose an analytic tool')),
-        form.yesNo('withDesigner', form.label('Use with wingbot.ai chatbot designer', 'for experimental purposes you can omit connection with designer'), Form.YES_NO)
+        form.yesNo('withDesigner', form.label('Connect with wingbot.ai designer', 'for experimental purposes you can make a chatbot without designer'), Form.YES_NO)
     ]);
 
     if (form.data.withDesigner) {
@@ -195,13 +196,13 @@ async function init () {
                     message: form.group(
                         'Cosmos DB connection',
                         'you can fill this information later into config files, but it\'s recommended to keep connection string in ENV variable (COSMOSDB_CONNECTION_STRING)',
-                        form.label('Database name (wil be created if not existing)')
+                        form.label('Database name', 'Leave empty if you don\'t want to create new database.', true)
                     ),
                     name: 'cosmosdbName'
                 },
                 {
                     type: 'input',
-                    message: form.label('Connection string', 'for production environment', true),
+                    message: form.label('Connection string', 'For existing database. Will be ignored if you specified Database name.', true),
                     name: 'cosmosdbConnectionString'
                 }
             ]);
@@ -272,15 +273,25 @@ async function init () {
                 },
                 {
                     type: 'input',
-                    message: form.label('Bot Application Id', 'Microsoft App Id or Client ID of your bot application. You can set it later in config or ENV variable BOT_APP_ID', true),
+                    message: form.label(
+                        'Bot Application Id',
+                        'Microsoft App Id or Client ID of your bot application. Reqired to create channels registration'
+                    ),
                     name: 'bsAppId'
                 },
                 {
                     type: 'input',
-                    message: form.label('Bot Application Password', 'Microsoft App Password or Client Secret of your bot application. You can set it later in config or ENV variable BOT_APP_PASSWORD', true),
+                    message: form.label(
+                        'Bot Application Password',
+                        'Microsoft App Password or Client Secret of your bot application. You can set it later in config or ENV variable BOT_APP_PASSWORD',
+                        true
+                    ),
                     name: 'bsAppPassword'
                 },
-                form.list('bsBotSku', form.label('Bot SKU', 'SKU defines price and performance of your Bot Service. Choose F0 for development and switch to S1 for production'))
+                form.list('bsBotSku', form.label(
+                    'Bot SKU',
+                    'SKU defines price and performance of your Bot Service. Choose F0 for development and switch to S1 for production'
+                ))
             ]);
             break;
         default:
@@ -309,16 +320,17 @@ async function init () {
             ]);
             break;
         case SERVERLESS_AZURE:
+        case EXPRESS_AZURE:
             await form.ask([
                 {
                     type: 'input',
                     message: form.group(
-                        'Azure Functions deployment settings',
+                        'Azure deployment settings',
                         'We will prepare an ARM template where you will be able to edit this information later',
                         form.label('Resource Group name')
                     ),
                     name: 'azureRgName',
-                    default: `${form.data.bsBotName}-rg`
+                    default: `${form.data.bsBotName || form.data.projectName}-rg`
                 },
                 {
                     type: 'input',
@@ -328,13 +340,12 @@ async function init () {
                 },
                 {
                     type: 'input',
-                    message: form.label('Function App name'),
-                    name: 'azureFunctionAppName',
+                    message: form.label('App Service name'),
+                    name: 'azureAppName',
                     default: form.data.bsBotName
                 }
             ]);
             break;
-        case EXPRESS_AZURE:
         case EXPRESS:
         default:
             break;

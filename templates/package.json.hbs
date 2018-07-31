@@ -11,10 +11,10 @@
     "test:coverage:threshold": "nyc check-coverage --lines 80 --functions 80 --branches 75",
     "test:bot": "mocha ./test",
     "test:lint": "eslint --ext .js src test bot routes bin *.js",
-    "build:test": ":",
     "build:production": ":"{{#if awsServerless}},
-    "deploy:test": "npm run build:test && sls deploy -s test",
-    "deploy:production": "npm run build:production && sls deploy -s production"{{/if}}
+    "deploy:production": "npm run build:production && sls deploy -s production"{{/if}}{{#if isAzure}},
+    "deploy:production": "./bin/universaldeploy.cmd",
+    "pack": "npm-pack-zip"{{/if}}
   },
   "keywords": [
     "wingbot",
@@ -32,7 +32,8 @@
     "eslint-plugin-mocha": "^4.11.0",
     "eslint-plugin-react": "^7.6.1",{{/if}}
     "mocha": "^5.1.1",
-    "nyc": "^11.7.3"
+    "nyc": "^11.7.3"{{#if isAzure}},
+    "npm-pack-zip": "^1.2.6"{{/if}}
   },
   "dependencies": { {{#if expressOrAppService}}
     "cookie-parser": "^1.4.3",

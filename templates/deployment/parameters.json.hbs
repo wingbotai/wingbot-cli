@@ -1,15 +1,14 @@
-{{#if azureServerless}}
+{{#if isAzure}}
 {
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "appName": {
-            "value": "{{azureFunctionAppName}}"
+            "value": "{{azureAppName}}"
         },
         "botSku": {
             "value": "{{bsBotSku}}"
         },
-        {
         "botName": {
             "value": "{{bsBotName}}"
         },
@@ -21,10 +20,10 @@
         },
         "botAppPassword": {
             "value": "{{bsAppPassword}}"
-        },
+        },{{#if cosmosdbName}}
         "cosmosDbName": {
             "value": "{{cosmosdbName}}"
-        },
+        },{{/if}}
         "cosmosDbConnectionString": {
             "value": "{{cosmosdbConnectionString}}"
         }

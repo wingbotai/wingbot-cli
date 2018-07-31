@@ -89,6 +89,14 @@ class TemplateRenderer {
             fs.writeFile(fileName, contents, (err) => {
                 if (err) {
                     reject(err);
+                } else if (fileName.match(/\/bin\/[a-z.]+$/)) {
+                    fs.chmod(fileName, 0o754, (error) => {
+                        if (error) {
+                            reject(error);
+                        } else {
+                            resolve();
+                        }
+                    });
                 } else {
                     resolve();
                 }
