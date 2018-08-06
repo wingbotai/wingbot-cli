@@ -12,7 +12,10 @@ const login = require('../src/login');
 const wikiToText = require('../src/wikiToText');
 const jsonToText = require('../src/jsonToText');
 
-commander.version('1.0.0', '-v --version');
+// @ts-ignore
+const pack = require('../package.json');
+
+commander.version(pack.version, '-v --version');
 
 commander
     .command('init')

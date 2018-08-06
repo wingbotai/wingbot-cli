@@ -10,6 +10,8 @@ const spinAndCatch = require('./cli/spinAndCatch');
 const Form = require('./Form');
 const { TemplateRenderer } = require('./templateRenderer');
 
+const packageJson = require('../package.json');
+
 const { log } = console;
 
 const SERVERLESS_AWS = 'awsServerless';
@@ -367,7 +369,8 @@ async function init () {
 
 
     try {
-        fs.writeFileSync(inputsStorage, JSON.stringify(form.data));
+        const save = Object.assign({}, form.data, { cliVersion: packageJson.version });
+        fs.writeFileSync(inputsStorage, JSON.stringify(save));
     } catch (e) {
         // noop
     }
