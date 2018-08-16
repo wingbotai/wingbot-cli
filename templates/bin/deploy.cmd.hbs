@@ -3,9 +3,9 @@
 echo Installing NPM packages...
 call npm install
 
-if exist ".\\{{projectName}}.zip" (
+if exist "..\\{{projectName}}.zip" (
     echo ZIP package exists, deleting.
-    del ".\\{{projectName}}.zip"
+    del "..\\{{projectName}}.zip"
 )
 
 echo Creating ZIP package...
@@ -15,10 +15,10 @@ echo Creating resource group...
 call az group create -n "{{azureRgName}}" -l "{{azureRegion}}"
 
 echo Creating resources...
-call az group deployment create -g "{{azureRgName}}" --template-file .\deployment\template.json --parameters ..\deployment\parameters.json
+call az group deployment create -g "{{azureRgName}}" --template-file ..\deployment\template.json --parameters ..\deployment\parameters.json
 
 echo Deploying...
-call az {{#if azureServerless}}functionapp{{else}}webapp{{/if}} deployment source config-zip -g "{{azureRgName}}" -n "{{azureAppName}}" --src ".\\{{projectName}}.zip"
+call az {{#if azureServerless}}functionapp{{else}}webapp{{/if}} deployment source config-zip -g "{{azureRgName}}" -n "{{azureAppName}}" --src "..\\{{projectName}}.zip"
 
 echo Done.
 {{/if}}
