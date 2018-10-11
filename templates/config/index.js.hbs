@@ -54,8 +54,9 @@ const config = {
         options: {
             poolSize: 3,
             autoReconnect: true,
+            useNewUrlParser: true,
+            keepAlive: true,
             connectTimeoutMS: 8000,
-            keepAlive: 3000,
             socketTimeoutMS: 8000
         }
     },

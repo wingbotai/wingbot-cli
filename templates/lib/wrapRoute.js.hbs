@@ -1,3 +1,4 @@
+{{#unless azureServerless}}
 /*
  * @author wingbot.ai
  */
@@ -5,14 +6,15 @@
 {{#if awsServerless}}const log = require('./log');{{/if}}
 
 function wrapRoute (fn) {
-    {{#if expressOrAppService}}
+{{#if expressOrAppService}}
     return (req, res, next) => {
         Promise.resolve(fn(req, res, next))
             .catch(next);
     };
-    {{/if}}{{#if awsServerless}}
+{{/if}}{{#if awsServerless}}
     return async (event, context) => {
 {{#if mongodbStorage}}
+        // eslint-disable-next-line no-param-reassign
         context.callbackWaitsForEmptyEventLoop = false;{{/if}}
         try {
             return await Promise.resolve(fn(event, context));
@@ -27,7 +29,8 @@ function wrapRoute (fn) {
             };
         }
     };
-    {{/if}}
+{{/if}}
 }
 
 module.exports = wrapRoute;
+{{/unless}}

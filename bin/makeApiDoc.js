@@ -26,4 +26,3 @@ const apiDoc = jsdoc2md.renderSync({
 console.log(apiDoc);
 
 fs.writeFileSync(filename, `${beginning}${separator}${apiDoc}`);
-

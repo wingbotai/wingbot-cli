@@ -12,30 +12,48 @@ const { Facebook } = require('wingbot-facebook');
 {{#if botService}}
 const { BotService } = require('wingbot-botservice');
 {{/if}}
+{{#if storeConversationHistory}}
+{{#if dynamodbStorage}}
+const { ChatLogStorage } = require('wingbot-dynamodb');
+{{/if}}
+{{#if isMongoOrCosmos}}
+const { ChatLogStorage } = require('wingbot-mongodb');
+{{/if}}
+{{/if}}
+{{#unless azureServerless}}
 const wrapRoute = require('../lib/wrapRoute');
+{{/unless}}
 const { createProcessor } = require('../bot');
 const config = require('../config');
 {{#if storeConversationHistory}}
 {{#if dynamodbStorage}}
-const { ChatLogStorage } = require('wingbot-dynamodb');
 const dynamodb = require('../lib/dynamodb');
 {{/if}}
 {{#if isMongoOrCosmos}}
-const { ChatLogStorage } = require('wingbot-mongodb');
 const mongodb = require('../lib/mongodb');
 {{/if}}
 const log = require('../lib/log');
 
 {{#if dynamodbStorage}}
-const chatLogStorage = new ChatLogStorage(`${config.prefix}-states`, dynamodb, log);
+const chatLogStorage = new ChatLogStorage(`${config.prefix}-chatlog`, dynamodb, log);
 {{/if}}
 {{#if isMongoOrCosmos}}
 const chatLogStorage = new ChatLogStorage(mongodb, 'chatlogs', log);
 {{/if}}
 {{/if}}
+{{#if messenger}}
+const attachmentCache = require('../lib/attachmentCache');
+{{/if}}
+{{#if frontendTokenStorage}}
+const botTokenStorage = require('../lib/botTokenStorage');
+{{/if}}
 
 {{#if messenger}}
-const facebook = new Facebook(createProcessor(), config.facebook{{#if storeConversationHistory}}, chatLogStorage{{/if}});
+const facebook = new Facebook(
+    createProcessor(),
+    Object.assign({ attachmentCache }, config.facebook){{#if storeConversationHistory}},
+    chatLogStorage{{/if}}
+);
 {{/if}}
 {{#if botService}}
 const botService = new BotService(createProcessor(), config.botService{{#if storeConversationHistory}}, chatLogStorage{{/if}});
@@ -56,6 +74,7 @@ module.exports.handler = wrapRoute(async (event) => {
     }
 
     const parsedBody = JSON.parse(event.body);
+    {{#if frontendTokenStorage}}
     const { botToken = null, senderId = null } = event.queryStringParameters || {};
 
     if (botToken && senderId) {
@@ -71,9 +90,12 @@ module.exports.handler = wrapRoute(async (event) => {
         await facebook.processMessage(parsedBody, tokenObj.senderId, tokenObj.pageId);
     } else {
         facebook.verifyRequest(event.body, event.headers);
-
         await facebook.processEvent(parsedBody);
     }
+    {{else}}
+    facebook.verifyRequest(event.body, event.headers);
+    await facebook.processEvent(parsedBody);
+    {{/if}}
 
     return {
         statusCode: 200,
@@ -87,6 +109,8 @@ module.exports.handler = wrapRoute(async (event) => {
 {{#if botService}}
 module.exports.handler = wrapRoute(async (event) => {
     const parsedBody = JSON.parse(event.body);
+
+    {{#if frontendTokenStorage}}
     const { botToken = null, senderId = null } = event.queryStringParameters || {};
 
     if (botToken && senderId) {
@@ -104,6 +128,10 @@ module.exports.handler = wrapRoute(async (event) => {
         await botService.verifyRequest(parsedBody, event.headers);
         await botService.processEvent(parsedBody);
     }
+    {{else}}
+    await botService.verifyRequest(parsedBody, event.headers);
+    await botService.processEvent(parsedBody);
+    {{/if}}
 
     return {
         statusCode: 200,
@@ -128,6 +156,7 @@ module.exports = async function (context, req) {
         };
     }
 
+    {{#if frontendTokenStorage}}
     const { botToken = null, senderId = null } = req.query || {};
 
     if (botToken && senderId) {
@@ -143,10 +172,13 @@ module.exports = async function (context, req) {
 
         await facebook.processMessage(req.body, tokenObj.senderId, tokenObj.pageId);
     } else {
-        facebook.verifyRequest(event.rawBody, event.headers);
-
+        facebook.verifyRequest(req.body, req.headers);
         await facebook.processEvent(req.body);
     }
+    {{else}}
+    facebook.verifyRequest(req.body, req.headers);
+    await facebook.processEvent(req.body);
+    {{/if}}
 
     return {
         status: 200,
@@ -163,6 +195,7 @@ module.exports = async function (context, req) {
         };
     }
 
+    {{#if frontendTokenStorage}}
     const { botToken = null, senderId = null } = req.query || {};
 
     if (botToken && senderId) {
@@ -181,6 +214,10 @@ module.exports = async function (context, req) {
         await botService.verifyRequest(req.body, req.headers);
         await botService.processEvent(req.body);
     }
+    {{else}}
+    await botService.verifyRequest(req.body, req.headers);
+    await botService.processEvent(req.body);
+    {{/if}}
 
     return {
         status: 200,
@@ -193,8 +230,14 @@ module.exports = async function (context, req) {
 {{#if messenger}}
 module.exports = [
     express.json({
-        verify: (req, res, buf) =>
-            facebook.verifyRequest(buf, req.headers)
+        verify: (req, res, buf) => {
+            {{#if frontendTokenStorage}}
+            if (req.query.botToken && req.query.senderId) {
+                return;
+            }
+            {{/if}}
+            facebook.verifyRequest(buf, req.headers);
+        }
     }),
     wrapRoute(async (req, res) => {
         if (req.method === 'GET') {
@@ -202,8 +245,24 @@ module.exports = [
             res.send(body);
             return;
         }
+        {{#if frontendTokenStorage}}
+        const { botToken = null, senderId = null } = req.query;
 
+        if (botToken && senderId) {
+            const tokenObj = await botTokenStorage.findByToken(botToken);
+
+            if (tokenObj.senderId !== req.body.sender.id) {
+                res.status(401).send('Unauthorized');
+                return;
+            }
+
+            await facebook.processMessage(req.body, tokenObj.senderId, tokenObj.pageId);
+        } else {
+            await facebook.processEvent(req.body);
+        }
+        {{else}}
         await facebook.processEvent(req.body);
+        {{/if}}
         res.send('OK');
     })
 ];
@@ -217,8 +276,27 @@ module.exports = [
             return;
         }
 
+        {{#if frontendTokenStorage}}
+        const { botToken = null, senderId = null } = req.query;
+
+        if (botToken && senderId) {
+            const tokenObj = await botTokenStorage.findByToken(botToken);
+
+            if (tokenObj.senderId !== req.body.sender.id) {
+                res.status(401).send('Unauthorized');
+                return;
+            }
+
+            await botService.processMessage(req.body, tokenObj.senderId, tokenObj.pageId);
+        } else {
+            await botService.verifyRequest(req.body, req.headers);
+            await botService.processEvent(req.body);
+        }
+        {{else}}
         await botService.verifyRequest(req.body, req.headers);
         await botService.processEvent(req.body);
+        {{/if}}
+
         res.send('OK');
     })
 ];

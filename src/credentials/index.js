@@ -3,9 +3,9 @@
  */
 'use strict';
 
-const Store = require('./Store');
 const os = require('os');
 const path = require('path');
+const Store = require('./Store');
 
 const FOLDER = '.wingbot';
 const CONFIG_FILE = 'config.json';

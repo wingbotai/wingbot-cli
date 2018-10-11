@@ -5,6 +5,7 @@
 
 const path = require('path');
 const chalk = require('chalk');
+const latestVersion = require('latest-version');
 const fs = require('fs');
 const spinAndCatch = require('./cli/spinAndCatch');
 const Form = require('./Form');
@@ -54,7 +55,10 @@ const options = {
         'JWT token storage': JWT_TOKEN_STORAGE,
         'Use database as token storage': DB_TOKEN_STORAGE
     },
-    withDesigner: Form.NO_YES,
+    withDesigner: {
+        'Use wingbot.ai designer (recommended)': 1,
+        'I\'ll create bot programmatically': 0
+    },
     storeConversationHistory: Form.NO_YES,
     fbLoadProfile: Form.NO_YES,
     bsBotSku: {
@@ -83,6 +87,18 @@ function preprocessData (data) {
 }
 
 async function init () {
+
+    // check the latest version
+    try {
+        const ver = await latestVersion('wingbot-cli');
+
+        if (ver !== packageJson.version) {
+            // eslint-disable-next-line no-console
+            console.log(`\n${chalk.red('New version')} ${ver} ${chalk.red('of wingbot-cli has been released. Please update your wingbot CLI.')}\n`);
+        }
+    } catch (e) {
+        // do not write nothing
+    }
 
     const inputsStorage = path.resolve(process.cwd(), '.wingbot');
     let previousData;
@@ -118,7 +134,7 @@ async function init () {
         form.list('platform', form.label('Choose a messaging platform')),
         form.list('database', form.label('Choose a database')),
         form.list('analytics', form.label('Choose an analytic tool')),
-        form.yesNo('withDesigner', form.label('Connect with wingbot.ai designer', 'for experimental purposes you can make a chatbot without designer'), Form.YES_NO)
+        form.list('withDesigner', form.label('Connect with wingbot.ai designer', 'for experimental purposes you can make a chatbot on your own'))
     ]);
 
     if (form.data.withDesigner) {

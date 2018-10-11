@@ -52,7 +52,6 @@ function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
 
 {{#if botService}}
     bot.use(botServiceQuickReplyPatch(bot, 'start'));
-
 {{/if}}
 {{#if fbLoadProfile}}
     // load user profile from Facebook
@@ -71,7 +70,7 @@ function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
     // attach router middlewares here
 {{#unless withDesigner}}
 
-     bot.use('start', (req, res) => {
+    bot.use('start', (req, res) => {
         res.text('Hello!', {
             continue: 'What is next?'
         });

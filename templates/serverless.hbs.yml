@@ -101,6 +101,7 @@ functions:
     events:
       - http: POST /validate
 {{#if analytics}}
+
   tracker:
     handler: routes/tracker.handler
     maxRetries: 1
@@ -154,6 +155,7 @@ resources:
                   Resource:
                     - "arn:aws:lambda:${self:provider.region}:${self:custom.accountId}:function:${self:custom.prefix}-bot"
 {{#if dynamodbStorage}}
+
     StatesTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -175,6 +177,7 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: ${self:custom.botDbReservation}
 {{#unless awsServerless}}
+
     BotConfigTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -190,6 +193,7 @@ resources:
           WriteCapacityUnits: 1
 {{/unless}}
 {{#if storeConversationHistory}}
+
     ChatlogTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -212,6 +216,7 @@ resources:
           WriteCapacityUnits: ${self:custom.botDbReservation}
 {{/if}}
 {{#if dbTokenStorage}}
+
     BottokensTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -239,6 +244,22 @@ resources:
               WriteCapacityUnits: 1
         ProvisionedThroughput:
           ReadCapacityUnits: ${self:custom.botDbReservation}
+          WriteCapacityUnits: 1
+{{/if}}
+{{#if messenger}}
+
+    AttachmentsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.prefix}-attachments
+        AttributeDefinitions:
+          - AttributeName: url
+            AttributeType: S
+        KeySchema:
+          - AttributeName: url
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
           WriteCapacityUnits: 1
 {{/if}}
 {{/if}}

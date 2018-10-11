@@ -1,0 +1,20 @@
+{{#if messenger}}
+/**
+ * @author wingbot.ai
+ */
+'use strict';
+
+{{#if dynamodbStorage}}
+const { AttachmentCache } = require('wingbot-dynamodb');
+const config = require('../config');
+const dynamodb = require('./dynamodb');
+
+module.exports = new AttachmentCache(`${config.prefix}-attachments`, dynamodb);
+{{/if}}
+{{#if isMongoOrCosmos}}
+const { AttachmentCache } = require('wingbot-mongodb');
+const mongodb = require('./mongodb');
+
+module.exports = new AttachmentCache(mongodb, 'attachments');
+{{/if}}
+{{/if}}

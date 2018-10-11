@@ -20,9 +20,15 @@ const defaultData = {
 const useOptions = Object.assign({}, options);
 
 delete useOptions.bsBotSku;
+delete useOptions.database['Azure Cosmos DB (MongoDB protocol)'];
+// delete useOptions.infrastructure['Express application'];
+// delete useOptions.infrastructure['Serverless AWS'];
+delete useOptions.infrastructure['Azure Web Apps'];
+// delete useOptions.infrastructure['Azure Functions'];
 
 const skipOptions = [
     { azureExpress: true, dynamodbStorage: true },
+    { express: true, dynamodbStorage: true },
     { azureServerless: true, dynamodbStorage: true },
     { botService: true, fbLoadProfile: true }
 ];
@@ -136,8 +142,8 @@ function generateTests (keysStack = Object.keys(useOptions).reverse()) {
         const newOptions = Object.keys(variants)
             .map(variant => Object.assign({}, option, {
                 _testName: `${option._testName}, ${variant}`,
-                _x: [...option._x, { v: variants[variant], variant }],
-                _opts: `${option._opts}${variants[variant] ? `-${variants[variant].substr(0, 9)}` : ''}`,
+                _x: [...option._x, { v: `${variants[variant]}`, variant }],
+                _opts: `${option._opts}${variants[variant] ? `-${variants[variant]}`.substr(0, 10) : ''}`,
                 [key]: variants[variant],
                 [variants[variant]]: true
             }))
