@@ -80,7 +80,6 @@ package:
 functions:
   bot:
     handler: routes/bot.handler
-    maxRetries: 1
     timeout: 50
     events:
       - http: GET /bot
@@ -104,7 +103,6 @@ functions:
 
   tracker:
     handler: routes/tracker.handler
-    maxRetries: 1
     memorySize: 128
     timeout: 15
     events:
