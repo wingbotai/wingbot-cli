@@ -10,7 +10,11 @@
     "test:coverage": "nyc --reporter=html mocha ./test && nyc report",
     "test:coverage:threshold": "nyc check-coverage --lines 80 --functions 80 --branches 75",
     "test:bot": "mocha ./test",
-    "test:lint": "eslint --ext .js lib test routes bot{{#if expressOrAppService}} bin *.js{{/if}}",
+    "test:lint": "eslint --ext .js lib config test routes bot{{#if expressOrAppService}} bin *.js{{/if}}",
+    {{#if stagingEnvironment}}
+    "build:staging": ":"{{#if awsServerless}},
+    "deploy:staging": "npm run build:staging && sls deploy -s staging"{{/if}},
+    {{/if}}
     "build:production": ":"{{#if awsServerless}},
     "deploy:production": "npm run build:production && sls deploy -s production"{{/if}}{{#if isAzure}},
     "deploy:production": "./bin/universaldeploy.cmd",
@@ -42,12 +46,12 @@
     "morgan": "^1.9.0",{{/if}}{{#if isMongoOrCosmos}}
     "mongodb": "^3.1.7",
     "mongodb-core": "^3.1.6",{{/if}}
-    "wingbot": "^1.5.0"{{#if dynamodbStorage}},
-    "wingbot-dynamodb": "^1.2.0"{{/if}}{{#if jwtTokenStorage}},
+    "wingbot": "^2.0.0"{{#if dynamodbStorage}},
+    "wingbot-dynamodb": "^2.0.0"{{/if}}{{#if jwtTokenStorage}},
     "wingbot-jwt": "^1.1.0"{{/if}}{{#if messenger}},
-    "wingbot-facebook": "^1.2.0"{{/if}}{{#if botService}},
-    "wingbot-botservice": "^1.4.0"{{/if}}{{#if isMongoOrCosmos}},
-    "wingbot-mongodb": "^1.2.0"{{/if}}{{#if googleAnalytics}},
+    "wingbot-facebook": "^2.0.0"{{/if}}{{#if botService}},
+    "wingbot-botservice": "^2.0.0"{{/if}}{{#if isMongoOrCosmos}},
+    "wingbot-mongodb": "^2.0.0"{{/if}}{{#if googleAnalytics}},
     "universal-analytics": "^0.4.16"{{/if}}{{#if analytics}},
     "webalize": "^0.1.0"{{/if}}
   }

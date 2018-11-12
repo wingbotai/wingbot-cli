@@ -27,7 +27,9 @@ class Form {
 
     randomSha () {
         const hash = crypto.createHash('sha1');
-        hash.update(`${Math.random()}${Date.now()}`);
+        for (let i = 0; i < 10; i++) {
+            hash.update(`${Math.random() * i}${Date.now() + i}`);
+        }
         return hash.digest('hex');
     }
 

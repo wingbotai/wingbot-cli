@@ -1,0 +1,37 @@
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+
+const { Processor } = require('wingbot');
+const config = require('../config');
+const log = require('../lib/log');
+{{#if notifications}}
+const notifications = require('../lib/notifications');
+{{/if}}
+{{#if frontendTokenStorage}}
+const tokenStorage = require('../lib/botTokenStorage');
+{{/if}}
+const stateStorage = require('../lib/stateStorage');
+const botFactory = require('./bot');
+const onAction = require('./onAction');
+
+const bot = botFactory();
+
+bot.on('action', onAction);
+
+const processor = new Processor(bot, {
+    appUrl: config.appUrl,
+    stateStorage,{{#if frontendTokenStorage}}
+    tokenStorage,{{/if}}
+    log,
+    autoTyping: true,
+    autoSeen: true
+});
+
+{{#if notifications}}
+processor.plugin(notifications);
+
+{{/if}}
+
+module.exports = processor;

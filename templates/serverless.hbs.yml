@@ -85,20 +85,13 @@ functions:
       - http: GET /bot
       - http: POST /bot
 
-  updateLambdaHandler:
-    handler: routes/update.handler
+  wingbotApi:
+    handler: routes/api.handler
     memorySize: 192
     timeout: 30
     role: DeployRole
     events:
-      - http: POST /update
-
-  validateBot:
-    handler: routes/validate.handler
-    memorySize: 192
-    timeout: 30
-    events:
-      - http: POST /validate
+      - http: POST /api
 {{#if analytics}}
 
   tracker:
@@ -107,6 +100,15 @@ functions:
     timeout: 15
     events:
       - http: GET /tracker
+{{/if}}
+{{#if notifications}}
+
+  worker:
+    handler: routes/api.worker
+    memorySize: 128
+    timeout: 50
+    events:
+      - schedule: rate(1 minute)
 {{/if}}
 
 resources:
@@ -140,12 +142,12 @@ resources:
                     - "logs:CreateLogGroup"
                     - "logs:CreateLogStream"
                   Resource:
-                    - 'arn:aws:logs:${self:provider.region}:${self:custom.accountId}:log-group:/aws/lambda/${self:custom.prefix}-updateLambdaHandler:*'
+                    - 'arn:aws:logs:${self:provider.region}:${self:custom.accountId}:log-group:/aws/lambda/${self:custom.prefix}-wingbotApi:*'
                 - Effect: Allow
                   Action:
                     - "logs:PutLogEvents"
                   Resource:
-                    - 'arn:aws:logs:${self:provider.region}:${self:custom.accountId}:log-group:/aws/lambda/${self:custom.prefix}-updateLambdaHandler:*:*'
+                    - 'arn:aws:logs:${self:provider.region}:${self:custom.accountId}:log-group:/aws/lambda/${self:custom.prefix}-wingbotApi:*:*'
                 - Effect: Allow
                   Action:
                     - "lambda:GetFunctionConfiguration"

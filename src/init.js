@@ -82,6 +82,13 @@ function preprocessData (data) {
                     /mongodb:\/\/[^:]+:[^@=]+(=+)/,
                     x => x.replace(/=+$/, z => encodeURIComponent(z))
                 )
+            : null,
+        stagingCosmosdbConnectionString: data.stagingCosmosdbConnectionString
+            ? data.stagingCosmosdbConnectionString
+                .replace(
+                    /mongodb:\/\/[^:]+:[^@=]+(=+)/,
+                    x => x.replace(/=+$/, z => encodeURIComponent(z))
+                )
             : null
     });
 }
@@ -113,7 +120,7 @@ async function init () {
 
     const form = new Form(options, previousData);
 
-    form.data.jwtTokenSecret = previousData.jwtTokenSecret || form.randomSha();
+    form.data.jwtTokenSecret = previousData.jwtTokenSecret || (form.randomSha() + form.randomSha());
 
     await form.ask([
         {
@@ -138,6 +145,14 @@ async function init () {
     ]);
 
     if (form.data.withDesigner) {
+        if ([MONGODB, AZURE_COSMOS_DB].includes(form.data.database)
+            && form.data.messenger) {
+
+            await form.ask([
+                form.yesNo('notifications', form.label('Deploy Ads subsystem for Notifications'), Form.YES_NO)
+            ]);
+        }
+
         await form.ask([
             {
                 type: 'input',
@@ -163,8 +178,31 @@ async function init () {
                 type: 'input',
                 name: 'wingbotProductionToken',
                 message: form.label('Wingbot "production" snapshot token', 'you can fill it later into config/config.production.js', true)
-            }
+            },
+            {
+                type: 'input',
+                message: form.label('Production API key', 'key used for accesing a chatbot API', true),
+                name: 'productionApiToken',
+                default: form.randomSha() + form.randomSha() + form.randomSha() + form.randomSha()
+            },
+            form.yesNo('stagingEnvironment', form.label('Deploy staging environment', 'will prepare staging configuration'), Form.NO_YES)
         ]);
+
+        if (form.data.stagingEnvironment) {
+            await form.ask([
+                {
+                    type: 'input',
+                    name: 'wingbotStagingToken',
+                    message: form.label('Wingbot "staging" snapshot token', 'you can fill it later into config/config.production.js', true)
+                },
+                {
+                    type: 'input',
+                    message: form.label('Staging API key', 'key used for accesing a chatbot API', true),
+                    name: 'stagingApiToken',
+                    default: form.randomSha() + form.randomSha()
+                }
+            ]);
+        }
     }
 
     switch (form.data.database) {
@@ -205,6 +243,23 @@ async function init () {
                 }
             ]);
 
+            if (form.data.stagingEnvironment) {
+                await form.ask([
+                    {
+                        type: 'input',
+                        message: form.label('Staging database name', 'for staging environment', true),
+                        name: 'stagingMongodbName',
+                        default: form.data.mongodbName
+                    },
+                    {
+                        type: 'input',
+                        message: form.label('Staging connection string', 'for staging environment', true),
+                        name: 'stagingMongodbConnectionString',
+                        default: form.data.mongodbConnectionString
+                    }
+                ]);
+            }
+
             break;
         }
         case AZURE_COSMOS_DB: {
@@ -225,6 +280,23 @@ async function init () {
                 }
             ]);
 
+            if (form.data.stagingEnvironment) {
+                await form.ask([
+                    {
+                        type: 'input',
+                        message: form.label('Staging database name', 'Leave empty if you don\'t want to create new database.', true),
+                        name: 'stagingCosmosdbName',
+                        default: form.data.cosmosdbName
+                    },
+                    {
+                        type: 'input',
+                        message: form.label('Staging connection string', 'For existing database. Will be ignored if you specified Database name.', true),
+                        name: 'stagingCosmosdbConnectionString',
+                        default: form.data.cosmosdbConnectionString
+                    }
+                ]);
+            }
+
             break;
         }
         case AWS_DYNAMO_DB:
@@ -238,7 +310,7 @@ async function init () {
                 {
                     type: 'input',
                     message: form.group(
-                        'FB Messanger platform settings',
+                        'FB Messanger settings - production',
                         'Each FB bot needs a FB application in http://developers.facebook.com.\nYou will be able to edit these data later in config directory.',
                         form.label('Facebook App ID', 'you can find it at FB developers portal', true)
                     ),
@@ -267,22 +339,54 @@ async function init () {
                 },
                 form.yesNo('fbLoadProfile', form.label('Download profile data, when starting conversation', 'user profile data will be stored in chatbots state', true), Form.NO_YES)
             ]);
+
+            if (form.data.stagingEnvironment) {
+                await form.ask([
+                    {
+                        type: 'input',
+                        message: form.group(
+                            'FB Messanger settings - staging',
+                            'Each FB bot needs a FB application in http://developers.facebook.com.\nYou will be able to edit these data later in config directory.',
+                            form.label('Facebook App ID', 'you can find it at FB developers portal', true)
+                        ),
+                        name: 'fbAppIdStaging'
+                    },
+                    {
+                        type: 'input',
+                        message: form.label('Facebook Page ID', 'you can find it at settings of the desired FB page', true),
+                        name: 'fbPageIdStaging'
+                    },
+                    {
+                        type: 'input',
+                        message: form.label('Facebook App Secret', 'you can find it at FB developers portal', true),
+                        name: 'fbAppSecretStaging'
+                    },
+                    {
+                        type: 'input',
+                        message: form.label('Facebook Page Token', 'you can generate it at FB developers portal, messenger section of your application', true),
+                        name: 'fbPageTokenStaging'
+                    },
+                    {
+                        type: 'input',
+                        message: form.label('Facebook Bot Token', 'the random string, you can use for attaching a webhook', true),
+                        name: 'fbBotTokenStaging',
+                        default: form.randomSha()
+                    }
+                ]);
+            }
             break;
         case BOT_SERVICE:
             await form.ask([
                 {
                     type: 'input',
                     message: form.group(
-                        'Bot Service settings',
+                        'Bot Service settings - production',
                         'Each Bot Service bot needs to have a corresponding app registered with Microsoft.\nRegister your bot at https://aka.ms/msaappid and use Application Id and Password here.',
                         form.label('Bot name (handle)', 'Global bot identification, must be unique')
                     ),
                     name: 'bsBotName',
                     default: path.basename(destination)
-                }
-            ]);
-
-            await form.ask([
+                },
                 {
                     type: 'input',
                     message: form.label('Bot display name', 'This name is shown to users on most channels'),
@@ -311,6 +415,32 @@ async function init () {
                     'SKU defines price and performance of your Bot Service. Choose F0 for development and switch to S1 for production'
                 ))
             ]);
+
+            if (form.data.stagingEnvironment) {
+                await form.ask([
+                    {
+                        type: 'input',
+                        message: form.group(
+                            'Bot Service settings - staging',
+                            'Each Bot Service bot needs to have a corresponding app registered with Microsoft.\nRegister your bot at https://aka.ms/msaappid and use Application Id and Password here.',
+                            form.label(
+                                'Bot Application Id',
+                                'Microsoft App Id or Client ID of your bot application. Reqired to create channels registration'
+                            )
+                        ),
+                        name: 'bsAppIdStaging'
+                    },
+                    {
+                        type: 'input',
+                        message: form.label(
+                            'Bot Application Password',
+                            'Microsoft App Password or Client Secret of your bot application. You can set it later in config or ENV variable BOT_APP_PASSWORD',
+                            true
+                        ),
+                        name: 'bsAppPasswordStaging'
+                    }
+                ]);
+            }
             break;
         default:
             break;
@@ -376,11 +506,25 @@ async function init () {
                 message: form.group(
                     'Analytics settings',
                     'we will configure Google Analytics for your production environment',
-                    form.label('Your Universal Analytics tracking ID')
+                    form.label('Production Universal Analytics tracking ID')
                 ),
                 name: 'gaCode'
             }
         ]);
+
+        if (form.data.stagingEnvironment) {
+            await form.ask([
+                {
+                    type: 'input',
+                    message: form.group(
+                        'Analytics settings',
+                        'we will configure Google Analytics for your staging environment',
+                        form.label('Staging Universal Analytics tracking ID')
+                    ),
+                    name: 'gaCodeStaging'
+                }
+            ]);
+        }
     }
 
 

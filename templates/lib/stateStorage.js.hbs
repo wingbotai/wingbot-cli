@@ -1,0 +1,23 @@
+/*
+ * @author David Menger
+ */
+'use strict';
+
+{{#if memoryStorage}}
+const { MemoryStateStorage } = require('wingbot');
+
+module.exports = new MemoryStateStorage();
+{{/if}}
+{{#if dynamodbStorage}}
+const { StateStorage } = require('wingbot-dynamodb');
+const config = require('../config');
+const dynamodb = require('./dynamodb');
+
+module.exports = new StateStorage(`${config.prefix}-states`, dynamodb);
+{{/if}}
+{{#if isMongoOrCosmos}}
+const { StateStorage } = require('wingbot-mongodb');
+const mongodb = require('./mongodb');
+
+module.exports = new StateStorage(mongodb, 'states');
+{{/if}}

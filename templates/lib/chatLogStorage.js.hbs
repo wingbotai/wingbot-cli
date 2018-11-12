@@ -1,0 +1,24 @@
+{{#if storeConversationHistory}}
+/*
+ * @author David Menger
+ */
+'use strict';
+
+{{#if dynamodbStorage}}
+const { ChatLogStorage } = require('wingbot-dynamodb');
+const config = require('../config');
+const dynamodb = require('./dynamodb');
+{{/if}}
+{{#if isMongoOrCosmos}}
+const { ChatLogStorage } = require('wingbot-mongodb');
+const mongodb = require('./mongodb');
+{{/if}}
+const log = require('./log');
+
+{{#if dynamodbStorage}}
+module.exports = new ChatLogStorage(`${config.prefix}-chatlog`, dynamodb, log);
+{{/if}}
+{{#if isMongoOrCosmos}}
+module.exports = new ChatLogStorage(mongodb, 'chatlogs', log);
+{{/if}}
+{{/if}}

@@ -3,42 +3,34 @@
  */
 'use strict';
 
-const { Processor{{#if memoryStorage}}, MemoryStateStorage{{/if}} } = require('wingbot');{{#if dynamodbStorage}}
-const { StateStorage } = require('wingbot-dynamodb');{{/if}}{{#if isMongoOrCosmos}}
-const { StateStorage } = require('wingbot-mongodb');{{/if}}
+{{#if messenger}}
+const { Facebook } = require('wingbot-facebook');
+const attachmentCache = require('../lib/attachmentCache');
+{{/if}}
+{{#if botService}}
+const { BotService } = require('wingbot-botservice');
+{{/if}}
 const config = require('../config');
-const log = require('../lib/log');{{#if dynamodbStorage}}
-const dynamodb = require('../lib/dynamodb');{{/if}}{{#if isMongoOrCosmos}}
-const mongodb = require('../lib/mongodb');{{/if}}{{#if frontendTokenStorage}}
-const tokenStorage = require('../lib/botTokenStorage');{{/if}}
-const onAction = require('./onAction');
+{{#if storeConversationHistory}}
+const chatLogStorage = require('../lib/chatLogStorage');
+{{/if}}
+const processor = require('./processor');
 const botFactory = require('./bot');
 const botSettings = require('./botSettings');
 
-function createProcessor () {
-    const bot = botFactory();
-
-    bot.on('action', onAction);
-
-{{#if memoryStorage}}
-    const stateStorage = new MemoryStateStorage();
-{{/if}}{{#if dynamodbStorage}}
-    const stateStorage = new StateStorage(`${config.prefix}-states`, dynamodb);
-{{/if}}{{#if isMongoOrCosmos}}
-    const stateStorage = new StateStorage(mongodb, 'states');
+{{#if messenger}}
+const channel = new Facebook(
+    processor,
+    Object.assign({ attachmentCache }, config.facebook){{#if storeConversationHistory}},
+    chatLogStorage{{/if}}
+);
 {{/if}}
-
-    return new Processor(bot, {
-        appUrl: config.appUrl,
-        stateStorage,{{#if frontendTokenStorage}}
-        tokenStorage,{{/if}}
-        log,
-        autoTyping: true
-    });
-}
+{{#if botService}}
+const channel = new BotService(processor, config.botService{{#if storeConversationHistory}}, chatLogStorage{{/if}});
+{{/if}}
 
 module.exports = {
     botSettings,
-    createProcessor,
-    botFactory
+    botFactory,
+    channel
 };

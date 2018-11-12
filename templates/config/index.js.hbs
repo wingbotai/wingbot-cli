@@ -19,18 +19,18 @@ const config = {
 
 {{#if messenger}}
     facebook: {
-        appId: '{{fbAppId}}',
-        pageId: '{{fbPageId}}',
-        appSecret: '{{fbAppSecret}}',
-        pageToken: '{{fbPageToken}}',
-        botToken: '{{fbBotToken}}'
+        appId: '-',
+        pageId: '-',
+        appSecret: '-',
+        pageToken: '-',
+        botToken: '-'
     },
 
 {{/if}}
 {{#if botService}}
     botService: {
-        appId: process.env.BOT_APP_ID || '{{bsAppId}}',
-        appSecret: process.env.BOT_APP_PASSWORD || '{{{bsAppPassword}}}'
+        appId: process.env.BOT_APP_ID || '{{#if bsAppIdStaging}}{{bsAppIdStaging}}{{else}}{{bsAppId}}{{/if}}',
+        appSecret: process.env.BOT_APP_PASSWORD || '{{#if bsAppPasswordStaging}}{{{bsAppPasswordStaging}}}{{else}}{{{bsAppPassword}}}{{/if}}'
     },
 
 {{/if}}
@@ -46,10 +46,10 @@ const config = {
 {{/if}}
 {{#if isMongoOrCosmos}}
     db: {
-        {{#if mongodbStorage}}url: process.env.MONGODB_CONNECTION_STRING || 'mongodb://127.0.0.1:27017/{{mongodbName}}',
-        {{else}}{{#if cosmosdbStorage}}url: process.env.COSMOSDB_CONNECTION_STRING || 'mongodb://localhost:C2y6yDjf5%2FR%2Bob0N8A7Cgv30VRDJIWEHLM%2B4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw%2FJw%3D%3D@localhost:10255/admin?ssl=true',{{/if}}{{/if}}
-        {{#if mongodbStorage}}db: '{{mongodbName}}',
-        {{else}}{{#if cosmosdbStorage}}db: '{{cosmosdbName}}',
+{{#if mongodbStorage}}        url: process.env.MONGODB_CONNECTION_STRING || 'mongodb://127.0.0.1:27017/{{mongodbName}}',
+{{else}}{{#if cosmosdbStorage}}        url: process.env.COSMOSDB_CONNECTION_STRING || 'mongodb://localhost:C2y6yDjf5%2FR%2Bob0N8A7Cgv30VRDJIWEHLM%2B4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw%2FJw%3D%3D@localhost:10255/admin?ssl=true',{{/if}}{{/if}}
+{{#if mongodbStorage}}        db: '{{mongodbName}}',
+{{else}}{{#if cosmosdbStorage}}        db: '{{cosmosdbName}}',
         {{/if}}{{/if}}
         options: {
             poolSize: 3,
@@ -105,4 +105,3 @@ function initialize (cfg, env = 'development') {
 initialize(config, process.env.NODE_ENV);
 
 module.exports = config;
-

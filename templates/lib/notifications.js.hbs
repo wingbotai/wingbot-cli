@@ -1,0 +1,33 @@
+{{#if notifications}}
+/*
+ * @author David Menger
+ */
+'use strict';
+
+const { Notifications } = require('wingbot');
+const { NotificationsStorage } = require('wingbot-mongodb');
+{{#if googleAnalytics}}
+const analytics = require('universal-analytics');
+const config = require('../config');
+{{/if}}
+const mongodb = require('./mongodb');
+const log = require('./log');
+
+const storage = new NotificationsStorage(mongodb);
+
+const notifications = new Notifications(storage, {
+    log,
+    sendMoreMessagesOver24: false
+});
+
+{{#if googleAnalytics}}
+notifications.on('report', (event, campaignNameOrTag, { senderId }) => {
+    const tracker = analytics(config.gaCode, senderId, { strictCidFormat: false });
+
+    tracker.event('Notification', event, campaignNameOrTag, 1);
+    tracker.send();
+});
+{{/if}}
+
+module.exports = notifications;
+{{/if}}

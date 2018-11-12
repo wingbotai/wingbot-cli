@@ -11,16 +11,14 @@ const bot = require('./bot');
 const tracker = require('./tracker');
 {{/if}}
 {{#if withDesigner}}
-const update = require('./update');
-const validate = require('./validate');
+const api = require('./api');
 {{/if}}
 
 const app = Router();
 
 app.use('/bot', ...bot);
 {{#if withDesigner}}
-app.post('/validate', ...validate);
-app.post('/update', ...update);
+app.post('/api', ...api);
 {{/if}}
 {{#if analytics}}
 app.get('/tracker', ...tracker);
