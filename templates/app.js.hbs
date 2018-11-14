@@ -8,6 +8,9 @@ const express = require('express');
 const createError = require('http-errors');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+{{#if publicStorage}}
+const path = require('path');
+{{/if}}
 const config = require('./config');
 const log = require('./lib/log');
 const routes = require('./routes');
@@ -23,11 +26,18 @@ if (!config.debugEnabled) {
 app.use(morgan('dev'));
 app.use(cookieParser());
 
+// attach routes
+app.use(routes);
+
+{{#if publicStorage}}
+// serve static files
+app.use('/', express.static(path.join(__dirname, 'dist')));
+
+{{else}}
 // serve static files
 // app.use('/', express.static(path.join(__dirname, 'public'));
 
-// attach routes
-app.use(routes);
+{{/if}}
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
@@ -48,6 +58,15 @@ app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
 
     // render the error page
     res.status(status);
+
+    if (`${req.get('Accept')}`.match(/^application\/json/)) {
+        res.send({
+            message,
+            code: status
+        });
+        return;
+    }
+
     res.send(`<!doctype html>
     <html>
         <head>

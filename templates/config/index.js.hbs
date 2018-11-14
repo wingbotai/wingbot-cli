@@ -48,8 +48,8 @@ const config = {
     db: {
 {{#if mongodbStorage}}        url: process.env.MONGODB_CONNECTION_STRING || 'mongodb://127.0.0.1:27017/{{mongodbName}}',
 {{else}}{{#if cosmosdbStorage}}        url: process.env.COSMOSDB_CONNECTION_STRING || 'mongodb://localhost:C2y6yDjf5%2FR%2Bob0N8A7Cgv30VRDJIWEHLM%2B4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw%2FJw%3D%3D@localhost:10255/admin?ssl=true',{{/if}}{{/if}}
-{{#if mongodbStorage}}        db: '{{mongodbName}}',
-{{else}}{{#if cosmosdbStorage}}        db: '{{cosmosdbName}}',
+{{#if mongodbStorage}}        db: '{{#if stagingApiToken}}{{projectName}}{{else}}{{mongodbName}}{{/if}}',
+{{else}}{{#if cosmosdbStorage}}        db: '{{#if stagingApiToken}}{{projectName}}{{else}}{{cosmosdbName}}{{/if}}',
         {{/if}}{{/if}}
         options: {
             poolSize: 3,

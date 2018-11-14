@@ -15,7 +15,11 @@
 service: {{projectName}}
 
 plugins:
-#  - serverless-s3-assets
+{{#if publicStorage}}
+#  - serverless-s3-sync
+{{else}}
+  - serverless-s3-sync
+{{/if}}
 
 custom:
   accountId: {{awsAccountId}}
@@ -26,7 +30,39 @@ custom:
     production: 10
   botDbReservation: ${self:custom.botDbReservations.${self:custom.stage}}{{/if}}
   prefix: ${self:service}-${self:custom.stage}
-
+{{#if publicStorage}}
+  bucket:
+{{#if stagingEnvironment}}
+    staging: {{projectName}}-staging.{{domain}}
+{{/if}}
+    production: {{projectName}}.{{domain}}
+  certificate:
+{{#if stagingEnvironment}}
+    staging: {{certificateArnStaging}}
+{{/if}}
+    production: {{certificateArnProduction}}
+  cors: https://${self:custom.bucket.${self:custom.stage}}
+  certArn: ${self:custom.certificate.${self:custom.stage}}
+  s3Sync:
+    - bucketName: ${self:custom.bucket.${self:custom.stage}}
+      localDir: dist
+      acl: public-read
+      params:
+        - "*.plist":
+            ContentType: text/xml
+        - "*.png":
+            ContentType: image/png
+        - "*.jpg":
+            ContentType: image/jpeg
+        - "*.gif":
+            ContentType: image/gif
+        - "*.html":
+            ContentType: text/html
+        - "*.css":
+            ContentType: text/css
+        - "*.js":
+            ContentType: text/javascript
+{{/if}}
 provider:
   name: aws
   runtime: nodejs8.10
@@ -59,6 +95,7 @@ provider:
   environment:
     PREFIX: ${self:custom.prefix}
     NODE_ENV: ${self:custom.stage}
+    CORS: ${self:custom.cors}
 
 package:
   exclude:
@@ -262,5 +299,65 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
 {{/if}}
+{{/if}}
+{{#if publicStorage}}
+
+    ContentBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucket.${self:custom.stage}}
+        AccessControl: PublicRead
+        CorsConfiguration:
+          CorsRules:
+            - AllowedMethods:
+                - GET
+              AllowedOrigins:
+                - '*'
+        WebsiteConfiguration:
+          IndexDocument: index.html
+          ErrorDocument: error.html
+
+    ## Specifying the CloudFront Distribution to server your Web Application
+    WebAppCloudFrontDistribution:
+      Type: AWS::CloudFront::Distribution
+      Properties:
+        DistributionConfig:
+          PriceClass: PriceClass_100
+          Origins:
+            - DomainName: ${self:custom.bucket.${self:custom.stage}}.s3-website.${self:provider.region}.amazonaws.com
+              Id: WebApp
+              CustomOriginConfig:
+                HTTPPort: 80
+                HTTPSPort: 443
+                OriginProtocolPolicy: http-only
+          Enabled: 'true'
+          Aliases:
+            - ${self:custom.bucket.${self:custom.stage}}
+          DefaultRootObject: index.html
+          CustomErrorResponses:
+            - ErrorCode: 404
+              ResponseCode: 404
+              ResponsePagePath: /error.html
+          DefaultCacheBehavior:
+            AllowedMethods:
+              - GET
+              - HEAD
+            CachedMethods:
+              - GET
+              - HEAD
+            MinTTL: 60
+            TargetOriginId: WebApp
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+              Headers:
+                - Origin
+                - Access-Control-Request-Method
+                - Access-Control-Request-Headers
+            ViewerProtocolPolicy: allow-all
+          ViewerCertificate:
+            AcmCertificateArn: ${self:custom.certArn}
+            SslSupportMethod: sni-only
 {{/if}}
 {{/if}}

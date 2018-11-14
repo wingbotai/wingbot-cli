@@ -36,7 +36,7 @@ const api = new GraphApi([
 {{#if awsServerless}}
     updateBot(() => botSettings(), BOT_UPDATE_GROUPS)
 {{else}}
-    botConfigStorage(() => botSettings(), BOT_UPDATE_GROUPS)
+    botConfigStorage.api(() => botSettings(), BOT_UPDATE_GROUPS)
 {{/if}}
 ], {
     token: config.wingbot.token,

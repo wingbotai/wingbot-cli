@@ -9,16 +9,16 @@ module.exports = {
     isProduction: true,
 
     // where the assets or html views are stored
-    // appUrl: 'putUrlHereAfterDeploy',
+    {{#unless domain}}// {{/unless}}appUrl: '{{#if domain}}https://{{projectName}}-staging.{{domain}}{{else}}putUrlHereAfterDeploy{{/if}}',
 
     // where the application API lays
-    // apiUrl: 'putUrlHereAfterDeploy',
+    {{#unless domain}}// {{/unless}}apiUrl: '{{#if domain}}https://{{projectName}}-staging{{#if awsServerless}}-api{{/if}}.{{domain}}{{else}}putUrlHereAfterDeploy{{/if}}',
 
 {{#if withDesigner}}
     wingbot: {
-        snapshot: 'production',
+        snapshot: 'staging',
         token: '{{wingbotStagingToken}}',
-        ai: '{{wingbotBotName}}-production'
+        ai: '{{wingbotBotName}}-staging'
     },
 
     // token for accessing a chatbot API
@@ -49,6 +49,7 @@ module.exports = {
         options: {
             poolSize: 5,
             autoReconnect: true,
+            useNewUrlParser: true,
             reconnectTries: 1200,
             reconnectInterval: 500
         }

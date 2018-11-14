@@ -144,6 +144,50 @@ async function init () {
         form.list('withDesigner', form.label('Connect with wingbot.ai designer', 'for experimental purposes you can make a chatbot on your own'))
     ]);
 
+
+    /**
+     * publicStorage
+     * domain
+     * certificateArnStaging
+     * certificateArnProduction
+     */
+
+    await form.ask([
+        form.yesNo('publicStorage', form.group(
+            'Chatbot application destination',
+            'Make configuration ready for the application deployment',
+            form.label('Chatbot will publish static website or assets', 'usefull for including image assets or having a test page for MS BotService')
+        ), Form.NO_YES),
+        {
+            type: 'input',
+            name: 'domain',
+            message: form.label('Chatbot domain', 'will set chatbot url in configuration files as <chatbot>.<domain>', true),
+            default: form.data.infrastructure === EXPRESS_AZURE ? 'azurewebsites.net' : undefined
+        },
+        form.yesNo('stagingEnvironment', form.label('Deploy staging environment', 'will prepare staging configuration'), Form.NO_YES)
+    ]);
+
+    if (form.data.infrastructure === SERVERLESS_AWS && form.data.publicStorage) {
+        await form.ask([
+            {
+                type: 'input',
+                name: 'certificateArnProduction',
+                message: form.label('Production certificate ARN', 'will set ARN in serverless configuration file', true)
+            }
+        ]);
+
+        if (form.data.stagingEnvironment) {
+            await form.ask([
+                {
+                    type: 'input',
+                    name: 'certificateArnStaging',
+                    message: form.label('Staging certificate ARN', 'will set ARN in serverless configuration file', true),
+                    default: form.data.certificateArnProduction
+                }
+            ]);
+        }
+    }
+
     if (form.data.withDesigner) {
         if ([MONGODB, AZURE_COSMOS_DB].includes(form.data.database)
             && form.data.messenger) {
@@ -184,8 +228,7 @@ async function init () {
                 message: form.label('Production API key', 'key used for accesing a chatbot API', true),
                 name: 'productionApiToken',
                 default: form.randomSha() + form.randomSha() + form.randomSha() + form.randomSha()
-            },
-            form.yesNo('stagingEnvironment', form.label('Deploy staging environment', 'will prepare staging configuration'), Form.NO_YES)
+            }
         ]);
 
         if (form.data.stagingEnvironment) {
@@ -516,11 +559,7 @@ async function init () {
             await form.ask([
                 {
                     type: 'input',
-                    message: form.group(
-                        'Analytics settings',
-                        'we will configure Google Analytics for your staging environment',
-                        form.label('Staging Universal Analytics tracking ID')
-                    ),
+                    message: form.label('Staging Universal Analytics tracking ID'),
                     name: 'gaCodeStaging'
                 }
             ]);

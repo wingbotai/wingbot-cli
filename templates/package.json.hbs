@@ -37,7 +37,8 @@
     "eslint-plugin-react": "^7.11.1",{{/if}}
     "mocha": "^5.2.0",
     "nyc": "^13.0.1"{{#if isAzure}},
-    "npm-pack-zip": "^1.2.6"{{/if}}
+    "npm-pack-zip": "^1.2.6"{{/if}}{{#if publicStorage}},
+    "serverless-s3-sync": "^1.7.1"{{/if}}
   },
   "dependencies": { {{#if expressOrAppService}}
     "cookie-parser": "^1.4.3",
