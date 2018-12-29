@@ -6,6 +6,7 @@
 {{#if googleAnalytics}}
 const analytics = require('universal-analytics');
 const { replaceDiacritics } = require('webalize');
+const { ai } = require('wingbot');
 const config = require('../config');
 {{/if}}
 /**
@@ -20,17 +21,21 @@ function onAction (senderId, action, text, req) { // eslint-disable-line no-unus
 {{#if analytics}}
     if (config.isProduction && config.gaCode) {
         // attach google analytics
+        if (req.state._doNotTrack) {
+            return;
+        }
 
         const tracker = analytics(config.gaCode, senderId, { strictCidFormat: false });
 
         const { cn, cs, cm } = req.action(true);
 
-        if (cn && cs && cm) {
-            tracker.set('cn', cn);
+        if (cs) {
             tracker.set('cs', cs);
-            tracker.set('cm', cm);
 
-            tracker.event('Campaign', cn, cs, 1);
+            if (cn) tracker.set('cn', cn);
+            if (cm) tracker.set('cm', cm);
+
+            tracker.event('Campaign', cn || 'no name', cs, 1);
         }
 
         if (action) {
@@ -40,7 +45,8 @@ function onAction (senderId, action, text, req) { // eslint-disable-line no-unus
         if (text && !req.quickReply()) {
             const word = replaceDiacritics(text).replace(/\s+/g, ' ').toLowerCase().trim();
             const { previousAction } = req.state || {};
-            tracker.event('Text', previousAction || action, word, 1);
+            const intent = req.intent(ai.confidence);
+            tracker.event('Text', previousAction || action, word, intent ? 0 : 1);
         } else if (req.isAttachment()) {
             const { type } = req.attachment();
             tracker.event('Attachment', action || 'attachment', type, 1);

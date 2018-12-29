@@ -20,10 +20,10 @@ function trackEvent (sender, text, url) {
 
     tracker.event('ButtonClick', word, url, 1);
 
-    tracker.send();
+    return new Promise(r => tracker.send(r));
 }
 {{#if awsServerless}}
-module.exports.handler = wrapRoute((event) => {
+module.exports.handler = wrapRoute(async (event) => {
     const { url = null, text = null, sender = null } = event.queryStringParameters || {};
 
     if (!url || !text || !sender) {
@@ -32,7 +32,7 @@ module.exports.handler = wrapRoute((event) => {
         };
     }
 
-    trackEvent(sender, text, url);
+    await trackEvent(sender, text, url);
 
     return {
         statusCode: 301,
@@ -50,7 +50,7 @@ module.exports = [
             throw createError(404);
         }
 
-        trackEvent(sender, text, url);
+        await trackEvent(sender, text, url);
 
         res.redirect(301, url);
     })

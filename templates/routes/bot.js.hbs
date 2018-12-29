@@ -5,6 +5,7 @@
 
 {{#if expressOrAppService}}
 const express = require('express');
+const log = require('../lib/log);
 {{/if}}
 {{#unless azureServerless}}
 const wrapRoute = require('../lib/wrapRoute');
@@ -151,11 +152,17 @@ module.exports = [
             await channel.processMessage(req.body, tokenObj.senderId, tokenObj.pageId);
         } else {
             await channel.verifyRequest(req.body, req.headers);
-            await channel.processEvent(req.body);
+            channel.processEvent(req.body)
+                .catch((e) => {
+                    log.error('Request failed', e);
+                });
         }
         {{else}}
         await channel.verifyRequest(req.rawBody, req.headers);
-        await channel.processEvent(req.body);
+        channel.processEvent(req.body)
+            .catch((e) => {
+                log.error('Request failed', e);
+            });
         {{/if}}
 
         res.send('OK');
