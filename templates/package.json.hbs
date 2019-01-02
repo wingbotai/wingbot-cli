@@ -43,7 +43,8 @@
   "dependencies": { {{#if expressOrAppService}}
     "cookie-parser": "^1.4.3",
     "express": "^4.16.3",
-    "http-errors": "^1.6.3",
+    "http-errors": "^1.6.3",{{#if logzioToken}}
+    "logzio-nodejs": "^1.0.3",{{/if}}
     "morgan": "^1.9.0",{{/if}}{{#if isMongoOrCosmos}}
     "mongodb": "^3.1.7",
     "mongodb-core": "^3.1.6",{{/if}}

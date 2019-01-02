@@ -3,6 +3,33 @@
  */
 'use strict';
 
+{{#if logzioToken}}
+const config = require('../../config');
+const loggerFactory = require('./loggerFactory');
+
+let logger = console;
+
+if (config.logzioToken) {
+
+    const logzio = module.require('logzio-nodejs').createLogger({
+        token: config.logzioToken,
+        type: config.prefix,
+        protocol: 'https',
+        debug: !config.isProduction
+    });
+
+    logger = loggerFactory(obj => logzio.log(obj));
+
+    logger.sendAndClose = () => logzio.sendAndClose();
+} else {
+    logger.sendAndClose = () => {};
+}
+
+// overide logger here
+module.exports = logger;
+{{else}}
+
 // override log model with console-like object to be able to use your own log service
 
 module.exports = console;
+{{/if}}

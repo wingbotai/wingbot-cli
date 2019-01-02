@@ -164,6 +164,11 @@ async function init () {
             message: form.label('Chatbot domain', 'will set chatbot url in configuration files as <chatbot>.<domain>', true),
             default: form.data.infrastructure === EXPRESS_AZURE ? 'azurewebsites.net' : undefined
         },
+        {
+            type: 'input',
+            name: 'logzioToken',
+            message: form.label('Logz.io token', 'Insert your token to be able to monitor your application. Keep empty to not set up a logging stack.', true)
+        },
         form.yesNo('stagingEnvironment', form.label('Deploy staging environment', 'will prepare staging configuration'), Form.NO_YES)
     ]);
 

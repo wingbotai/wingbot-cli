@@ -15,11 +15,19 @@ function wrapRoute (fn) {
     return async (event, context) => {
 {{#if mongodbStorage}}
         // eslint-disable-next-line no-param-reassign
-        context.callbackWaitsForEmptyEventLoop = false;{{/if}}
+        context.callbackWaitsForEmptyEventLoop = false;
+{{/if}}
         try {
-            return await Promise.resolve(fn(event, context));
+            const res = await Promise.resolve(fn(event, context));
+{{#if logzioToken}}
+            log.sendAndClose();
+{{/if}}
+            return res;
         } catch (e) {
             log.error(e, event);
+{{#if logzioToken}}
+            log.sendAndClose();
+{{/if}}
             return {
                 statusCode: e.status || 500,
                 headers: {
