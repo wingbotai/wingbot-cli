@@ -45,14 +45,7 @@ module.exports = {
 {{#if mongodbStorage}}
     db: {
         db: '{{stagingMongodbName}}',
-        url: '{{{stagingMongodbConnectionString}}}',
-        options: {
-            poolSize: 5,
-            autoReconnect: true,
-            useNewUrlParser: true,
-            reconnectTries: 1200,
-            reconnectInterval: 500
-        }
+        url: '{{{stagingMongodbConnectionString}}}'
     },
 
 {{/if}}

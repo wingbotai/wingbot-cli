@@ -10,6 +10,9 @@ const { botServiceQuickReplyPatch } = require('wingbot-botservice');
 {{#if fbLoadProfile}}
 const { userLoader } = require('wingbot-facebook');
 {{/if}}
+{{#if messenger}}
+const { PASS_THREAD_ACTION, TAKE_THEAD_ACTION, REQUEST_THREAD_ACTION } = require('./actions');
+{{/if}}
 const config = require('../config'); // eslint-disable-line no-unused-vars
 {{#if withDesigner}}
 const plugins = require('./plugins');
@@ -18,6 +21,8 @@ const configStorage = require('../lib/botConfigStorage');
 {{/unless}}
 
 ai.register(config.wingbot.ai);
+
+ai.confidence = 0.85;
 {{/if}}
 
 function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
@@ -56,6 +61,69 @@ function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
 {{#if fbLoadProfile}}
     // load user profile from Facebook
     bot.use(userLoader(config.facebook.pageToken));
+
+{{/if}}
+{{#if messenger}}
+    // implements primary receivers process thread action
+    bot.use(REQUEST_THREAD_ACTION, (req, res) => {
+        const { requested_owner_app_id: toAppId } = req.action(true);
+        res.setState({ _threadPassed: true });
+        res.passThread(toAppId);
+    });
+
+    // listen for threads takeover
+    bot.use(TAKE_THEAD_ACTION, (req, res) => {
+        res.setState({ _threadPassed: true });
+    });
+
+    // listen for pass thread action
+    bot.use(PASS_THREAD_ACTION, (req, res) => {
+        if (req.expected()) {
+            // keep the expected action
+            const { action, data } = req.expected();
+            res.expected(action, data);
+        }
+        res.setState({ _threadPassed: false });
+        res.takeThead(config.facebook.appId);
+        return Router.END;
+    });
+
+    // action cancles the handover
+    bot.use((req, res) => {
+        const action = req.action();
+
+        if (action && req.state._threadPassed
+            && action !== PASS_THREAD_ACTION) {
+
+            res.takeThead(config.facebook.appId);
+        }
+
+        if (action) {
+            res.setState({ _threadPassed: false });
+        }
+        return Router.CONTINUE;
+    });
+
+    // allow only access with an action - there's a start button but we dont want to risk anything
+    bot.use((req, res) => {
+        const action = req.action();
+
+        // initial text interactions will be
+        if (!req.state._actionReceived && !action) {
+            // redirected existing users to the inbox
+            res.setState({ _threadPassed: true })
+                .passThread(263902037430900);
+
+            // IGNORED
+            return Router.END;
+        }
+
+        if (!req.state._actionReceived && action) {
+            res.setState({ _actionReceived: true });
+        }
+
+        return Router.CONTINUE;
+    });
 
 {{/if}}
     // store previous action for analytics purposes

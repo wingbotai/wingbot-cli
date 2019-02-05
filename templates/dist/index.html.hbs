@@ -10,6 +10,8 @@
     />
     <title>Wingbot.ai chatbot</title>
     <link href="https://fonts.googleapis.com/css?family=Rubik:300,400,500,700" rel="stylesheet">
+    <!-- BOTSERVICE CSS -->
+    <!--  <link href="https://cdn.botframework.com/botframework-webchat/latest/botchat.css" rel="stylesheet" /> -->
 
     <link href="./bulma.min.css" rel="stylesheet" />
     <link href="./general.css" rel="stylesheet" />
@@ -64,9 +66,34 @@
                     </div>
                 </div>
                 <div class="column has-chat">
+                    <!-- BOTSERVICE WEBCHAT -->
                     <!-- <div class="chatcontainer">
                         <div class="framewrap">
-                            <iframe class="chat" src="https://webchat.botframework.com/embed/--bot--?s=--token--"> </iframe>
+                            <div id="webchat" class="chat"></div>
+                            <script src="https://cdn.botframework.com/botframework-webchat/latest/botchat-es5.js"></script>
+                            <script src="https://wingbotai.github.io/wingbot-browser-lib/botchat.js"></script>
+                            <script>
+                                /*
+                                // detect an user ID and a conversation ID in url
+                                var match = (window.location.search || '')
+                                    .match(/uid=([^&]+)/);
+                                var setUserId = match && decodeURIComponent(match[1]);
+
+                                match = (window.location.search || '')
+                                    .match(/cid=([^&]+)/);
+                                var setCid = match && decodeURIComponent(match[1]); */
+
+                                const directLine = wingbotBotChat({
+                                    secret: '<webchat token here>',
+                                    // initAction: 'start',
+                                    // restoreConversation: true,
+                                    // userName: 'Vy',
+                                    // userID: setUserId,
+                                    // conversationID: setCid
+                                }, {
+                                    resize: 'detect'
+                                }, document.getElementById('webchat'));
+                            </script>
                         </div>
                     </div> -->
                 </div>

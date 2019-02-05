@@ -52,12 +52,21 @@ const config = {
 {{else}}{{#if cosmosdbStorage}}        db: '{{#if stagingApiToken}}{{projectName}}{{else}}{{cosmosdbName}}{{/if}}',
         {{/if}}{{/if}}
         options: {
-            poolSize: 3,
+            poolSize: 5,
             autoReconnect: true,
             useNewUrlParser: true,
-            keepAlive: true,
-            connectTimeoutMS: 8000,
-            socketTimeoutMS: 8000
+            haInterval: 5000,
+{{#if mongodbStorage}}
+            connectTimeoutMS: 5000,
+            socketTimeoutMS: 12000,
+            reconnectTries: 1200,
+            reconnectInterval: 500
+{{/if}}
+{{#if cosmosdbStorage}}
+            connectTimeoutMS: 25000,
+            socketTimeoutMS: 32000,
+            haInterval: 5000
+{{/if}}
         }
     },
 

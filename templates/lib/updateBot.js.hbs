@@ -8,7 +8,10 @@ const AWS = require('aws-sdk');
 const { apiAuthorizer } = require('wingbot');
 const config = require('../config');
 
-const BOT_LAMBDA_NAME = `${config.prefix}-bot`;
+const SEND_MESSAGE_LAMBDA_NAME = `${config.prefix}-send`;
+{{#if notifications}}
+const WORKER_LAMBDA_NAME = `${config.prefix}-worker`;
+{{/if}}
 
 const lambda = new AWS.Lambda();
 
@@ -47,7 +50,7 @@ module.exports = function updateBot (onReady, acl) {
             if (!apiAuthorizer(args, ctx, acl)) {
                 return null;
             }
-            const fn = await getLambda(BOT_LAMBDA_NAME);
+            const fn = await getLambda(SEND_MESSAGE_LAMBDA_NAME);
 
             const newEnv = Object.assign({}, fn.Environment, {
                 Variables: Object.assign({}, fn.Environment.Variables, {
@@ -55,7 +58,10 @@ module.exports = function updateBot (onReady, acl) {
                 })
             });
 
-            await updateLambda(BOT_LAMBDA_NAME, newEnv);
+            await updateLambda(SEND_MESSAGE_LAMBDA_NAME, newEnv);
+            {{#if notifications}}
+            await updateLambda(WORKER_LAMBDA_NAME, newEnv);
+            {{/if}}
 
             await onReady();
 

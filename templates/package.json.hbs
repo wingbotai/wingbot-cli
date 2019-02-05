@@ -27,14 +27,14 @@
   "author": "Wingbot.ai",
   "devDependencies": { {{#if awsServerless}}
     "aws-sdk": "^2.101.0",{{else}}{{#if dynamodbStorage}}"aws-sdk": "^2.101.0",{{/if}}{{/if}}
-    "env-test": "^1.0.0",
-    "eslint": "^5.6.1",{{#if eslint}}
+    "env-test": "^1.0.0",{{#if eslint}}
+    "eslint": "^5.12.1",
     "eslint-config-airbnb": "^17.1.0",
-    "eslint-mocha": "^0.4.0",
-    "eslint-plugin-import": "^2.14.0",
-    "eslint-plugin-jsx-a11y": "^6.1.2",
-    "eslint-plugin-mocha": "^5.2.0",
-    "eslint-plugin-react": "^7.11.1",{{/if}}
+    "eslint-mocha": "^0.5.0",
+    "eslint-plugin-import": "^2.16.0",
+    "eslint-plugin-jsx-a11y": "^6.2.0",
+    "eslint-plugin-mocha": "^5.2.1",
+    "eslint-plugin-react": "^7.12.4",{{/if}}
     "mocha": "^5.2.0",
     "nyc": "^13.0.1"{{#if isAzure}},
     "npm-pack-zip": "^1.2.6"{{/if}}{{#if publicStorage}},
@@ -43,18 +43,18 @@
   "dependencies": { {{#if expressOrAppService}}
     "cookie-parser": "^1.4.3",
     "express": "^4.16.3",
-    "http-errors": "^1.6.3",{{#if logzioToken}}
-    "logzio-nodejs": "^1.0.3",{{/if}}
-    "morgan": "^1.9.0",{{/if}}{{#if isMongoOrCosmos}}
-    "mongodb": "^3.1.7",
-    "mongodb-core": "^3.1.6",{{/if}}
-    "wingbot": "^2.4.0"{{#if dynamodbStorage}},
-    "wingbot-dynamodb": "^2.0.0"{{/if}}{{#if jwtTokenStorage}},
+    "http-errors": "^1.6.3",
+    "morgan": "^1.9.0",{{/if}}{{#if logzioToken}}
+    "logzio-nodejs": "^1.0.3",{{/if}}{{#if isMongoOrCosmos}}
+    "mongodb": "^3.1.13",
+    "mongodb-core": "3.1.11",{{/if}}
+    "wingbot": "^2.5.0"{{#if dynamodbStorage}},
+    "wingbot-dynamodb": "^2.5.0"{{/if}}{{#if jwtTokenStorage}},
     "wingbot-jwt": "^1.1.0"{{/if}}{{#if messenger}},
-    "wingbot-facebook": "^2.1.0"{{/if}}{{#if botService}},
+    "wingbot-facebook": "^2.5.0"{{/if}}{{#if botService}},
     "wingbot-botservice": "^2.0.0"{{/if}}{{#if isMongoOrCosmos}},
-    "wingbot-mongodb": "^2.0.0"{{/if}}{{#if googleAnalytics}},
-    "universal-analytics": "^0.4.16"{{/if}}{{#if analytics}},
+    "wingbot-mongodb": "^2.5.4"{{/if}}{{#if googleAnalytics}},
+    "universal-analytics": "^0.4.20"{{/if}}{{#if analytics}},
     "webalize": "^0.1.0"{{/if}}
   }
 }

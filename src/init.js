@@ -82,12 +82,20 @@ function preprocessData (data) {
                     /mongodb:\/\/[^:]+:[^@=]+(=+)/,
                     x => x.replace(/=+$/, z => encodeURIComponent(z))
                 )
+                .replace(
+                    /[&?]?replicaSet=globaldb/,
+                    ''
+                )
             : null,
         stagingCosmosdbConnectionString: data.stagingCosmosdbConnectionString
             ? data.stagingCosmosdbConnectionString
                 .replace(
                     /mongodb:\/\/[^:]+:[^@=]+(=+)/,
                     x => x.replace(/=+$/, z => encodeURIComponent(z))
+                )
+                .replace(
+                    /[&?]?replicaSet=globaldb/,
+                    ''
                 )
             : null
     });

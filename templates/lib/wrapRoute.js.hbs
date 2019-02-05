@@ -3,7 +3,16 @@
  * @author wingbot.ai
  */
 'use strict';
-{{#if awsServerless}}const log = require('./log');{{/if}}
+{{#if awsServerless}}
+const log = require('./log');
+
+{{#if logzioToken}}
+// next tick
+function wait (ms) {
+    return new Promise(r => setTimeout(r, ms));
+}
+{{/if}}
+{{/if}}
 
 function wrapRoute (fn) {
 {{#if expressOrAppService}}
@@ -21,12 +30,14 @@ function wrapRoute (fn) {
             const res = await Promise.resolve(fn(event, context));
 {{#if logzioToken}}
             log.sendAndClose();
+            await wait(50); // wait for logs
 {{/if}}
             return res;
         } catch (e) {
             log.error(e, event);
 {{#if logzioToken}}
             log.sendAndClose();
+            await wait(100); // wait for logs
 {{/if}}
             return {
                 statusCode: e.status || 500,

@@ -3,9 +3,13 @@
  */
 'use strict';
 
+{{#if awsServerless}}
+const AWS = require('aws-sdk');
+const config = require('../config');
+{{/if}}
 {{#if expressOrAppService}}
 const express = require('express');
-const log = require('../lib/log);
+const log = require('../lib/log');
 {{/if}}
 {{#unless azureServerless}}
 const wrapRoute = require('../lib/wrapRoute');
@@ -17,6 +21,12 @@ const botTokenStorage = require('../lib/botTokenStorage');
 
 
 {{#if awsServerless}}
+const SEND_MESSAGE_LAMBDA_NAME = `${config.prefix}-send`;
+
+const lambda = new AWS.Lambda({
+    lambda: '2015-03-31'
+});
+
 module.exports.handler = wrapRoute(async (event) => {
 
     if (event.httpMethod === 'GET') {
@@ -42,6 +52,7 @@ module.exports.handler = wrapRoute(async (event) => {
     {{#if frontendTokenStorage}}
     const { botToken = null, senderId = null } = event.queryStringParameters || {};
 
+    let invokeEvent;
     if (botToken && senderId) {
         const tokenObj = await botTokenStorage.findByToken(botToken);
 
@@ -52,15 +63,21 @@ module.exports.handler = wrapRoute(async (event) => {
             };
         }
 
-        await channel.processMessage(parsedBody, tokenObj.senderId, tokenObj.pageId);
+        invokeEvent = { message: parsedBody, senderId: tokenObj.senderId, pageId: tokenObj.pageId };
     } else {
         await channel.verifyRequest(event.body, event.headers);
-        await channel.processEvent(parsedBody);
+        invokeEvent = { parsedBody };
     }
     {{else}}
     await channel.verifyRequest(event.body, event.headers);
-    await channel.processEvent(parsedBody);
+    const invokeEvent = { parsedBody };
     {{/if}}
+    await lambda.invoke({
+        FunctionName: SEND_MESSAGE_LAMBDA_NAME,
+        Payload: JSON.stringify(invokeEvent),
+        LogType: 'Tail',
+        InvocationType: 'Event'
+    }).promise();
 
     return {
         statusCode: 200,

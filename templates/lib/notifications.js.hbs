@@ -1,6 +1,6 @@
 {{#if notifications}}
 /*
- * @author David Menger
+ * @author wingbot.ai
  */
 'use strict';
 
@@ -22,10 +22,12 @@ const notifications = new Notifications(storage, {
 
 {{#if googleAnalytics}}
 notifications.on('report', (event, campaignNameOrTag, { senderId }) => {
-    const tracker = analytics(config.gaCode, senderId, { strictCidFormat: false });
+    if (config.gaCode) {
+        const tracker = analytics(config.gaCode, senderId, { strictCidFormat: false });
 
-    tracker.event('Notification', event, campaignNameOrTag, 1);
-    tracker.send();
+        tracker.event('Notification', event, campaignNameOrTag, 1);
+        tracker.send();
+    }
 });
 {{/if}}
 
