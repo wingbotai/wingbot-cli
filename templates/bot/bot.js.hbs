@@ -29,7 +29,7 @@ function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
 {{#if withDesigner}}
     {{#if analytics}}
     const routerOptions = {
-        linksTranslator (senderId, linkText, linkUrl) {
+        linksTranslator (senderId, linkText, linkUrl, isExtUrl, state = {}) {
             if (`${linkUrl}`.startsWith(config.apiUrl)
                 || `${linkUrl}`.startsWith(config.appUrl)) {
                 return linkUrl;
@@ -37,7 +37,7 @@ function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
 
             const url = encodeURIComponent(linkUrl);
             const text = encodeURIComponent(linkText);
-            const sender = encodeURIComponent(senderId);
+            const sender = encodeURIComponent(state._mergedFromSenderId || senderId);
             return `${config.apiUrl}/tracker?url=${url}&text=${text}&sender=${sender}`;
         }
     };
@@ -83,7 +83,7 @@ function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
             const { action, data } = req.expected();
             res.expected(action, data);
         }
-        res.setState({ _threadPassed: false });
+        res.setState({ _threadPassed: false, _actionReceived: true });
         res.takeThead(config.facebook.appId);
         return Router.END;
     });
@@ -91,14 +91,16 @@ function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
     // action cancles the handover
     bot.use((req, res) => {
         const action = req.action();
+        const isAction = action || req.isReferral();
 
-        if (action && req.state._threadPassed
+        if (isAction
+            && req.state._threadPassed
             && action !== PASS_THREAD_ACTION) {
 
             res.takeThead(config.facebook.appId);
         }
 
-        if (action) {
+        if (isAction) {
             res.setState({ _threadPassed: false });
         }
         return Router.CONTINUE;
@@ -110,11 +112,29 @@ function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
 
         // initial text interactions will be
         if (!req.state._actionReceived && !action) {
+
+            // let's respond intents
+            if (req.intent(ai.confidence)) {
+                res.setState({ _actionReceived: true });
+                return Router.CONTINUE;
+            }
+
             // redirected existing users to the inbox
-            res.setState({ _threadPassed: true })
-                .passThread(263902037430900);
+            if (!req.isReferral()) {
+                res.setState({ _threadPassed: true })
+                    .passThread(263902037430900);
+            } else {
+                // this was probably an action from the Ad.
+                res.setState({ _actionReceived: true });
+            }
 
             // IGNORED
+            return Router.END;
+        }
+
+        // IGNORE referrals without an action - probably from an Ad
+        if (!action && req.isReferral()) {
+            // IGNORED TOO
             return Router.END;
         }
 

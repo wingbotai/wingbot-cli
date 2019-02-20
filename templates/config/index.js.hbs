@@ -50,22 +50,21 @@ const config = {
 {{else}}{{#if cosmosdbStorage}}        url: process.env.COSMOSDB_CONNECTION_STRING || 'mongodb://localhost:C2y6yDjf5%2FR%2Bob0N8A7Cgv30VRDJIWEHLM%2B4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw%2FJw%3D%3D@localhost:10255/admin?ssl=true',{{/if}}{{/if}}
 {{#if mongodbStorage}}        db: '{{#if stagingApiToken}}{{projectName}}{{else}}{{mongodbName}}{{/if}}',
 {{else}}{{#if cosmosdbStorage}}        db: '{{#if stagingApiToken}}{{projectName}}{{else}}{{cosmosdbName}}{{/if}}',
-        {{/if}}{{/if}}
+{{/if}}{{/if}}
         options: {
             poolSize: 5,
             autoReconnect: true,
             useNewUrlParser: true,
             haInterval: 5000,
+            reconnectTries: 1200,
 {{#if mongodbStorage}}
             connectTimeoutMS: 5000,
             socketTimeoutMS: 12000,
-            reconnectTries: 1200,
             reconnectInterval: 500
 {{/if}}
 {{#if cosmosdbStorage}}
             connectTimeoutMS: 25000,
-            socketTimeoutMS: 32000,
-            haInterval: 5000
+            socketTimeoutMS: 32000
 {{/if}}
         }
     },

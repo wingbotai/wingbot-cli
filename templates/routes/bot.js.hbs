@@ -168,7 +168,7 @@ module.exports = [
 
             await channel.processMessage(req.body, tokenObj.senderId, tokenObj.pageId);
         } else {
-            await channel.verifyRequest(req.body, req.headers);
+            await channel.verifyRequest(req.rawBody, req.headers);
             channel.processEvent(req.body)
                 .catch((e) => {
                     log.error('Request failed', e);

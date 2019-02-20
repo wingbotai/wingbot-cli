@@ -25,7 +25,9 @@ function onAction (senderId, action, text, req) { // eslint-disable-line no-unus
             return;
         }
 
-        const tracker = analytics(config.gaCode, senderId, { strictCidFormat: false });
+        const useSenderId = req.state._mergedFromSenderId || senderId;
+
+        const tracker = analytics(config.gaCode, useSenderId, { strictCidFormat: false });
 
         const { cn, cs, cm } = req.action(true);
 
