@@ -35,8 +35,8 @@
     "eslint-plugin-jsx-a11y": "^6.2.0",
     "eslint-plugin-mocha": "^5.2.1",
     "eslint-plugin-react": "^7.12.4",{{/if}}
-    "mocha": "^5.2.0",
-    "nyc": "^13.0.1"{{#if isAzure}},
+    "mocha": "^6.1.4",
+    "nyc": "^14.1.0"{{#if isAzure}},
     "npm-pack-zip": "^1.2.6"{{/if}}{{#if publicStorage}},
     "serverless-s3-sync": "^1.7.1"{{/if}}
   },
@@ -46,9 +46,9 @@
     "http-errors": "^1.6.3",
     "morgan": "^1.9.0",{{/if}}{{#if logzioToken}}
     "logzio-nodejs": "^1.0.3",{{/if}}{{#if isMongoOrCosmos}}
-    "mongodb": "^3.1.13",
-    "mongodb-core": "3.1.11",{{/if}}
-    "wingbot": "^2.5.0"{{#if dynamodbStorage}},
+    "mongodb": "^3.2.3",
+    "mongodb-core": "3.2.3",{{/if}}
+    "wingbot": "^2.9.2"{{#if dynamodbStorage}},
     "wingbot-dynamodb": "^2.5.0"{{/if}}{{#if jwtTokenStorage}},
     "wingbot-jwt": "^1.1.0"{{/if}}{{#if messenger}},
     "wingbot-facebook": "^2.5.0"{{/if}}{{#if botService}},

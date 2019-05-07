@@ -8,10 +8,14 @@ module.exports = {
     isProduction: true,
 
     // where the assets or html views are stored
-    {{#unless domain}}// {{/unless}}appUrl: '{{#if domain}}https://{{projectName}}.{{domain}}{{else}}putUrlHereAfterDeploy{{/if}}',
+    {{#unless productionDomain}}// {{/unless}}appUrl: '{{#if productionDomain}}https://{{productionDomain}}{{else}}putUrlHereAfterDeploy{{/if}}',
 
     // where the application API lays
-    {{#unless domain}}// {{/unless}}apiUrl: '{{#if domain}}https://{{projectName}}{{#if awsServerless}}-api{{/if}}.{{domain}}{{else}}putUrlHereAfterDeploy{{/if}}',
+{{#if awsServerless}}
+    {{#unless productionApiDomain}}// {{/unless}}apiUrl: '{{#if productionApiDomain}}https://{{productionApiDomain}}{{else}}putUrlHereAfterDeploy{{/if}}',
+{{else}}
+    {{#unless productionDomain}}// {{/unless}}apiUrl: '{{#if productionDomain}}https://{{productionDomain}}{{else}}putUrlHereAfterDeploy{{/if}}',
+{{/if}}
 
 
 {{#if withDesigner}}

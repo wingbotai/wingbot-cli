@@ -3,7 +3,7 @@
  */
 'use strict';
 
-const { Router{{#if withDesigner}}, BuildRouter, ai{{/if}} } = require('wingbot');
+const { Router{{#if withDesigner}}, BuildRouter, ai{{else}}{{#if messenger}}, ai{{/if}}{{/if}} } = require('wingbot');
 {{#if botService}}
 const { botServiceQuickReplyPatch } = require('wingbot-botservice');
 {{/if}}

@@ -168,17 +168,53 @@ async function init () {
         ), Form.NO_YES),
         {
             type: 'input',
-            name: 'domain',
-            message: form.label('Chatbot domain', 'will set chatbot url in configuration files as <chatbot>.<domain>', true),
-            default: form.data.infrastructure === EXPRESS_AZURE ? 'azurewebsites.net' : undefined
-        },
-        {
-            type: 'input',
             name: 'logzioToken',
             message: form.label('Logz.io token', 'Insert your token to be able to monitor your application. Keep empty to not set up a logging stack.', true)
         },
+        {
+            type: 'input',
+            name: 'productionDomain',
+            message: form.label('Producton bot domain', 'assets will be stored here', true),
+            default: form.data.infrastructure === EXPRESS_AZURE ? `${form.data.projectName}.azurewebsites.net` : undefined
+        }
+    ]);
+
+    if (form.data.infrastructure === SERVERLESS_AWS) {
+        await form.ask([
+            {
+                type: 'input',
+                name: 'productionApiDomain',
+                message: form.label('Production API  domain', 'domain of API Gateway endpoint', true),
+                default: form.data.productionDomain.replace(/\./, '-api.')
+            }
+        ]);
+    }
+
+    await form.ask([
         form.yesNo('stagingEnvironment', form.label('Deploy staging environment', 'will prepare staging configuration'), Form.NO_YES)
     ]);
+
+    if (form.data.stagingEnvironment) {
+        await form.ask([
+            {
+                type: 'input',
+                name: 'stagingDomain',
+                message: form.label('Staging chatbot domain', 'will set chatbot url in configuration files', true),
+                default: form.data.infrastructure === EXPRESS_AZURE ? `${form.data.projectName}-staging.azurewebsites.net` : undefined
+            }
+        ]);
+
+        if (form.data.infrastructure === SERVERLESS_AWS) {
+            await form.ask([
+                {
+                    type: 'input',
+                    name: 'stagingApiDomain',
+                    message: form.label('Staging API domain', 'domain of staging API Gateway endpoint', true),
+                    default: form.data.stagingDomain.replace(/\./, '-api.')
+                }
+            ]);
+        }
+    }
 
     if (form.data.infrastructure === SERVERLESS_AWS && form.data.publicStorage) {
         await form.ask([
@@ -249,7 +285,7 @@ async function init () {
                 {
                     type: 'input',
                     name: 'wingbotStagingToken',
-                    message: form.label('Wingbot "staging" snapshot token', 'you can fill it later into config/config.production.js', true)
+                    message: form.label('Wingbot "staging" snapshot token', 'you can fill it later into config/config.staging.js', true)
                 },
                 {
                     type: 'input',

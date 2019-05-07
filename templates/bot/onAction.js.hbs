@@ -8,6 +8,11 @@ const analytics = require('universal-analytics');
 const { replaceDiacritics } = require('webalize');
 const { ai } = require('wingbot');
 const config = require('../config');
+
+const PHONE_REGEX = /((00|\+)[\s-]?[0-9]{1,4})?[\s-]?([0-9]{3,4}[\s-]?([0-9]{2,3}[\s-]?[0-9]{2}[\s-]?[0-9]{2,3}|[0-9]{3,4}[\s-]?[0-9]{3,4}))/g;
+const EMAIL_REGEX = /[^@\s]+@[^.@\s]+\.[^@\s]+/g;
+const NUMERIC_CODE = /^[a-z0-9]*[0-9][a-z0-9]*$/ig;
+
 {{/if}}
 /**
  * Trigged, when action arrives to be able to record it
@@ -16,8 +21,10 @@ const config = require('../config');
  * @param {string} action
  * @param {string} text
  * @param {Request} req
+ * @param {string} prevAction
+
  */
-function onAction (senderId, action, text, req) { // eslint-disable-line no-unused-vars
+function onAction (senderId, action, text, req, prevAction) { // eslint-disable-line no-unused-vars
 {{#if analytics}}
     if (config.isProduction && config.gaCode) {
         // attach google analytics
@@ -44,11 +51,36 @@ function onAction (senderId, action, text, req) { // eslint-disable-line no-unus
             tracker.pageview(action);
         }
 
-        if (text && !req.quickReply()) {
-            const word = replaceDiacritics(text).replace(/\s+/g, ' ').toLowerCase().trim();
-            const { previousAction } = req.state || {};
-            const intent = req.intent(ai.confidence);
-            tracker.event('Text', previousAction || action, word, intent ? 0 : 1);
+        let word = text;
+
+        if (word) {
+            word = replaceDiacritics(text).replace(/\s+/g, ' ').toLowerCase().trim();
+
+            if (word.match(PHONE_REGEX)) {
+                word = word.replace(PHONE_REGEX, '@PHONE');
+            }
+
+            if (word.match(EMAIL_REGEX)) {
+                word = word.replace(EMAIL_REGEX, '@EMAIL');
+            }
+
+            if (word.match(NUMERIC_CODE)) {
+                word = word.replace(NUMERIC_CODE, '@CODE');
+            }
+        }
+
+
+        if (word && !req.quickReply()) {
+            const notHandled = action === '/*' || action === '*';
+            tracker.event('Text', prevAction || '(not set)', word, notHandled ? 1 : 0, {
+                p: prevAction
+            });
+        }
+
+        if (word && !req.quickReply()) {
+            const { intent = '(not set)', score = 0 } = req.intent(true) || {};
+
+            tracker.event('Intent', intent, word, score >= ai.confidence ? 0 : 1);
         } else if (req.isAttachment()) {
             const { type } = req.attachment();
             tracker.event('Attachment', action || 'attachment', type, 1);

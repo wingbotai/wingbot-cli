@@ -9,10 +9,14 @@ module.exports = {
     isProduction: true,
 
     // where the assets or html views are stored
-    {{#unless domain}}// {{/unless}}appUrl: '{{#if domain}}https://{{projectName}}-staging.{{domain}}{{else}}putUrlHereAfterDeploy{{/if}}',
+    {{#unless stagingDomain}}// {{/unless}}appUrl: '{{#if stagingDomain}}https://{{stagingDomain}}{{else}}putUrlHereAfterDeploy{{/if}}',
 
     // where the application API lays
-    {{#unless domain}}// {{/unless}}apiUrl: '{{#if domain}}https://{{projectName}}-staging{{#if awsServerless}}-api{{/if}}.{{domain}}{{else}}putUrlHereAfterDeploy{{/if}}',
+{{#if awsServerless}}
+    {{#unless stagingApiDomain}}// {{/unless}}apiUrl: '{{#if stagingApiDomain}}https://{{stagingApiDomain}}{{else}}putUrlHereAfterDeploy{{/if}}',
+{{else}}
+    {{#unless stagingDomain}}// {{/unless}}apiUrl: '{{#if stagingDomain}}https://{{stagingDomain}}{{else}}putUrlHereAfterDeploy{{/if}}',
+{{/if}}
 
 {{#if withDesigner}}
     wingbot: {
