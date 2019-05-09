@@ -36,6 +36,10 @@ function onAction (senderId, action, text, req, prevAction) { // eslint-disable-
 
         const tracker = analytics(config.gaCode, useSenderId, { strictCidFormat: false });
 
+        if (action) {
+            tracker.set('dp', action);
+        }
+
         const { cn, cs, cm } = req.action(true);
 
         if (cs) {
@@ -80,10 +84,14 @@ function onAction (senderId, action, text, req, prevAction) { // eslint-disable-
         if (word && !req.quickReply()) {
             const { intent = '(not set)', score = 0 } = req.intent(true) || {};
 
-            tracker.event('Intent', intent, word, score >= ai.confidence ? 0 : 1);
+            tracker.event('Intent', intent, word, score >= ai.confidence ? 0 : 1, {
+                p: prevAction
+            });
         } else if (req.isAttachment()) {
             const { type } = req.attachment();
-            tracker.event('Attachment', action || 'attachment', type, 1);
+            tracker.event('Attachment', action || 'attachment', type, 1, {
+                p: prevAction
+            });
         }
 
         tracker.send();
