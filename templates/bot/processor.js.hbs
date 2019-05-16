@@ -14,7 +14,7 @@ const tokenStorage = require('../lib/botTokenStorage');
 {{/if}}
 const stateStorage = require('../lib/stateStorage');
 const botFactory = require('./bot');
-const onAction = require('./onAction');
+const { onAction, onEvent } = require('./onAction');
 
 const bot = botFactory();
 
@@ -28,6 +28,8 @@ const processor = new Processor(bot, {
     autoTyping: true,
     autoSeen: true
 });
+
+processor.on('event', onEvent);
 
 {{#if notifications}}
 processor.plugin(notifications);

@@ -158,9 +158,9 @@ functions:
   worker:
     handler: routes/api.worker
     memorySize: 128
-    timeout: 50
+    timeout: 130
     events:
-      - schedule: rate(1 minute)
+      - schedule: rate(2 minutes)
 {{/if}}
 
 resources:

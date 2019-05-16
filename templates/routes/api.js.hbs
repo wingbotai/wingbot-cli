@@ -58,7 +58,7 @@ module.exports.handler = wrapRoute(async (event) => {
 {{#if notifications}}
 
 module.exports.worker = wrapRoute(async () => {
-    await notifications.processQueue(channel);
+    await notifications.processQueue(channel, 90000);
 });
 {{/if}}
 {{/if}}{{#if expressOrAppService}}
