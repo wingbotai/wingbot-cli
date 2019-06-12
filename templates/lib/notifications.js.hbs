@@ -21,11 +21,21 @@ const notifications = new Notifications(storage, {
 });
 
 {{#if googleAnalytics}}
+const NON_INTERACTIVE_EVENTS = ['sent', 'delivery', 'notSent', 'leaved', 'failed'];
+const SUBSCRIBTION_EVENTS = ['subscribed', 'unsubscribed'];
+
 notifications.on('report', (event, campaignNameOrTag, { senderId }) => {
     if (config.gaCode) {
         const tracker = analytics(config.gaCode, senderId, { strictCidFormat: false });
-
-        tracker.event('Notification', event, campaignNameOrTag, 1);
+        if (NON_INTERACTIVE_EVENTS.includes(event)) {
+            tracker.set('ni', 1);
+        }
+        if (SUBSCRIBTION_EVENTS.includes(event)) {
+            tracker.event('Event: Audience', event, campaignNameOrTag);
+        } else {
+            const value = event === 'positive' ? 1 : 0;
+            tracker.event('Event: Notification', event, campaignNameOrTag, value);
+        }
         tracker.send();
     }
 });

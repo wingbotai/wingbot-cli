@@ -5,7 +5,7 @@
 'use strict';
 
 const wrapRoute = require('../lib/wrapRoute');
-const { channel } = require('../bot');
+const { channel{{#if wingbot}}: facebook, botservice{{/if}} } = require('../bot');
 
 function waitFn (ms) {
     return new Promise(r => setTimeout(r, ms));
@@ -20,6 +20,18 @@ module.exports.handler = wrapRoute(async (event) => {
         await waitFn(wait);
     }
 
+    {{#if wingbot}}
+    let channel;
+    switch (event.channel) {
+        case 'botservice';
+            channel = botservice;
+            break;
+        default:
+            channel = facebook;
+            break;
+    }
+
+    {{/if}}
     if (parsedBody) {
         await channel.processEvent(parsedBody);
     } else {

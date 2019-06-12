@@ -16,9 +16,9 @@ const notifications = require('../lib/notifications');
 const log = require('../lib/log');
 {{/if}}
 {{/if}}
-{{#if awsServerless}}
+{{#if awsServerless}}{{#unless wingbot}}
 const updateBot = require('../lib/updateBot');
-{{else}}
+{{/unless}}{{else}}
 const botConfigStorage = require('../lib/botConfigStorage');
 {{/if}}
 const { botFactory, channel, botSettings } = require('../bot');
@@ -32,15 +32,16 @@ const api = new GraphApi([
     notifications.api(),
 {{/if}}
     postBackApi(channel, POSTBACK_GROUPS),
-    validateBotApi(botFactory, 'start', 'foobar', BOT_UPDATE_GROUPS),
+    validateBotApi(botFactory, 'start', 'foobar', BOT_UPDATE_GROUPS){{#unless webchat}},
 {{#if awsServerless}}
     updateBot(() => botSettings(), BOT_UPDATE_GROUPS)
 {{else}}
     botConfigStorage.api(() => botSettings(), BOT_UPDATE_GROUPS)
 {{/if}}
+{{/unless}}
 ], {
-    token: config.wingbot.token,
-    appToken: config.appToken,
+    token: config.wingbot.token,{{#unless webchat}}
+    appToken: config.appToken,{{/unless}}
     groups: DEFAULT_ACCESS_GROUPS
 });
 

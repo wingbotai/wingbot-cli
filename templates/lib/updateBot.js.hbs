@@ -1,4 +1,5 @@
 {{#if awsServerless}}
+{{#unless wingbot}}
 /*
  * @author wingbot.ai
  */
@@ -69,4 +70,5 @@ module.exports = function updateBot (onReady, acl) {
         }
     };
 };
+{{/unless}}
 {{/if}}

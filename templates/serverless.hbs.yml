@@ -33,9 +33,9 @@ custom:
 {{#if publicStorage}}
   bucket:
 {{#if stagingEnvironment}}
-    staging: {{projectName}}-staging.{{domain}}
+    staging: {{stagingDomain}}
 {{/if}}
-    production: {{projectName}}.{{domain}}
+    production: {{productionDomain}}
   certificate:
 {{#if stagingEnvironment}}
     staging: {{certificateArnStaging}}

@@ -30,16 +30,13 @@ function onEvent (senderId, action, text, req, prevAction) { // eslint-disable-l
         return;
     }
 
-    const isJustAText = req.isText();
-
-    if (!req.isAttachment() && !isJustAText) {
-        return;
-    }
-
     const useSenderId = req.state._mergedFromSenderId || senderId;
 
     const tracker = analytics(config.gaCode, useSenderId, { strictCidFormat: false });
 
+    if (req.campaign) {
+        tracker.set('ni', 1);
+    }
     if (action) {
         tracker.set('dp', action);
     }
@@ -62,44 +59,69 @@ function onEvent (senderId, action, text, req, prevAction) { // eslint-disable-l
         }
     }
 
+    const notHandled = action === '/*' || action === '*';
 
-
-    if (isJustAText) {
-        const notHandled = action === '/*' || action === '*';
-        tracker.event('Text', action || '(not set)', word, notHandled ? 1 : 0, {
-            p: prevAction
-        });
-
+    if (req.isText()) {
         const { intent = '(not set)', score = 0 } = req.intent(true) || {};
 
-        tracker.event('Intent', intent, word, score >= ai.confidence ? 0 : 1, {
+        tracker.event('Intent: Detection', intent, word, score >= ai.confidence ? 0 : 1, {
             p: prevAction
         });
     }
 
-    let actionType = '(other)';
+    let actionCategory = 'User: ';
+    let label = '(none)';
+    let withPreviousAction = true;
+    const value = notHandled ? 1 : 0;
 
     if (req.campaign) {
-        actionType = 'notification';
-    } else if (req.isSticker()) {
-        actionType = 'sticker';
-    } else if (req.isImage()) {
-        actionType = 'image';
-    } else if (req.isAttachment()) {
-        actionType = 'attachment';
-    } else if (req.isText()) {
-        actionType = 'text';
-    } else if (req.isQuickReply()) {
-        actionType = 'quick-reply';
-    } else if (req.isReferral() || req.isOptin()) {
-        actionType = 'referral';
-    } else if (req.isPostBack()) {
-        actionType = 'button';
+        // no user event
+        return;
     }
 
-    tracker.event('UserAction', action || '(not set)', actionType, 1, {
-        p: prevAction
-    });
+    if (req.isSticker()) {
+        actionCategory += 'Sticker';
+        label = req.attachmentUrl(0);
+    } else if (req.isImage()) {
+        actionCategory += 'Image';
+        label = req.attachmentUrl(0);
+    } else if (req.hasLocation()) {
+        actionCategory += 'Location';
+        const { lat, long } = req.getLocation();
+        label = `${lat}, ${long}`;
+    } else if (req.isAttachment()) {
+        actionCategory += 'Attachement';
+        label = req.attachment(0).type;
+    } else if (req.isText()) {
+        actionCategory += 'Text';
+        label = word;
+    } else if (req.isQuickReply()) {
+        actionCategory += 'Quick reply';
+        label = word;
+    } else if (req.isReferral() || req.isOptin()) {
+        const { cs, cn } = req.action(true);
+        actionCategory = req.isOptin()
+            ? 'Entry: Optin'
+            : 'Entry: Referral';
+        withPreviousAction = false;
+        if (cs) {
+            label = cn || cs;
+        }
+    } else if (req.isPostBack()) {
+        actionCategory += 'Button - bot';
+        label = req.data.postback.title || '(unknown)';
+    } else {
+        actionCategory += 'Other';
+    }
+
+    if (withPreviousAction) {
+        tracker.event(actionCategory, action || '(not set)', label, value, {
+            p: prevAction
+        });
+    } else {
+        tracker.event(actionCategory, action || '(not set)', label, value);
+    }
+
 
     tracker.send();
 {{/if}}
@@ -128,6 +150,10 @@ function onAction (senderId, action, text, req, prevAction) { // eslint-disable-
 
         const tracker = analytics(config.gaCode, useSenderId, { strictCidFormat: false });
 
+        if (req.campaign) {
+            tracker.set('ni', 1);
+        }
+
         if (action) {
             tracker.set('dp', action);
         }
@@ -140,7 +166,9 @@ function onAction (senderId, action, text, req, prevAction) { // eslint-disable-
             if (cn) tracker.set('cn', cn);
             if (cm) tracker.set('cm', cm);
 
-            tracker.event('Campaign', cn || 'no name', cs, 1);
+            if (!req.isReferral() && !req.isOptin()) {
+                tracker.event('Entry: Campaign', action, cn || cs, 0);
+            }
         }
 
         if (action) {

@@ -1,3 +1,4 @@
+{{#unless wingbot}}
 # IDEs
 
 .idea/
@@ -13,11 +14,11 @@ node_modules
 /html-report
 
 # Wingbot configuration log
-
-.wingbot
+# .wingbot
 {{#if isAzure}}
 
 # Deployment
 
 /{{projectName}}.zip
 {{/if}}
+{{/unless}}

@@ -7,7 +7,7 @@
 const commander = require('commander');
 const chalk = require('chalk');
 const attach = require('../src/cli/attach');
-const { init } = require('../src/init');
+const { init, update } = require('../src/init');
 const login = require('../src/login');
 const wikiToText = require('../src/wikiToText');
 const jsonToText = require('../src/jsonToText');
@@ -19,16 +19,22 @@ commander.version(pack.version, '-v --version');
 
 commander
     .command('init')
+    .option('-w')
     .description(chalk.blue('Create a new project'))
     .action(attach(init));
+
+commander
+    .command('update')
+    .description(chalk.blue('Create an existing project'))
+    .action(attach(update));
+
+commander
+    .command('cluster', chalk.blue('Run clusterization on Analytics event export'));
 
 commander
     .command('login')
     .description(chalk.blue('Sign in to application'))
     .action(attach(login));
-
-commander
-    .command('model', chalk.blue('List or update models'));
 
 commander
     .command('jsonToText <fromJson> <toText>')

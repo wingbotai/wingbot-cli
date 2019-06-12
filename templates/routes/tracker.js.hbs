@@ -1,4 +1,5 @@
 {{#unless azureServerless}}
+{{#unless wingbot}}
 {{#if analytics}}
 /*
  * @author wingbot.ai
@@ -18,7 +19,7 @@ function trackEvent (sender, text, url) {
 
     const word = replaceDiacritics(text).replace(/\s+/g, ' ').toLowerCase().trim();
 
-    tracker.event('ButtonClick', word, url, 1);
+    tracker.event('User: Button - url', url, word);
 
     return new Promise(r => tracker.send(r));
 }
@@ -57,4 +58,5 @@ module.exports = [
 ];
 {{/if}}
 {{/if}}
+{{/unless}}
 {{/unless}}

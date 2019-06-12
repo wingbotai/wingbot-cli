@@ -8,6 +8,9 @@ const { Facebook } = require('wingbot-facebook');
 const attachmentCache = require('../lib/attachmentCache');
 const { PASS_THREAD_ACTION, TAKE_THEAD_ACTION, REQUEST_THREAD_ACTION } = require('./actions');
 {{/if}}
+{{#if wingbot}}
+const { BotService } = require('wingbot-botservice');
+{{/if}}
 {{#if botService}}
 const { BotService } = require('wingbot-botservice');
 const { START_ACTION } = require('./actions');
@@ -38,9 +41,16 @@ const channel = new BotService(processor, Object.assign({
     welcomeAction: START_ACTION
 }, config.botService){{#if storeConversationHistory}}, chatLogStorage{{/if}});
 {{/if}}
+{{#if wingbot}}
+const botservice = new BotService(processor, Object.assign({
+    // set to null when using an initAction option in the Wingbot Browser Lib
+    welcomeAction: START_ACTION
+}, config.botService){{#if storeConversationHistory}}, chatLogStorage{{/if}});
+{{/if}}
 
 module.exports = {
     botSettings,
-    botFactory,
+    botFactory,{{#if wingbot}}
+    botservice,{{/if}}
     channel
 };

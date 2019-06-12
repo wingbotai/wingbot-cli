@@ -3,8 +3,11 @@
   "version": "0.0.1",
   "description": "Wingbot chatbot: {{projectName}}",
   "main": "handler.js",
+  "engines": {
+    "node": "^8.10.0"
+  },
   "scripts": {
-    "start": {{#if isAwsOrAzure}}"echo \"Error: start command not available\" && exit 1",
+    "start": {{#if wingbot}}"echo \"Error: start command not available\",{{/if}}{{#if isAwsOrAzure}}"echo \"Error: start command not available\" && exit 1",
 {{/if}}{{#if expressOrAppService}}"node ./bin/www.js",{{/if}}
     "test": "npm run test:lint && npm run test:bot",
     "test:coverage": "nyc --reporter=html mocha ./test && nyc report",
@@ -48,11 +51,12 @@
     "logzio-nodejs": "^1.0.3",{{/if}}{{#if isMongoOrCosmos}}
     "mongodb": "^3.2.3",
     "mongodb-core": "3.2.3",{{/if}}
-    "wingbot": "^2.11.0"{{#if dynamodbStorage}},
+    "wingbot": "^2.11.2"{{#if dynamodbStorage}},
     "wingbot-dynamodb": "^2.5.0"{{/if}}{{#if jwtTokenStorage}},
     "wingbot-jwt": "^1.1.0"{{/if}}{{#if messenger}},
-    "wingbot-facebook": "^2.10.0"{{/if}}{{#if botService}},
-    "wingbot-botservice": "^2.0.0"{{/if}}{{#if isMongoOrCosmos}},
+    "wingbot-facebook": "^2.10.0"{{/if}}{{#if wingbot}},
+    "wingbot-botservice": "^2.0.1"{{/if}}{{#if botService}},
+    "wingbot-botservice": "^2.0.1"{{/if}}{{#if isMongoOrCosmos}},
     "wingbot-mongodb": "^2.10.0"{{/if}}{{#if googleAnalytics}},
     "universal-analytics": "^0.4.20"{{/if}}{{#if analytics}},
     "webalize": "^0.1.0"{{/if}}

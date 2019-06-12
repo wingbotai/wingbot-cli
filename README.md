@@ -1,9 +1,6 @@
 # Wingbot.ai CLI
 
 CLI tool for wingbot.AI
-Tools for processing intents from RASA JSONs to Facebook fast-text learning sets.
-
-Because there is good GUI: [Rasa NLU Trainer](https://rasahq.github.io/rasa-nlu-trainer/)
 
 ## Create wingbot project
 
@@ -23,12 +20,10 @@ $ wingbot init
 
 ![wingbot init command](https://github.com/wingbotai/wingbot/raw/master/doc/wingbotInit.png "Wingbot Init Command")
 
-## Log in to wingbot.ai
-
-  - **Log in to Wingbot**
+## Update wingbot project
 
 ```bash
-$ wingbot login
+$ wingbot update
 ```
 
 ## Learning set tools

@@ -1,0 +1,49 @@
+{{#if wingbot}}
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+
+module.exports = {
+
+    isProduction: true,
+
+    // where the assets or html views are stored
+    appUrl: process.env.APP_URL,
+
+    // where the application API lays
+    apiUrl: process.env.API_URL,
+
+    prefix: `${process.env.BOT_NAME}-${process.env.STAGE}`,
+
+    wingbot: {
+        snapshot: process.env.STAGE,
+        token: process.env.WINGBOT_TOKEN,
+        ai: `${process.env.BOT_NAME}-${process.env.STAGE}`
+    },
+
+    facebook: {
+        appId: process.env.FB_APP_ID || null,
+        pageToken: process.env.FB_PAGE_TOKEN || null,
+        apiUrl: process.env.FB_API_URL
+    },
+
+    botService: {
+        appId: process.env.BOTSERVICE_APP_ID || null,
+        appSecret: process.env.BOT_APP_PASSWORD || null
+    },
+
+    db: {
+        db: process.env.DB_NAME,
+        url: process.env.DB_URL,
+        options: {
+            poolSize: process.env.POOL_SIZE
+                ? parseInt(process.env.POOL_SIZE, 10),
+                : 3
+        }
+    },
+
+    gaCode: process.env.GA_CODE
+
+};
+{{/if}}
