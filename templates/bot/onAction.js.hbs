@@ -1,4 +1,4 @@
-/*
+/**
  * @author wingbot.ai
  */
 'use strict';
@@ -8,6 +8,7 @@ const analytics = require('universal-analytics');
 const { replaceDiacritics } = require('webalize');
 const { ai } = require('wingbot');
 const config = require('../config');
+const anonymize = require('./anonymize');
 
 const PHONE_REGEX = /((00|\+)[\s-]?[0-9]{1,4})?[\s-]?([0-9]{3,4}[\s-]?([0-9]{2,3}[\s-]?[0-9]{2}[\s-]?[0-9]{2,3}|[0-9]{3,4}[\s-]?[0-9]{3,4}))/g;
 const EMAIL_REGEX = /[^@\s]+@[^.@\s]+\.[^@\s]+/g;
@@ -45,18 +46,7 @@ function onEvent (senderId, action, text, req, prevAction) { // eslint-disable-l
 
     if (word) {
         word = replaceDiacritics(text).replace(/\s+/g, ' ').toLowerCase().trim();
-
-        if (word.match(PHONE_REGEX)) {
-            word = word.replace(PHONE_REGEX, '@PHONE');
-        }
-
-        if (word.match(EMAIL_REGEX)) {
-            word = word.replace(EMAIL_REGEX, '@EMAIL');
-        }
-
-        if (word.match(NUMERIC_CODE)) {
-            word = word.replace(NUMERIC_CODE, '@CODE');
-        }
+        word = anonymize(word);
     }
 
     const notHandled = action === '/*' || action === '*';
