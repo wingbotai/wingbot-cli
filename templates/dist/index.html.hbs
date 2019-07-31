@@ -93,6 +93,20 @@
                                 }, {
                                     resize: 'detect'
                                 }, document.getElementById('webchat'));
+
+                                var ref = (window.location.search || '')
+                                    .match(/ref=([^&]+)/);
+
+                                if (ref) {
+                                    ref = decodeURIComponent(ref[1]);
+                                    var data = {};
+                                    if (ref.match(/^{/)) {
+                                        data = JSON.parse(ref);
+                                        ref = data.action;
+                                        data = data.data || {};
+                                    }
+                                    directLine.postBack(ref, data);
+                                }
                             </script>
                         </div>
                     </div> -->

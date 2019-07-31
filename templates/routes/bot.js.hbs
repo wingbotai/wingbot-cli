@@ -12,6 +12,9 @@ const config = require('../config');
 const express = require('express');
 const log = require('../lib/log');
 {{/if}}
+{{#if messenger}}{{#unless awsServerless}}
+const config = require('../config');
+{{/unless}}{{/if}}
 {{#unless azureServerless}}
 const wrapRoute = require('../lib/wrapRoute');
 {{/unless}}
@@ -31,8 +34,16 @@ const lambda = new AWS.Lambda({
 module.exports.handler = wrapRoute(async (event) => {
 
     if (event.httpMethod === 'GET') {
-        {{#if messenger}}
         const { queryStringParameters } = event;
+        {{#if messenger}}
+        if (queryStringParameters.ref) {
+            const location = `https://m.me/${config.facebook.pageId}?ref=${encodeURIComponent(queryStringParameters.ref)}`;
+            return {
+                statusCode: 301,
+                headers: { Location: location }
+            };
+        }
+
         const body = await channel.verifyWebhook(queryStringParameters);
 
         return {
@@ -41,6 +52,13 @@ module.exports.handler = wrapRoute(async (event) => {
             body
         };
         {{else}}
+        if (queryStringParameters.ref) {
+            const location = `/?ref=${encodeURIComponent(queryStringParameters.ref)}`;
+            return {
+                status: 301,
+                headers: { Location: location }
+            };
+        }
         return {
             statusCode: 200,
             headers: { 'Content-Type': 'text/plain' },
@@ -93,6 +111,13 @@ module.exports.handler = wrapRoute(async (event) => {
 module.exports = async function (context, req) {
     if (req.method === 'GET') {
         {{#if messenger}}
+        if (req.query.ref) {
+            const location = `https://m.me/${config.facebook.pageId}?ref=${encodeURIComponent(req.query.ref)}`;
+            return {
+                status: 301,
+                headers: { location }
+            };
+        }
         const body = await channel.verifyWebhook(req.query);
 
         return {
@@ -101,6 +126,13 @@ module.exports = async function (context, req) {
             body
         };
         {{else}}
+        if (req.query.ref) {
+            const location = `/?ref=${encodeURIComponent(req.query.ref)}`;
+            return {
+                status: 301,
+                headers: { location }
+            };
+        }
         return {
             status: 200,
             headers: { 'content-type': 'text/plain' },
@@ -149,9 +181,17 @@ module.exports = [
     wrapRoute(async (req, res) => {
         if (req.method === 'GET') {
             {{#if messenger}}
+            if (req.query.ref) {
+                res.redirect(`https://m.me/${config.facebook.pageId}?ref=${encodeURIComponent(req.query.ref)}`);
+                return;
+            }
             const body = await channel.verifyWebhook(req.query);
             res.send(body);
             {{else}}
+            if (req.query.ref) {
+                res.redirect(`/?ref=${encodeURIComponent(req.query.ref)}`);
+                return;
+            }
             res.send('RUNNING');
             {{/if}}
             return;

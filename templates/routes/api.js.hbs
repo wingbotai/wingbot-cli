@@ -6,8 +6,11 @@
 'use strict';
 
 {{#if expressOrAppService}}
-const express = require('express');{{/if}}
-const { GraphApi, validateBotApi, postBackApi } = require('wingbot');
+const express = require('express');
+{{/if}}
+const {
+    GraphApi, validateBotApi, postBackApi, conversationsApi
+} = require('wingbot');
 const config = require('../config');
 const wrapRoute = require('../lib/wrapRoute');
 {{#if notifications}}
@@ -21,6 +24,10 @@ const updateBot = require('../lib/updateBot');
 {{/unless}}{{else}}
 const botConfigStorage = require('../lib/botConfigStorage');
 {{/if}}
+const stateStorage = require('../lib/stateStorage');
+{{#if storeConversationHistory}}
+const chatLogStorage = require('../lib/chatLogStorage');
+{{/if}}
 const { botFactory, channel, botSettings } = require('../bot');
 
 const DEFAULT_ACCESS_GROUPS = ['botEditor', 'botAdmin', 'appToken'];
@@ -32,6 +39,7 @@ const api = new GraphApi([
     notifications.api(),
 {{/if}}
     postBackApi(channel, POSTBACK_GROUPS),
+    conversationsApi(stateStorage, {{#if storeConversationHistory}}chatLogStorage{{else}}null{{/if}}, {{#if notifications}}notifications{{else}}null{{/if}}, BOT_UPDATE_GROUPS),
     validateBotApi(botFactory, 'start', 'foobar', BOT_UPDATE_GROUPS){{#unless webchat}},
 {{#if awsServerless}}
     updateBot(() => botSettings(), BOT_UPDATE_GROUPS)

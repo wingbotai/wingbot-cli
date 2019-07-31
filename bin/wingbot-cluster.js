@@ -7,7 +7,6 @@
 const { replaceDiacritics } = require('webalize');
 const fs = require('fs');
 const path = require('path');
-const { Query } = require('fast-text');
 const { DBSCAN, KMEANS } = require('density-clustering');
 const commander = require('commander');
 const chalk = require('chalk');
@@ -19,6 +18,14 @@ let trainingJson;
 let userDefinedK;
 
 let algorithm;
+
+let Query;
+
+try {
+    ({ Query } = module.require('fast-text'));
+} catch (e) {
+    Query = null;
+}
 
 commander
     .option('-c, --csv [output]', 'save results to csv file')
@@ -68,6 +75,12 @@ commander.parse(process.argv);
 
 if (!source || !algorithm) {
     commander.help();
+    process.exit();
+}
+
+if (!Query) {
+    // eslint-disable-next-line no-console
+    console.log('This machine does not support clustering');
     process.exit();
 }
 
