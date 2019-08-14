@@ -27,9 +27,26 @@ function onEvent (senderId, action, text, req, prevAction) { // eslint-disable-l
         return;
     }
 
+    const notHandled = action === '/*' || action === '*' || !action;
+
+    // IGNORE referrals without an action - probably from an Ad
+    if (notHandled && req.isReferral()) {
+        // IGNORED TOO
+        return;
+    }
+
     const useSenderId = req.state._mergedFromSenderId || senderId;
 
     const tracker = analytics(config.gaCode, useSenderId, { strictCidFormat: false });
+
+    const { cn, cs, cm } = req.action(true);
+
+    if (cs) {
+        tracker.set('cs', cs);
+
+        if (cn) tracker.set('cn', cn);
+        if (cm) tracker.set('cm', cm);
+    }
 
     if (req.campaign) {
         tracker.set('ni', 1);
@@ -44,8 +61,6 @@ function onEvent (senderId, action, text, req, prevAction) { // eslint-disable-l
         word = replaceDiacritics(text).replace(/\s+/g, ' ').toLowerCase().trim();
         word = anonymize(word);
     }
-
-    const notHandled = action === '/*' || action === '*';
 
     if (req.isText()) {
         const { intent = '(not set)', score = 0 } = req.intent(true) || {};
@@ -85,7 +100,6 @@ function onEvent (senderId, action, text, req, prevAction) { // eslint-disable-l
         actionCategory += 'Quick reply';
         label = word;
     } else if (req.isReferral() || req.isOptin()) {
-        const { cs, cn } = req.action(true);
         actionCategory = req.isOptin()
             ? 'Entry: Optin'
             : 'Entry: Referral';
@@ -132,9 +146,19 @@ function onAction (senderId, action, text, req, prevAction) { // eslint-disable-
             return;
         }
 
+        const notHandled = action === '/*' || action === '*' || !action;
+
+        // IGNORE referrals without an action - probably from an Ad
+        if (notHandled && req.isReferral()) {
+            // IGNORED TOO
+            return;
+        }
+
         const useSenderId = req.state._mergedFromSenderId || senderId;
 
         const tracker = analytics(config.gaCode, useSenderId, { strictCidFormat: false });
+
+        tracker.set('qt', 400);
 
         if (req.campaign) {
             tracker.set('ni', 1);
@@ -151,14 +175,14 @@ function onAction (senderId, action, text, req, prevAction) { // eslint-disable-
 
             if (cn) tracker.set('cn', cn);
             if (cm) tracker.set('cm', cm);
-
-            if (!req.isReferral() && !req.isOptin()) {
-                tracker.event('Entry: Campaign', action, cn || cs, 0);
-            }
         }
 
         if (action) {
             tracker.pageview(action);
+        }
+
+        if (cs && !req.isReferral() && !req.isOptin()) {
+            tracker.event('Entry: Campaign', action, cn || cs, 0);
         }
 
         tracker.send();

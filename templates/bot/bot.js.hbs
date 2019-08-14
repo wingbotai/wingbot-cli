@@ -115,6 +115,19 @@ function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
     // allow only access with an action - there's a start button but we dont want to risk anything
     bot.use((req, res) => {
         const action = req.action();
+        const { action: expected = null, data = null } = req.expected() || {};
+
+        const isExternalAction = action && action !== expected;
+
+        // IGNORE referrals without an action - probably from Ad
+        if (!isExternalAction && req.isReferral()) {
+            if (expected) {
+                // keep the expected action
+                res.expected(expected, data);
+            }
+            // IGNORED TOO
+            return Router.END;
+        }
 
         // initial text interactions will be
         if (!req.state._actionReceived && !action) {
@@ -135,12 +148,6 @@ function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
             }
 
             // IGNORED
-            return Router.END;
-        }
-
-        // IGNORE referrals without an action - probably from an Ad
-        if (!action && req.isReferral()) {
-            // IGNORED TOO
             return Router.END;
         }
 

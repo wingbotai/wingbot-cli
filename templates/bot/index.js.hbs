@@ -19,6 +19,9 @@ const config = require('../config');
 {{#if storeConversationHistory}}
 const chatLogStorage = require('../lib/chatLogStorage');
 {{/if}}
+{{#if anonymizeConversationLogs}}
+const anonymize = require('./anonymize');
+{{/if}}
 const processor = require('./processor');
 const botFactory = require('./bot');
 const botSettings = require('./botSettings');
@@ -30,7 +33,8 @@ const channel = new Facebook(
         attachmentStorage: attachmentCache,
         passThreadAction: PASS_THREAD_ACTION,
         takeThreadAction: TAKE_THEAD_ACTION,
-        requestThreadAction: REQUEST_THREAD_ACTION
+        requestThreadAction: REQUEST_THREAD_ACTION{{#if anonymizeConversationLogs}},
+        textFilter: anonymize{{/if}}
     }, config.facebook){{#if storeConversationHistory}},
     chatLogStorage{{/if}}
 );
@@ -38,13 +42,15 @@ const channel = new Facebook(
 {{#if botService}}
 const channel = new BotService(processor, Object.assign({
     // set to null when using an initAction option in the Wingbot Browser Lib
-    welcomeAction: START_ACTION
+    welcomeAction: START_ACTION{{#if anonymizeConversationLogs}},
+    textFilter: anonymize{{/if}}
 }, config.botService){{#if storeConversationHistory}}, chatLogStorage{{/if}});
 {{/if}}
 {{#if wingbot}}
 const botservice = new BotService(processor, Object.assign({
     // set to null when using an initAction option in the Wingbot Browser Lib
-    welcomeAction: START_ACTION
+    welcomeAction: START_ACTION{{#if anonymizeConversationLogs}},
+    textFilter: anonymize{{/if}}
 }, config.botService){{#if storeConversationHistory}}, chatLogStorage{{/if}});
 {{/if}}
 

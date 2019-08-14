@@ -142,7 +142,10 @@ async function processGenerator (args, skipForm) {
 
     // check the latest version
     try {
-        const ver = await latestVersion('wingbot-cli');
+        const ver = await Promise.race([
+            new Promise((r, e) => setTimeout(e, 2000)),
+            latestVersion('wingbot-cli')
+        ]);
 
         if (ver !== packageJson.version) {
             // eslint-disable-next-line no-console
@@ -373,6 +376,7 @@ async function processGenerator (args, skipForm) {
 
                 await form.ask([
                     form.yesNo('storeConversationHistory', form.label('Store conversation history in DB', 'not necessary for running a chatbot', true), Form.NO_YES),
+                    form.yesNo('anonymizeConversationLogs', form.label('Anonymize conversation logs', 'by passing anonymizer together with conversation logger to Sender', true), Form.YES_NO),
                     form.list('frontendTokenStorage', form.label('Choose a frontend token storage', 'usefull for authorizing webviews', true))
                 ]);
 
