@@ -21,16 +21,22 @@ const SERVERLESS_AZURE = 'azureServerless';
 
 const MESSENGER = 'messenger';
 const BOT_SERVICE = 'botService';
+const WEBCHAT = 'webchat';
 const WINGBOT = 'wingbot';
 
 const AWS_DYNAMO_DB = 'dynamodbStorage';
 const MONGODB = 'mongodbStorage';
 const AZURE_COSMOS_DB = 'cosmosdbStorage';
+const MSSQL = 'mssqlStorage';
 
 const DB_TOKEN_STORAGE = 'dbTokenStorage';
 const JWT_TOKEN_STORAGE = 'jwtTokenStorage';
 
 const UNIVERSAL_ANALYTICS = 'googleAnalytics';
+
+const LOGZIO_TOKEN = 'logzioToken';
+const SENTRY = 'sentry';
+// const APP_INSIGHTS = 'appInsights';
 
 const options = {
     infrastructure: {
@@ -42,12 +48,14 @@ const options = {
     },
     platform: {
         'Facebook messenger': MESSENGER,
-        'Azure Bot Service': BOT_SERVICE
+        'Azure Bot Service': BOT_SERVICE,
+        Webchat: WEBCHAT
     },
     database: {
         MongoDB: MONGODB,
         'AWS DynamoDB': AWS_DYNAMO_DB,
-        'Azure Cosmos DB (MongoDB protocol)': AZURE_COSMOS_DB
+        'Azure Cosmos DB (MongoDB protocol)': AZURE_COSMOS_DB,
+        'Microsoft SQL Server': MSSQL
     },
     analytics: {
         None: null,
@@ -67,6 +75,10 @@ const options = {
     bsBotSku: {
         'F0 (Free)': 'F0',
         'S1 (Standard)': 'S1'
+    },
+    monitoring: {
+        Sentry: SENTRY,
+        LogzIO: LOGZIO_TOKEN
     }
 };
 
@@ -78,7 +90,9 @@ function preprocessData (data) {
         isMongoOrCosmos: data[MONGODB] || data[AZURE_COSMOS_DB],
         isAwsOrAzure: data[SERVERLESS_AWS] || data[SERVERLESS_AZURE],
         isAzure: data[SERVERLESS_AZURE] || data[EXPRESS_AZURE],
+        isLogzioTokenOrSentry: data[LOGZIO_TOKEN] || data[SENTRY],
         expressOrAppService: data[EXPRESS_AZURE] || data[EXPRESS],
+        webchatOrMessenger: data[WEBCHAT] || data[MESSENGER],
         productionDomain: data.productionDomain
             ? data.productionDomain.trim()
             : data.productionDomain,
@@ -170,7 +184,8 @@ async function processGenerator (args, skipForm) {
             [UNIVERSAL_ANALYTICS]: true,
             withDesigner: true,
             notifications: true,
-            storeConversationHistory: false
+            storeConversationHistory: false,
+            monitoring: SENTRY
         }, destination);
         return;
     }
@@ -215,7 +230,9 @@ async function processGenerator (args, skipForm) {
             form.list('platform', form.label('Choose a messaging platform')),
             form.list('database', form.label('Choose a database')),
             form.list('analytics', form.label('Choose an analytic tool')),
-            form.list('withDesigner', form.label('Connect with wingbot.ai designer', 'for experimental purposes you can make a chatbot on your own'))
+            form.list('withDesigner', form.label('Connect with wingbot.ai designer', 'for experimental purposes you can make a chatbot on your own')),
+            form.list('monitoring', form.label('Choose a monitoring'))
+
         ]);
 
 
@@ -239,11 +256,6 @@ async function processGenerator (args, skipForm) {
             ), Form.NO_YES),
             {
                 type: 'input',
-                name: 'logzioToken',
-                message: form.label('Logz.io token', 'Insert your token to be able to monitor your application. Keep empty to not set up a logging stack.', true)
-            },
-            {
-                type: 'input',
                 name: 'productionDomain',
                 message: form.label('Producton bot domain', 'assets will be stored here', true),
                 default: form.data.infrastructure === EXPRESS_AZURE ? `${urlProjectName}.azurewebsites.net` : undefined
@@ -259,6 +271,34 @@ async function processGenerator (args, skipForm) {
                     default: form.data.productionDomain.replace(/\./, '-api.')
                 }
             ]);
+        }
+
+        switch (form.data.monitoring) {
+            case SENTRY:
+                await form.ask([
+                    {
+                        type: 'input',
+                        name: 'sentry',
+                        message: form.label('Sentry url ', 'Insert Sentry url to monitor your application. Keep empty to not set up a logging stack.', true)
+                    }
+                ]);
+
+                break;
+
+            case LOGZIO_TOKEN: {
+                await form.ask([
+                    {
+                        type: 'input',
+                        name: 'logzioToken',
+                        message: form.label('Logz.io token', 'Insert your token to be able to monitor your application. Keep empty to not set up a logging stack.', true)
+                    }
+
+                ]);
+
+                break;
+            }
+            default:
+                break;
         }
 
         await form.ask([
@@ -309,7 +349,7 @@ async function processGenerator (args, skipForm) {
         }
 
         if (form.data.withDesigner) {
-            if ([MONGODB, AZURE_COSMOS_DB].includes(form.data.database)
+            if ([MONGODB, AZURE_COSMOS_DB, MSSQL].includes(form.data.database)
                 && form.data.messenger) {
 
                 await form.ask([
@@ -372,6 +412,7 @@ async function processGenerator (args, skipForm) {
         switch (form.data.database) {
             case AWS_DYNAMO_DB:
             case MONGODB:
+            case MSSQL:
             case AZURE_COSMOS_DB: {
 
                 await form.ask([
@@ -400,6 +441,44 @@ async function processGenerator (args, skipForm) {
                             form.label('Database name')
                         ),
                         name: 'mongodbName',
+                        default: urlProjectName
+                    },
+                    {
+                        type: 'input',
+                        message: form.label('Connection string', 'for production environment', true),
+                        name: 'mongodbConnectionString'
+                    }
+                ]);
+
+                if (form.data.stagingEnvironment) {
+                    await form.ask([
+                        {
+                            type: 'input',
+                            message: form.label('Staging database name', 'for staging environment', true),
+                            name: 'stagingMongodbName',
+                            default: form.data.mongodbName
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Staging connection string', 'for staging environment', true),
+                            name: 'stagingMongodbConnectionString',
+                            default: form.data.mongodbConnectionString
+                        }
+                    ]);
+                }
+
+                break;
+            }
+            case MSSQL: {
+                await form.ask([
+                    {
+                        type: 'input',
+                        message: form.group(
+                            'MSSQL connection',
+                            'you can fill theese data later into config files, but it\'s recommended to keep connection string in ENV variables',
+                            form.label('Database name')
+                        ),
+                        name: 'mssqlName',
                         default: urlProjectName
                     },
                     {
@@ -537,6 +616,43 @@ async function processGenerator (args, skipForm) {
                             message: form.label('Facebook Bot Token', 'the random string, you can use for attaching a webhook', true),
                             name: 'fbBotTokenStaging',
                             default: form.randomSha()
+                        }
+                    ]);
+                }
+                break;
+            case WEBCHAT:
+                await form.ask([
+                    {
+                        type: 'input',
+                        message: form.group(
+                            'Webchat settings - production',
+                            'Information about webchat configuration\nYou will be able to edit these data later in config directory.',
+                            form.label('Webchat App ID', '', true),
+                        ),
+                        name: 'wchAppId'
+                    },
+                    {
+                        type: 'input',
+                        message: form.label('Webchat Channel ID', '', true),
+                        name: 'wchChannelId'
+                    }
+                ]);
+
+                if (form.data.stagingEnvironment) {
+                    await form.ask([
+                        {
+                            type: 'input',
+                            message: form.group(
+                                'FB Messanger settings - Stage',
+                                'Information about webchat configuration\nYou will be able to edit these data later in config directory.',
+                                form.label('Webchat App ID', '', true),
+                            ),
+                            name: 'wchAppIdStaging'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Webchat Channel ID', '', true),
+                            name: 'wchChannelIdStaging'
                         }
                     ]);
                 }

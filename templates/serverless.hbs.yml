@@ -67,7 +67,7 @@ custom:
 {{/if}}
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: nodejs12.x
   region: {{awsRegion}}
   stage: production
   memorySize: 256
@@ -306,7 +306,7 @@ resources:
           ReadCapacityUnits: ${self:custom.botDbReservation}
           WriteCapacityUnits: 1
 {{/if}}
-{{#if messenger}}
+{{#if webchatOrMessenger}}
 
     AttachmentsTable:
       Type: AWS::DynamoDB::Table

@@ -39,6 +39,22 @@ module.exports = {
     },
 
 {{/if}}
+{{#if webchat}}
+    facebook: {
+        appId: '{{fbAppIdStaging}}',
+        pageId: '{{fbPageIdStaging}}',
+        appSecret: '{{fbAppSecretStaging}}',
+        pageToken: '{{fbPageTokenStaging}}',
+        botToken: '{{fbBotTokenStaging}}',
+        apiUrl: '{{wchApiUrlStaging}}'
+    },
+
+    webchat: {
+        appId: '{{wchAppIdStaging}}',
+        channelId: '{{wchChannelIdStaging}}'
+    },
+
+{{/if}}
 {{#if botService}}
     botService: {
         appId: process.env.BOT_APP_ID || '{{bsAppIdStaging}}',
@@ -53,11 +69,22 @@ module.exports = {
     },
 
 {{/if}}
+{{#if mssqlStorage}}
+    db: {
+        db: '{{stagingMongodbName}}',
+        url: '{{{stagingMongodbConnectionString}}}'
+    },
+
+{{/if}}
 {{#if cosmosdbStorage}}
     db: {
         db: '{{stagingCosmosdbName}}',
         url: process.env.COSMOSDB_CONNECTION_STRING || '{{{stagingCosmosdbConnectionString}}}'
     },
+
+{{/if}}
+{{#if sentry}}
+    sentryDsn: '{{sentry}}',
 
 {{/if}}
     gaCode: '{{gaCodeStaging}}'

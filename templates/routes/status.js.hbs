@@ -1,0 +1,24 @@
+{{#if mssqlStorage}}
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+
+const wrapRoute = require('../lib/wrapRoute');
+const mssql = require('../lib/mssql');
+
+module.exports = [
+    wrapRoute(async (req, res) => {
+
+        let sql = 0;
+        try {
+            await mssql.connection();
+            sql = 1;
+        } catch (e) {
+            // noop
+        }
+
+        res.send({ sql, run: 1 });
+    })
+];
+{{/if}}

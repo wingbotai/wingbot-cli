@@ -3,14 +3,14 @@
  */
 'use strict';
 
-const { Router{{#if withDesigner}}, BuildRouter, ai{{else}}{{#if messenger}}, ai{{/if}}{{/if}} } = require('wingbot');
+const { Router{{#if withDesigner}}, BuildRouter, ai{{else}}{{#if webchatOrMessenger}}, ai{{/if}}{{/if}} } = require('wingbot');
 {{#if botService}}
 const { botServiceQuickReplyPatch } = require('wingbot-botservice');
 {{/if}}
 {{#if fbLoadProfile}}
 const { userLoader } = require('wingbot-facebook');
 {{/if}}
-{{#if messenger}}
+{{#if webchatOrMessenger}}
 const { PASS_THREAD_ACTION, TAKE_THEAD_ACTION, REQUEST_THREAD_ACTION } = require('./actions');
 {{/if}}
 const config = require('../config'); // eslint-disable-line no-unused-vars
@@ -69,7 +69,7 @@ function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
     bot.use(userLoader(config.facebook.pageToken));
 
 {{/if}}
-{{#if messenger}}
+{{#if webchatOrMessenger}}
     // implements primary receivers process thread action
     bot.use(REQUEST_THREAD_ACTION, (req, res) => {
         const { requested_owner_app_id: toAppId } = req.action(true);

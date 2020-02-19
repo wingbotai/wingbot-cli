@@ -21,3 +21,9 @@ const mongodb = require('./mongodb');
 
 module.exports = new StateStorage(mongodb, 'states');
 {{/if}}
+{{#if mssqlStorage}}
+const { StateStorage } = require('wingbot-mssql');
+const mssql = require('./mssql');
+
+module.exports = new StateStorage(mssql.connection());
+{{/if}}

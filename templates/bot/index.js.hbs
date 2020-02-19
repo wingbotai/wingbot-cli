@@ -3,7 +3,12 @@
  */
 'use strict';
 
-{{#if messenger}}
+{{#if webchat}}
+const request = require('request-promise-native');
+const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
+{{/if}}
+{{#if webchatOrMessenger}}
 const { Facebook } = require('wingbot-facebook');
 const attachmentCache = require('../lib/attachmentCache');
 const { PASS_THREAD_ACTION, TAKE_THEAD_ACTION, REQUEST_THREAD_ACTION } = require('./actions');
@@ -26,7 +31,36 @@ const processor = require('./processor');
 const botFactory = require('./bot');
 const botSettings = require('./botSettings');
 
-{{#if messenger}}
+{{#if webchat}}
+async function requestLib (input) {
+    const body = JSON.stringify(input.body);
+
+    const { secret } = config.webchat;
+
+    const hash = crypto.createHmac('sha1', secret);
+
+    const sha1 = hash.update(body)
+        .digest('hex');
+
+    const token = jwt.sign({
+        appId: config.webchat.appId, cid: config.webchat.channelId, sha1, t: 'a'
+    }, secret);
+
+    const out = Object.assign({}, input, {
+        headers: {
+            'Content-type': 'application/json; charset=utf-8',
+            Authorization: token
+        },
+        body,
+        timeout: 30000,
+        json: false
+    });
+
+    return request(out);
+}
+{{/if}}
+
+{{#if webchatOrMessenger}}
 const channel = new Facebook(
     processor,
     Object.assign({
@@ -34,7 +68,10 @@ const channel = new Facebook(
         passThreadAction: PASS_THREAD_ACTION,
         takeThreadAction: TAKE_THEAD_ACTION,
         requestThreadAction: REQUEST_THREAD_ACTION{{#if anonymizeConversationLogs}},
-        textFilter: anonymize{{/if}}
+        textFilter: anonymize{{/if}}{{#if webchat}},
+        requestLib,
+        throwsExceptions: true
+        {{/if}}
     }, config.facebook){{#if storeConversationHistory}},
     chatLogStorage{{/if}}
 );

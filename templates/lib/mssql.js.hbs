@@ -1,0 +1,12 @@
+{{#if mssqlStorage}}
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+
+const { MsSql } = require('wingbot-mssql');
+const config = require('../config');
+const log = require('./log');
+
+module.exports = new MsSql(config.mssql, null, log);
+{{/if}}

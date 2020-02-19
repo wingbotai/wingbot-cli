@@ -3,6 +3,11 @@
  */
 'use strict';
 
+{{#if mssqlStorage}}
+const { getSecret } = require('./getKeyvaultSecrets');
+
+const keyvaultDomain = process.env.KEYVAULT_DOMAIN || null;
+{{/if}}
 const config = {
 
     environment: process.env.NODE_ENV || 'development',
@@ -24,6 +29,23 @@ const config = {
         appSecret: '-',
         pageToken: '-',
         botToken: '-'
+    },
+
+{{/if}}
+{{#if webchat}}
+    facebook: {
+        appId: '{{fbAppId}}',
+        pageId: '{{fbPageId}}',
+        appSecret: '{{fbAppSecret}}',
+        pageToken: '{{fbPageToken}}',
+        botToken: '{{fbBotToken}}',
+        apiUrl: '{{wchApiUrl}}'
+
+    },
+
+    webchat: {
+        appId: '{{wchAppId}}',
+        channelId: '{{wchChannelId}}'
     },
 
 {{/if}}
@@ -70,6 +92,19 @@ const config = {
     },
 
 {{/if}}
+
+{{#if mssqlStorage}}
+    mssql: {
+        user: process.env.SQL_USER || 'SA',
+        password: getSecret(keyvaultDomain, 'sqlpassword'),
+        server: process.env.SQL_HOST || 'localhost',
+        port: parseInt(process.env.SQL_PORT || '1433', 10),
+        database: process.env.SQL_DB || 'loginbot',
+        options: {
+            encrypt: false
+        }
+    },
+{{/if}}
 {{#if jwtTokenStorage}}
     jwt: {
         secret: '{{jwtTokenSecret}}',
@@ -77,6 +112,10 @@ const config = {
             expiresIn: '30d'
         }
     },
+{{#if sentry}}
+    sentryDsn: '',
+
+{{/if}}
 
 {{/if}}
     gaCode: ''

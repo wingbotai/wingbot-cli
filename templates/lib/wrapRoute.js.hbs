@@ -28,14 +28,14 @@ function wrapRoute (fn) {
 {{/if}}
         try {
             const res = await Promise.resolve(fn(event, context));
-{{#if logzioToken}}
+{{#if isLogzioTokenOrSentry}}
             log.sendAndClose();
             await wait(50); // wait for logs
 {{/if}}
             return res;
         } catch (e) {
             log.error(e, event);
-{{#if logzioToken}}
+{{#if isLogzioTokenOrSentry}}
             log.sendAndClose();
             await wait(100); // wait for logs
 {{/if}}

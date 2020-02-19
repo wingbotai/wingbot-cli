@@ -2,12 +2,81 @@
  * @author wingbot.ai
  */
 'use strict';
-
-{{#if logzioToken}}
+{{#if isLogzioTokenOrSentry}}
 const config = require('../../config');
-const loggerFactory = require('./loggerFactory');
+const loggerOveridderFactory = require('./loggerOveridderFactory');
 
 let logger = console;
+
+{{#if appInsights}}
+
+if (config.appInsights) {
+// @ts-ignore
+const appInsights = module.require('applicationinsights');
+
+appInsights.setup(config.appInsights).start();
+
+// @ts-ignore
+logger = loggerOveridderFactory((obj, exception) => {
+    const {
+        level, message, stack, args
+    } = obj;
+
+    if (exception) {
+        appInsights.defaultClient.trackException({
+            exception
+        });
+    }
+
+    appInsights.defaultClient.trackEvent({
+        name: `${level}: ${message}`,
+        properties: {
+            level,
+            stack,
+            args: typeof args === 'object'
+                ? JSON.stringify(args, null, 2)
+                : args
+        }
+    });
+
+});
+
+// @ts-ignore
+logger.sendAndClose = () => {};
+
+{{/if}}
+{{#if sentry}}
+const Sentry = require('@sentry/node');
+
+let logger = console;
+
+if (config.sentryDsn) {
+
+    Sentry.init({
+        dsn: config.sentryDsn
+    });
+
+    logger = loggerOveridderFactory((obj) => {
+        const { level, message, stack } = obj;
+
+        if (level === 'error') {
+            const err = new Error(message);
+
+            if (stack) {
+                err.stack = stack;
+            }
+
+            Sentry.captureException(err);
+        }
+    });
+
+    logger.sendAndClose = () => Sentry.flush(2000);
+} else {
+    logger.sendAndClose = () => {};
+}
+
+{{/if}}
+{{#if logzioToken}}
 
 if (config.logzioToken) {
 
@@ -18,13 +87,14 @@ if (config.logzioToken) {
         debug: !config.isProduction
     });
 
-    logger = loggerFactory(obj => logzio.log(obj));
+    logger = loggerOveridderFactory(obj => logzio.log(obj));
 
     logger.sendAndClose = () => logzio.sendAndClose();
 } else {
     logger.sendAndClose = () => {};
 }
 
+{{/if}}
 // overide logger here
 module.exports = logger;
 {{else}}

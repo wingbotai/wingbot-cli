@@ -21,4 +21,11 @@ module.exports = new ChatLogStorage(`${config.prefix}-chatlog`, dynamodb, log);
 {{#if isMongoOrCosmos}}
 module.exports = new ChatLogStorage(mongodb, 'chatlogs', log);
 {{/if}}
+{{#if mssqlStorage}}
+const { ChatLogStorage } = require('wingbot-mssql');
+const mssql = require('./mssql');
+const log = require('./log');
+
+module.exports = new ChatLogStorage(mssql.connection(), log);
+{{/if}}
 {{/if}}

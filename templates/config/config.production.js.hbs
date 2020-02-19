@@ -40,6 +40,23 @@ module.exports = {
     },
 
 {{/if}}
+{{#if webchat}}
+    facebook: {
+        appId: '{{fbAppId}}',
+        pageId: '{{fbPageId}}',
+        appSecret: '{{fbAppSecret}}',
+        pageToken: '{{fbPageToken}}',
+        botToken: '{{fbBotToken}}',
+        apiUrl: '{{wchApiUrl}}'
+
+    },
+
+    webchat: {
+        appId: '{{wchAppId}}',
+        channelId: '{{wchChannelId}}'
+    },
+
+{{/if}}
 {{#if botService}}
     botService: {
         appId: process.env.BOT_APP_ID || '{{bsAppId}}',
@@ -48,6 +65,13 @@ module.exports = {
 
 {{/if}}
 {{#if mongodbStorage}}
+    db: {
+        db: '{{mongodbName}}',
+        url: '{{{mongodbConnectionString}}}'
+    },
+
+{{/if}}
+{{#if mssqlStorage}}
     db: {
         db: '{{mongodbName}}',
         url: '{{{mongodbConnectionString}}}'
@@ -63,6 +87,10 @@ module.exports = {
 {{/if}}
 {{#if logzioToken}}
     logzioToken: '{{logzioToken}}',
+
+{{/if}}
+{{#if sentry}}
+    sentryDsn: '{{sentry}}',
 
 {{/if}}
     gaCode: '{{gaCode}}'

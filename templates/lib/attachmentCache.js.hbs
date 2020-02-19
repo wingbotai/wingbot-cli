@@ -1,4 +1,4 @@
-{{#if messenger}}
+{{#if webchatOrMessenger}}
 /**
  * @author wingbot.ai
  */
@@ -16,5 +16,11 @@ const { AttachmentCache } = require('wingbot-mongodb');
 const mongodb = require('./mongodb');
 
 module.exports = new AttachmentCache(mongodb, 'attachments');
+{{/if}}
+{{#if mssqlStorage}}
+const { AttachmentCache } = require('wingbot-mssql');
+const mssql = require('./mssql');
+
+module.exports = new AttachmentCache(mssql.connection());
 {{/if}}
 {{/if}}

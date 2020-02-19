@@ -1,27 +1,25 @@
-{{#if logzioToken}}
+{{#if isLogzioTokenOrSentry}}
 /*
  * @author wingbot.ai
  */
 'use strict';
 
 /**
- * @typedef {Object} Logger
- * @prop {Function} log
- * @prop {Function} info
- * @prop {Function} warn
- * @prop {Function} error
- */
-
-/**
  * @param {Function} callback
- * @returns {Logger}
+ * @returns \{{ log: Function, info: Function, warn: Function, error: Function }}
  */
-function loggerFactory (callback) {
+function loggerOveridderFactory (callback) {
 
     return ['info', 'log', 'warn', 'error']
         .reduce((obj, level) => Object.assign(obj, {
             [level] (message, data, ...args) {
-                const entry = { level, data };
+
+                let entry;
+                if (data && typeof data === 'object' && typeof data.level === 'string') {
+                    entry = data;
+                } else {
+                    entry = { level, data };
+                }
 
                 console[level](message, data, ...args); // eslint-disable-line
 
@@ -50,5 +48,6 @@ function loggerFactory (callback) {
         }), {});
 }
 
-module.exports = loggerFactory;
+module.exports = loggerOveridderFactory;
+
 {{/if}}

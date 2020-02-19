@@ -14,6 +14,14 @@ after(async () => {
     await db.close(true);
 });
 {{/if}}
+{{#if mssqlStorage}}
+const mssql = require('../../lib/mssql');
+
+after(async () => {
+    const cp = await mssql.connection();
+    cp.close();
+});
+{{/if}}
 
 describe('Bot', function () {
 

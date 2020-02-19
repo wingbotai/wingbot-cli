@@ -17,4 +17,10 @@ const mongodb = require('./mongodb');
 
 module.exports = new BotConfigStorage(mongodb, 'botconfig');
 {{/if}}
+{{#if mssqlStorage}}
+const { BotConfigStorage } = require('wingbot-mssql');
+const mssql = require('./mssql');
+
+module.exports = new BotConfigStorage(mssql.connection());
+{{/if}}
 {{/unless}}
