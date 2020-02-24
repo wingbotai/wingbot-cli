@@ -217,7 +217,7 @@ module.exports = [
             }
             res.send('RUNNING');
         {{/if}}
-            return;
+return;
         }
         {{#if frontendTokenStorage}}
         const { botToken = null, senderId = null } = req.query;

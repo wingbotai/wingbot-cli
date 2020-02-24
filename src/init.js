@@ -36,7 +36,7 @@ const UNIVERSAL_ANALYTICS = 'googleAnalytics';
 
 const LOGZIO_TOKEN = 'logzioToken';
 const SENTRY = 'sentry';
-// const APP_INSIGHTS = 'appInsights';
+const APP_INSIGHTS = 'appInsights';
 
 const options = {
     infrastructure: {
@@ -79,6 +79,9 @@ const options = {
     monitoring: {
         Sentry: SENTRY,
         LogzIO: LOGZIO_TOKEN
+    },
+    monitoringAzure: {
+        AppInsights: APP_INSIGHTS
     }
 };
 
@@ -91,6 +94,8 @@ function preprocessData (data) {
         isAwsOrAzure: data[SERVERLESS_AWS] || data[SERVERLESS_AZURE],
         isAzure: data[SERVERLESS_AZURE] || data[EXPRESS_AZURE],
         isLogzioTokenOrSentry: data[LOGZIO_TOKEN] || data[SENTRY],
+        isLogzioTokenOrSentryorAppIngsights: data[LOGZIO_TOKEN]
+            || data[SENTRY] || data[APP_INSIGHTS],
         expressOrAppService: data[EXPRESS_AZURE] || data[EXPRESS],
         webchatOrMessenger: data[WEBCHAT] || data[MESSENGER],
         productionDomain: data.productionDomain
@@ -230,9 +235,7 @@ async function processGenerator (args, skipForm) {
             form.list('platform', form.label('Choose a messaging platform')),
             form.list('database', form.label('Choose a database')),
             form.list('analytics', form.label('Choose an analytic tool')),
-            form.list('withDesigner', form.label('Connect with wingbot.ai designer', 'for experimental purposes you can make a chatbot on your own')),
-            form.list('monitoring', form.label('Choose a monitoring'))
-
+            form.list('withDesigner', form.label('Connect with wingbot.ai designer', 'for experimental purposes you can make a chatbot on your own'))
         ]);
 
 
@@ -262,16 +265,15 @@ async function processGenerator (args, skipForm) {
             }
         ]);
 
-        if (form.data.infrastructure === SERVERLESS_AWS) {
-            await form.ask([
-                {
-                    type: 'input',
-                    name: 'productionApiDomain',
-                    message: form.label('Production API  domain', 'domain of API Gateway endpoint', true),
-                    default: form.data.productionDomain.replace(/\./, '-api.')
-                }
-            ]);
+        if (form.data.infrastructure === SERVERLESS_AZURE
+            || form.data.infrastructure === EXPRESS_AZURE) {
+
+            Object.assign(form.options.monitoring, form.options.monitoringAzure);
         }
+
+        await form.ask([
+            form.list('monitoring', form.label('Choose a monitoring'))
+        ]);
 
         switch (form.data.monitoring) {
             case SENTRY:
@@ -299,6 +301,17 @@ async function processGenerator (args, skipForm) {
             }
             default:
                 break;
+        }
+
+        if (form.data.infrastructure === SERVERLESS_AWS) {
+            await form.ask([
+                {
+                    type: 'input',
+                    name: 'productionApiDomain',
+                    message: form.label('Production API  domain', 'domain of API Gateway endpoint', true),
+                    default: form.data.productionDomain.replace(/\./, '-api.')
+                }
+            ]);
         }
 
         await form.ask([

@@ -70,8 +70,7 @@ const channel = new Facebook(
         requestThreadAction: REQUEST_THREAD_ACTION{{#if anonymizeConversationLogs}},
         textFilter: anonymize{{/if}}{{#if webchat}},
         requestLib,
-        throwsExceptions: true
-        {{/if}}
+        throwsExceptions: true{{/if}}
     }, config.facebook){{#if storeConversationHistory}},
     chatLogStorage{{/if}}
 );

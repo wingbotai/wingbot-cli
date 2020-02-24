@@ -112,10 +112,15 @@ const config = {
             expiresIn: '30d'
         }
     },
+
+{{/if}}
 {{#if sentry}}
     sentryDsn: '',
 
 {{/if}}
+{{#if appInsights}}
+    appInsights: process.env.APPINSIGHTS_INSTRUMENTATIONKEY
+        || process.env.APPSETTING_APPINSIGHTS_INSTRUMENTATIONKEY,
 
 {{/if}}
     gaCode: ''

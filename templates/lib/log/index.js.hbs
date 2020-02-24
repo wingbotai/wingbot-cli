@@ -2,7 +2,7 @@
  * @author wingbot.ai
  */
 'use strict';
-{{#if isLogzioTokenOrSentry}}
+{{#if isLogzioTokenOrSentryorAppIngsights}}
 const config = require('../../config');
 const loggerOveridderFactory = require('./loggerOveridderFactory');
 
@@ -11,38 +11,41 @@ let logger = console;
 {{#if appInsights}}
 
 if (config.appInsights) {
-// @ts-ignore
-const appInsights = module.require('applicationinsights');
+    // @ts-ignore
+    const appInsights = module.require('applicationinsights');
 
-appInsights.setup(config.appInsights).start();
+    appInsights.setup(config.appInsights).start();
 
-// @ts-ignore
-logger = loggerOveridderFactory((obj, exception) => {
-    const {
-        level, message, stack, args
-    } = obj;
+    // @ts-ignore
+    logger = loggerOveridderFactory((obj, exception) => {
+        const {
+            level, message, stack, args
+        } = obj;
 
-    if (exception) {
-        appInsights.defaultClient.trackException({
-            exception
-        });
-    }
-
-    appInsights.defaultClient.trackEvent({
-        name: `${level}: ${message}`,
-        properties: {
-            level,
-            stack,
-            args: typeof args === 'object'
-                ? JSON.stringify(args, null, 2)
-                : args
+        if (exception) {
+            appInsights.defaultClient.trackException({
+                exception
+            });
         }
+
+        appInsights.defaultClient.trackEvent({
+            name: `${level}: ${message}`,
+            properties: {
+                level,
+                stack,
+                args: typeof args === 'object'
+                    ? JSON.stringify(args, null, 2)
+                    : args
+            }
+        });
+
     });
 
-});
-
-// @ts-ignore
-logger.sendAndClose = () => {};
+    // @ts-ignore
+    logger.sendAndClose = () => {};
+} else {
+    logger.sendAndClose = () => {};
+}
 
 {{/if}}
 {{#if sentry}}
