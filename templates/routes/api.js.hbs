@@ -9,8 +9,9 @@
 const express = require('express');
 {{/if}}
 const {
-    GraphApi, validateBotApi, postBackApi, conversationsApi
+    GraphApi, validateBotApi, postBackApi, conversationsApi{{#if gSheetTestingSuit}}, conversationTestApi{{/if}}
 } = require('wingbot');
+{{#if gSheetTestingSuit}}const { TestsGsheet } = require('wingbot-tests-gsheets');{{/if}}
 const config = require('../config');
 const wrapRoute = require('../lib/wrapRoute');
 {{#if notifications}}
@@ -29,6 +30,11 @@ const stateStorage = require('../lib/stateStorage');
 const chatLogStorage = require('../lib/chatLogStorage');
 {{/if}}
 const { botFactory, channel, botSettings } = require('../bot');
+{{#if gSheetTestingSuit}}
+
+const key = config.gsheet;
+const testsSource = new TestsGsheet(config.testCasesGoogleSheetId, key);
+{{/if}}
 
 const DEFAULT_ACCESS_GROUPS = ['botEditor', 'botAdmin', 'appToken'];
 const BOT_UPDATE_GROUPS = ['botEditor', 'botAdmin', 'botUser'];
@@ -42,9 +48,11 @@ const api = new GraphApi([
     conversationsApi(stateStorage, {{#if storeConversationHistory}}chatLogStorage{{else}}null{{/if}}, {{#if notifications}}notifications{{else}}null{{/if}}, BOT_UPDATE_GROUPS),
     validateBotApi(botFactory, 'start', 'foobar', BOT_UPDATE_GROUPS){{#unless webchat}},
 {{#if awsServerless}}
-    updateBot(() => botSettings(), BOT_UPDATE_GROUPS)
+    updateBot(() => botSettings(), BOT_UPDATE_GROUPS){{#if gSheetTestingSuit}},
+    conversationTestApi(testsSource, botFactory, {}, BOT_UPDATE_GROUPS){{/if}}
 {{else}}
-    botConfigStorage.api(() => botSettings(), BOT_UPDATE_GROUPS)
+    botConfigStorage.api(() => botSettings(), BOT_UPDATE_GROUPS){{#if gSheetTestingSuit}},
+    conversationTestApi(testsSource, botFactory, {}, BOT_UPDATE_GROUPS){{/if}}
 {{/if}}
 {{/unless}}
 ], {

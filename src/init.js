@@ -38,6 +38,8 @@ const LOGZIO_TOKEN = 'logzioToken';
 const SENTRY = 'sentry';
 const APP_INSIGHTS = 'appInsights';
 
+const G_SHEET_TESTING_SUIT = 'gSheetTestingSuit';
+
 const options = {
     infrastructure: {
         'Express application': EXPRESS,
@@ -60,6 +62,10 @@ const options = {
     analytics: {
         None: null,
         'Universal Analytics': UNIVERSAL_ANALYTICS
+    },
+    conversationTesting: {
+        None: null,
+        'Gsheet testing suit': G_SHEET_TESTING_SUIT
     },
     frontendTokenStorage: {
         'No frontend token storage': null,
@@ -186,6 +192,7 @@ async function processGenerator (args, skipForm) {
             platform: MESSENGER,
             [MESSENGER]: true,
             analytics: UNIVERSAL_ANALYTICS,
+            conversationTesting: G_SHEET_TESTING_SUIT,
             [UNIVERSAL_ANALYTICS]: true,
             withDesigner: true,
             notifications: true,
@@ -235,6 +242,7 @@ async function processGenerator (args, skipForm) {
             form.list('platform', form.label('Choose a messaging platform')),
             form.list('database', form.label('Choose a database')),
             form.list('analytics', form.label('Choose an analytic tool')),
+            form.list('conversationTesting', form.label('Choose a conversation testing tool')),
             form.list('withDesigner', form.label('Connect with wingbot.ai designer', 'for experimental purposes you can make a chatbot on your own'))
         ]);
 
@@ -792,6 +800,21 @@ async function processGenerator (args, skipForm) {
             case EXPRESS:
             default:
                 break;
+        }
+
+        if (form.data.conversationTesting) {
+            await form.ask([
+                {
+                    type: 'input',
+                    message: form.group(
+                        'Conversation testing settings',
+                        'we will configure Google Sheet for your production environment',
+                        form.label('ID of the Google testing sheet')
+                    ),
+                    name: 'gSheetTestingSuit'
+                }
+            ]);
+
         }
 
         if (form.data.googleAnalytics) {
