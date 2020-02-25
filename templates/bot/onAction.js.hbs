@@ -5,10 +5,29 @@
 
 {{#if googleAnalytics}}
 const analytics = require('universal-analytics');
-const { replaceDiacritics } = require('webalize');
+const { replaceDiacritics, webalize } = require('webalize');
 const { ai } = require('wingbot');
 const config = require('../config');
 const anonymize = require('./anonymize');
+
+function getEventTracker (senderId, skill = null) {
+    const tracker = analytics(config.gaCode, senderId, { strictCidFormat: false });
+
+    tracker.set('dh', config.wingbot.bot);
+    tracker.set('cd1', senderId);
+
+    if (skill) {
+        const contentGroup = `${skill}`
+            .split('/')
+            .filter(s => s.trim().length !== 0)
+            .map(s => webalize(s))
+            .join('/');
+
+        tracker.set('cg1', contentGroup);
+    }
+
+    return tracker;
+}
 
 {{/if}}
 
@@ -21,13 +40,13 @@ const anonymize = require('./anonymize');
  * @param {Request} req
  * @param {string} prevAction
  */
-function onEvent (senderId, action, text, req, prevAction) { // eslint-disable-line no-unused-vars
+function onEvent (senderId, action, text, req, prevAction, doNotTrack, skill) { // eslint-disable-line no-unused-vars, max-len
 {{#if googleAnalytics}}
     if (!config.isProduction || !config.gaCode) {
         return;
     }
 
-    const notHandled = action === '/*' || action === '*' || !action;
+    const notHandled = !action || action.match(/\*$/);
 
     // IGNORE referrals without an action - probably from an Ad
     if (notHandled && req.isReferral()) {
@@ -37,7 +56,7 @@ function onEvent (senderId, action, text, req, prevAction) { // eslint-disable-l
 
     const useSenderId = req.state._mergedFromSenderId || senderId;
 
-    const tracker = analytics(config.gaCode, useSenderId, { strictCidFormat: false });
+    const tracker = getEventTracker(useSenderId, skill);
 
     const { cn, cs, cm } = req.action(true);
 
@@ -138,7 +157,7 @@ function onEvent (senderId, action, text, req, prevAction) { // eslint-disable-l
  * @param {string} prevAction
 
  */
-function onAction (senderId, action, text, req, prevAction) { // eslint-disable-line no-unused-vars
+function onAction (senderId, action, text, req, lastAction, doNotTrack, skill) { // eslint-disable-line no-unused-vars, max-len
 {{#if googleAnalytics}}
     if (config.isProduction && config.gaCode) {
         // attach google analytics
@@ -146,7 +165,7 @@ function onAction (senderId, action, text, req, prevAction) { // eslint-disable-
             return;
         }
 
-        const notHandled = action === '/*' || action === '*' || !action;
+        const notHandled = !action || action.match(/\*$/);
 
         // IGNORE referrals without an action - probably from an Ad
         if (notHandled && req.isReferral()) {
@@ -156,7 +175,7 @@ function onAction (senderId, action, text, req, prevAction) { // eslint-disable-
 
         const useSenderId = req.state._mergedFromSenderId || senderId;
 
-        const tracker = analytics(config.gaCode, useSenderId, { strictCidFormat: false });
+        const tracker = getEventTracker(useSenderId, skill);
 
         tracker.set('qt', 400);
 
