@@ -7,9 +7,9 @@
 {{#if webchat}}
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 const verify = promisify(jwt.verify);
-const crypto = require('crypto');
 {{/if}}
 {{#if awsServerless}}
 const AWS = require('aws-sdk');
@@ -25,7 +25,7 @@ const config = require('../config');
 {{#unless azureServerless}}
 const wrapRoute = require('../lib/wrapRoute');
 {{/unless}}
-const { channel } = require('../bot');
+const { channel, processor } = require('../bot');
 {{#if frontendTokenStorage}}
 const botTokenStorage = require('../lib/botTokenStorage');
 {{/if}}
@@ -204,11 +204,44 @@ module.exports = [
             const body = await channel.verifyWebhook(req.query);
             res.send(body);
             {{else}}{{! else if webchat }}
+            if (req.query.text) {
+                const aiActions = await processor.aiActionsForText(req.query.text);
+
+                const actions = aiActions
+                    .map(({
+                        action, meta, winner, title
+                    }) => {
+                        const useTitle = typeof title === 'function'
+                            ? title({})
+                            : title;
+
+                        if (meta.targetAppId) {
+                            return {
+                                appId: meta.targetAppId,
+                                action: meta.targetAction,
+                                title: useTitle,
+                                winner
+                            };
+                        }
+
+                        return {
+                            appId: config.facebook.appId,
+                            action,
+                            title: useTitle,
+                            winner
+                        };
+                    });
+
+                res.send({ actions });
+                return;
+            }
+
             if (req.query.ref) {
                 res.redirect(`${config.facebook.apiUrl.replace('/api/send', '/')}?ref=${encodeURIComponent(req.query.ref)}`);
                 return;
             }
-            res.send('OK');
+            const body = await channel.verifyWebhook(req.query);
+            res.send(body);
             {{/if}}
         {{else}}
             if (req.query.ref) {
@@ -217,8 +250,38 @@ module.exports = [
             }
             res.send('RUNNING');
         {{/if}}
-return;
+            return;
         }
+        {{#if webchat}}
+
+        const secret = await Promise.resolve(config.webchat.secret);
+
+        const hash = crypto.createHmac('sha1', secret);
+
+        const sha1 = hash.update(req.rawBody)
+            .digest('hex');
+
+        const authHeader = req.get('Authorization');
+
+        const token = await verify(authHeader, secret);
+
+        if (!token || token.sha1 !== sha1) {
+            res.status(403)
+                .send();
+            return;
+        }
+
+        const invokeEvent = {
+            ...req.body,
+            object: 'page'
+        };
+
+        log.log('received event', invokeEvent);
+
+        await channel.processEvent(invokeEvent);
+        {{/if}}
+        
+        {{#unless webchat}}
         {{#if frontendTokenStorage}}
         const { botToken = null, senderId = null } = req.query;
 
@@ -232,31 +295,7 @@ return;
 
             await channel.processMessage(req.body, tokenObj.senderId, tokenObj.pageId);
         } else {
-            {{#if webchat}}
-            const { secret } = config.webchat;
 
-            const hash = crypto.createHmac('sha1', secret);
-
-            const sha1 = hash.update(req.rawBody)
-                .digest('hex');
-
-            const authHeader = req.get('Authorization');
-
-            const token = await verify(authHeader, secret);
-
-            if (!token || token.sha1 !== sha1) {
-                res.status(403)
-                    .send();
-                return;
-            }
-
-            const invokeEvent = {
-                ...req.body,
-                object: 'page'
-            };
-
-            await channel.processEvent(invokeEvent);
-            {{/if}}
             await channel.verifyRequest(req.rawBody, req.headers);
             channel.processEvent(req.body)
                 .catch((e) => {
@@ -270,6 +309,8 @@ return;
                 log.error('Request failed', e);
             });
         {{/if}}
+        {{/unless}}
+
 
         res.send('OK');
     })

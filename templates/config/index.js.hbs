@@ -45,7 +45,9 @@ const config = {
 
     webchat: {
         appId: '{{wchAppId}}',
-        channelId: '{{wchChannelId}}'
+        channelId: '{{wchChannelId}}',
+        secret: getSecret(keyvaultDomain, 'defaultbotsecret', '-')
+
     },
 
 {{/if}}

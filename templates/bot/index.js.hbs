@@ -35,7 +35,7 @@ const botSettings = require('./botSettings');
 async function requestLib (input) {
     const body = JSON.stringify(input.body);
 
-    const { secret } = config.webchat;
+    const secret = await Promise.resolve(config.webchat.secret);
 
     const hash = crypto.createHmac('sha1', secret);
 
@@ -94,5 +94,6 @@ module.exports = {
     botSettings,
     botFactory,{{#if wingbot}}
     botservice,{{/if}}
-    channel
+    channel{{#if webchat}},
+    processor{{/if}}
 };
