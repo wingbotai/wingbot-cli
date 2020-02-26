@@ -17,6 +17,9 @@ const api = require('./api');
 const app = Router();
 
 app.use('/bot', ...bot);
+{{#if mssqlStorage}}
+app.get('/api/status', ...status);
+{{/if}}
 {{#if withDesigner}}
 app.post('/api', ...api);
 {{/if}}
