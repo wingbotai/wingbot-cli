@@ -116,6 +116,18 @@ function preprocessData (data) {
         stagingApiDomain: data.stagingApiDomain
             ? data.stagingApiDomain.trim()
             : data.stagingApiDomain,
+        devDomain: data.devDomain
+            ? data.devDomain.trim()
+            : data.devDomain,
+        devApiDomain: data.devApiDomain
+            ? data.devApiDomain.trim()
+            : data.devApiDomain,
+        testDomain: data.testDomain
+            ? data.testDomain.trim()
+            : data.testDomain,
+        testApiDomain: data.testApiDomain
+            ? data.testApiDomain.trim()
+            : data.testApiDomain,
         cosmosdbConnectionString: data.cosmosdbConnectionString
             ? data.cosmosdbConnectionString
                 .replace(
@@ -325,6 +337,12 @@ async function processGenerator (args, skipForm) {
         await form.ask([
             form.yesNo('stagingEnvironment', form.label('Deploy staging environment', 'will prepare staging configuration'), Form.NO_YES)
         ]);
+        await form.ask([
+            form.yesNo('devEnvironment', form.label('Deploy dev environment', 'will prepare staging configuration'), Form.NO_YES)
+        ]);
+        await form.ask([
+            form.yesNo('testEnvironment', form.label('Deploy test environment', 'will prepare staging configuration'), Form.NO_YES)
+        ]);
 
         if (form.data.stagingEnvironment) {
             await form.ask([
@@ -348,6 +366,50 @@ async function processGenerator (args, skipForm) {
             }
         }
 
+        if (form.data.devEnvironment) {
+            await form.ask([
+                {
+                    type: 'input',
+                    name: 'devDomain',
+                    message: form.label('Dev chatbot domain', 'will set chatbot url in configuration files', true),
+                    default: form.data.infrastructure === EXPRESS_AZURE ? `${urlProjectName}-dev.azurewebsites.net` : undefined
+                }
+            ]);
+
+            if (form.data.infrastructure === SERVERLESS_AWS) {
+                await form.ask([
+                    {
+                        type: 'input',
+                        name: 'devApiDomain',
+                        message: form.label('Dev API domain', 'domain of dev API Gateway endpoint', true),
+                        default: form.data.dev.replace(/\./, '-api.')
+                    }
+                ]);
+            }
+        }
+
+        if (form.data.testEnvironment) {
+            await form.ask([
+                {
+                    type: 'input',
+                    name: 'testDomain',
+                    message: form.label('Test chatbot domain', 'will set chatbot url in configuration files', true),
+                    default: form.data.infrastructure === EXPRESS_AZURE ? `${urlProjectName}-test.azurewebsites.net` : undefined
+                }
+            ]);
+
+            if (form.data.infrastructure === SERVERLESS_AWS) {
+                await form.ask([
+                    {
+                        type: 'input',
+                        name: 'testApiDomain',
+                        message: form.label('Test API domain', 'domain of test API Gateway endpoint', true),
+                        default: form.data.testDomain.replace(/\./, '-api.')
+                    }
+                ]);
+            }
+        }
+
         if (form.data.infrastructure === SERVERLESS_AWS && form.data.publicStorage) {
             await form.ask([
                 {
@@ -363,6 +425,28 @@ async function processGenerator (args, skipForm) {
                         type: 'input',
                         name: 'certificateArnStaging',
                         message: form.label('Staging certificate ARN', 'will set ARN in serverless configuration file', true),
+                        default: form.data.certificateArnProduction
+                    }
+                ]);
+            }
+
+            if (form.data.devEnvironment) {
+                await form.ask([
+                    {
+                        type: 'input',
+                        name: 'certificateArnDev',
+                        message: form.label('Dev certificate ARN', 'will set ARN in serverless configuration file', true),
+                        default: form.data.certificateArnProduction
+                    }
+                ]);
+            }
+
+            if (form.data.testEnvironment) {
+                await form.ask([
+                    {
+                        type: 'input',
+                        name: 'certificateArnTest',
+                        message: form.label('Test certificate ARN', 'will set ARN in serverless configuration file', true),
                         default: form.data.certificateArnProduction
                     }
                 ]);
@@ -428,6 +512,38 @@ async function processGenerator (args, skipForm) {
                     }
                 ]);
             }
+
+            if (form.data.devEnvironment) {
+                await form.ask([
+                    {
+                        type: 'input',
+                        name: 'wingbotDevToken',
+                        message: form.label('Wingbot "dev" snapshot token', 'you can fill it later into config/config.staging.js', true)
+                    },
+                    {
+                        type: 'input',
+                        message: form.label('Dev API key', 'key used for accesing a chatbot API', true),
+                        name: 'devApiToken',
+                        default: form.randomSha() + form.randomSha()
+                    }
+                ]);
+            }
+
+            if (form.data.testEnvironment) {
+                await form.ask([
+                    {
+                        type: 'input',
+                        name: 'wingbotTestToken',
+                        message: form.label('Wingbot "test" snapshot token', 'you can fill it later into config/config.staging.js', true)
+                    },
+                    {
+                        type: 'input',
+                        message: form.label('Test API key', 'key used for accesing a chatbot API', true),
+                        name: 'testApiToken',
+                        default: form.randomSha() + form.randomSha()
+                    }
+                ]);
+            }
         }
 
         switch (form.data.database) {
@@ -488,6 +604,40 @@ async function processGenerator (args, skipForm) {
                     ]);
                 }
 
+                if (form.data.devEnvironment) {
+                    await form.ask([
+                        {
+                            type: 'input',
+                            message: form.label('Dev database name', 'for dev environment', true),
+                            name: 'devMongodbName',
+                            default: form.data.mongodbName
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Dev connection string', 'for dev environment', true),
+                            name: 'devMongodbConnectionString',
+                            default: form.data.mongodbConnectionString
+                        }
+                    ]);
+                }
+
+                if (form.data.testEnvironment) {
+                    await form.ask([
+                        {
+                            type: 'input',
+                            message: form.label('Test database name', 'for staging environment', true),
+                            name: 'testMongodbName',
+                            default: form.data.mongodbName
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Test connection string', 'for staging environment', true),
+                            name: 'testMongodbConnectionString',
+                            default: form.data.mongodbConnectionString
+                        }
+                    ]);
+                }
+
                 break;
             }
             case MSSQL: {
@@ -505,7 +655,7 @@ async function processGenerator (args, skipForm) {
                     {
                         type: 'input',
                         message: form.label('Connection string', 'for production environment', true),
-                        name: 'mongodbConnectionString'
+                        name: 'mssqlConnectionString'
                     }
                 ]);
 
@@ -514,14 +664,48 @@ async function processGenerator (args, skipForm) {
                         {
                             type: 'input',
                             message: form.label('Staging database name', 'for staging environment', true),
-                            name: 'stagingMongodbName',
-                            default: form.data.mongodbName
+                            name: 'stagingMssqlName',
+                            default: form.data.mssqlName
                         },
                         {
                             type: 'input',
                             message: form.label('Staging connection string', 'for staging environment', true),
-                            name: 'stagingMongodbConnectionString',
-                            default: form.data.mongodbConnectionString
+                            name: 'stagingMssqlConnectionString',
+                            default: form.data.mssqlConnectionString
+                        }
+                    ]);
+                }
+
+                if (form.data.devEnvironment) {
+                    await form.ask([
+                        {
+                            type: 'input',
+                            message: form.label('Dev database name', 'for dev environment', true),
+                            name: 'devMssqlName',
+                            default: form.data.mssqlName
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Dev connection string', 'for dev environment', true),
+                            name: 'devMssqlConnectionString',
+                            default: form.data.mssqlConnectionString
+                        }
+                    ]);
+                }
+
+                if (form.data.testEnvironment) {
+                    await form.ask([
+                        {
+                            type: 'input',
+                            message: form.label('Test database name', 'for test environment', true),
+                            name: 'testMssqlName',
+                            default: form.data.mssqlName
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Test connection string', 'for test environment', true),
+                            name: 'testMssqlConnectionString',
+                            default: form.data.mssqlConnectionString
                         }
                     ]);
                 }
@@ -558,6 +742,40 @@ async function processGenerator (args, skipForm) {
                             type: 'input',
                             message: form.label('Staging connection string', 'For existing database. Will be ignored if you specified Database name.', true),
                             name: 'stagingCosmosdbConnectionString',
+                            default: form.data.cosmosdbConnectionString
+                        }
+                    ]);
+                }
+
+                if (form.data.devEnvironment) {
+                    await form.ask([
+                        {
+                            type: 'input',
+                            message: form.label('Dev database name', 'Leave empty if you don\'t want to create new database.', true),
+                            name: 'devCosmosdbName',
+                            default: form.data.cosmosdbName
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Dev connection string', 'For existing database. Will be ignored if you specified Database name.', true),
+                            name: 'devCosmosdbConnectionString',
+                            default: form.data.cosmosdbConnectionString
+                        }
+                    ]);
+                }
+
+                if (form.data.testEnvironment) {
+                    await form.ask([
+                        {
+                            type: 'input',
+                            message: form.label('Test database name', 'Leave empty if you don\'t want to create new database.', true),
+                            name: 'testCosmosdbName',
+                            default: form.data.cosmosdbName
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Test connection string', 'For existing database. Will be ignored if you specified Database name.', true),
+                            name: 'testCosmosdbConnectionString',
                             default: form.data.cosmosdbConnectionString
                         }
                     ]);
@@ -640,6 +858,76 @@ async function processGenerator (args, skipForm) {
                         }
                     ]);
                 }
+
+                if (form.data.devEnvironment) {
+                    await form.ask([
+                        {
+                            type: 'input',
+                            message: form.group(
+                                'FB Messanger settings - dev',
+                                'Each FB bot needs a FB application in http://developers.facebook.com.\nYou will be able to edit these data later in config directory.',
+                                form.label('Facebook App ID', 'you can find it at FB developers portal', true)
+                            ),
+                            name: 'fbAppIdDev'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Facebook App Secret', 'you can find it at FB developers portal', true),
+                            name: 'fbAppSecretDev'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Facebook Page ID', 'you can find it at settings of the desired FB page', true),
+                            name: 'fbPageIdDev'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Facebook Page Token', 'you can generate it at FB developers portal, messenger section of your application', true),
+                            name: 'fbPageTokenDev'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Facebook Bot Token', 'the random string, you can use for attaching a webhook', true),
+                            name: 'fbBotTokenDev',
+                            default: form.randomSha()
+                        }
+                    ]);
+                }
+
+                if (form.data.testEnvironment) {
+                    await form.ask([
+                        {
+                            type: 'input',
+                            message: form.group(
+                                'FB Messanger settings - test',
+                                'Each FB bot needs a FB application in http://developers.facebook.com.\nYou will be able to edit these data later in config directory.',
+                                form.label('Facebook App ID', 'you can find it at FB developers portal', true)
+                            ),
+                            name: 'fbAppIdTest'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Facebook App Secret', 'you can find it at FB developers portal', true),
+                            name: 'fbAppSecretTest'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Facebook Page ID', 'you can find it at settings of the desired FB page', true),
+                            name: 'fbPageIdTest'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Facebook Page Token', 'you can generate it at FB developers portal, messenger section of your application', true),
+                            name: 'fbPageTokenTest'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Facebook Bot Token', 'the random string, you can use for attaching a webhook', true),
+                            name: 'fbBotTokenTest',
+                            default: form.randomSha()
+                        }
+                    ]);
+                }
                 break;
             case WEBCHAT:
                 await form.ask([
@@ -674,6 +962,44 @@ async function processGenerator (args, skipForm) {
                             type: 'input',
                             message: form.label('Webchat Channel ID', '', true),
                             name: 'wchChannelIdStaging'
+                        }
+                    ]);
+                }
+
+                if (form.data.devEnvironment) {
+                    await form.ask([
+                        {
+                            type: 'input',
+                            message: form.group(
+                                'FB Messanger settings - Dev',
+                                'Information about webchat configuration\nYou will be able to edit these data later in config directory.',
+                                form.label('Webchat App ID', '', true),
+                            ),
+                            name: 'wchAppIdDev'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Webchat Channel ID', '', true),
+                            name: 'wchChannelIdDev'
+                        }
+                    ]);
+                }
+
+                if (form.data.testEnvironment) {
+                    await form.ask([
+                        {
+                            type: 'input',
+                            message: form.group(
+                                'FB Messanger settings - Test',
+                                'Information about webchat configuration\nYou will be able to edit these data later in config directory.',
+                                form.label('Webchat App ID', '', true),
+                            ),
+                            name: 'wchAppIdTest'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Webchat Channel ID', '', true),
+                            name: 'wchChannelIdTest'
                         }
                     ]);
                 }
@@ -741,6 +1067,58 @@ async function processGenerator (args, skipForm) {
                                 true
                             ),
                             name: 'bsAppPasswordStaging'
+                        }
+                    ]);
+                }
+
+                if (form.data.devEnvironment) {
+                    await form.ask([
+                        {
+                            type: 'input',
+                            message: form.group(
+                                'Bot Service settings - dev',
+                                'Each Bot Service bot needs to have a corresponding app registered with Microsoft.\nRegister your bot at https://aka.ms/msaappid and use Application Id and Password here.',
+                                form.label(
+                                    'Bot Application Id',
+                                    'Microsoft App Id or Client ID of your bot application. Reqired to create channels registration'
+                                )
+                            ),
+                            name: 'bsAppIdDev'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label(
+                                'Bot Application Password',
+                                'Microsoft App Password or Client Secret of your bot application. You can set it later in config or ENV variable BOT_APP_PASSWORD',
+                                true
+                            ),
+                            name: 'bsAppPasswordDev'
+                        }
+                    ]);
+                }
+
+                if (form.data.testEnvironment) {
+                    await form.ask([
+                        {
+                            type: 'input',
+                            message: form.group(
+                                'Bot Service settings - test',
+                                'Each Bot Service bot needs to have a corresponding app registered with Microsoft.\nRegister your bot at https://aka.ms/msaappid and use Application Id and Password here.',
+                                form.label(
+                                    'Bot Application Id',
+                                    'Microsoft App Id or Client ID of your bot application. Reqired to create channels registration'
+                                )
+                            ),
+                            name: 'bsAppIdTest'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label(
+                                'Bot Application Password',
+                                'Microsoft App Password or Client Secret of your bot application. You can set it later in config or ENV variable BOT_APP_PASSWORD',
+                                true
+                            ),
+                            name: 'bsAppPasswordTest'
                         }
                     ]);
                 }
@@ -836,6 +1214,26 @@ async function processGenerator (args, skipForm) {
                         type: 'input',
                         message: form.label('Staging Universal Analytics tracking ID'),
                         name: 'gaCodeStaging'
+                    }
+                ]);
+            }
+
+            if (form.data.devEnvironment) {
+                await form.ask([
+                    {
+                        type: 'input',
+                        message: form.label('Dev Universal Analytics tracking ID'),
+                        name: 'gaCodeDev'
+                    }
+                ]);
+            }
+
+            if (form.data.testEnvironment) {
+                await form.ask([
+                    {
+                        type: 'input',
+                        message: form.label('Test Universal Analytics tracking ID'),
+                        name: 'gaCodeTest'
                     }
                 ]);
             }

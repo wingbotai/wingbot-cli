@@ -3,6 +3,7 @@
  */
 'use strict';
 {{#if isLogzioTokenOrSentryorAppIngsights}}
+{{#if sentry}}const Sentry = require('@sentry/node');{{/if}}
 const config = require('../../config');
 const loggerOveridderFactory = require('./loggerOveridderFactory');
 
@@ -49,9 +50,6 @@ if (config.appInsights) {
 
 {{/if}}
 {{#if sentry}}
-const Sentry = require('@sentry/node');
-
-let logger = console;
 
 if (config.sentryDsn) {
 

@@ -1,0 +1,93 @@
+{{#if testEnvironment}}
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+
+module.exports = {
+
+    isProduction: true,
+
+    // where the assets or html views are stored
+    {{#unless testDomain}}// {{/unless}}appUrl: '{{#if testDomain}}https://{{testDomain}}{{else}}putUrlHereAfterDeploy{{/if}}',
+
+    // where the application API lays
+{{#if awsServerless}}
+    {{#unless testApiDomain}}// {{/unless}}apiUrl: '{{#if testApiDomain}}https://{{testApiDomain}}{{else}}putUrlHereAfterDeploy{{/if}}',
+{{else}}
+    {{#unless testDomain}}// {{/unless}}apiUrl: '{{#if testDomain}}https://{{testDomain}}{{else}}putUrlHereAfterDeploy{{/if}}',
+{{/if}}
+
+{{#if withDesigner}}
+    wingbot: {
+        snapshot: 'test',
+        token: '{{wingbotTestToken}}',
+        ai: '{{wingbotBotName}}-test'
+    },
+
+    // token for accessing a chatbot API
+    {{#unless testApiToken}}// {{/unless}}appToken: '{{testApiToken}}',
+
+{{/if}}
+{{#if messenger}}
+    facebook: {
+        appId: '{{fbAppIdTest}}',
+        pageId: '{{fbPageIdTest}}',
+        appSecret: '{{fbAppSecretTest}}',
+        pageToken: '{{fbPageTokenTest}}',
+        botToken: '{{fbBotTokenTest}}'
+    },
+
+{{/if}}
+{{#if webchat}}
+    facebook: {
+        appId: '{{fbAppIdTest}}',
+        pageId: '{{fbPageIdTest}}',
+        appSecret: '{{fbAppSecretTest}}',
+        pageToken: '{{fbPageTokenTest}}',
+        botToken: '{{fbBotTokenTest}}',
+        apiUrl: '{{wchApiUrlTest}}'
+    },
+
+    webchat: {
+        appId: '{{wchAppIdTest}}',
+        channelId: '{{wchChannelIdTest}}'
+    },
+
+{{/if}}
+{{#if botService}}
+    botService: {
+        appId: process.env.BOT_APP_ID || '{{bsAppIdTest}}',
+        appSecret: process.env.BOT_APP_PASSWORD || '{{{bsAppPasswordTest}}}'
+    },
+
+{{/if}}
+{{#if mongodbStorage}}
+    db: {
+        db: '{{testMongodbName}}',
+        url: '{{{testMongodbConnectionString}}}'
+    },
+
+{{/if}}
+{{#if mssqlStorage}}
+    db: {
+        db: '{{testMssqlName}}',
+        url: '{{{testMssqlConnectionString}}}'
+    },
+
+{{/if}}
+{{#if cosmosdbStorage}}
+    db: {
+        db: '{{testCosmosdbName}}',
+        url: process.env.COSMOSDB_CONNECTION_STRING || '{{{testCosmosdbConnectionString}}}'
+    },
+
+{{/if}}
+{{#if sentry}}
+    sentryDsn: '{{sentry}}',
+
+{{/if}}
+    gaCode: '{{gaCodeTest}}'
+
+};
+{{/if}}

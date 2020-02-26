@@ -71,8 +71,8 @@ module.exports = {
 {{/if}}
 {{#if mssqlStorage}}
     db: {
-        db: '{{stagingMongodbName}}',
-        url: '{{{stagingMongodbConnectionString}}}'
+        db: '{{stagingMssqlName}}',
+        url: '{{{stagingMssqlConnectionString}}}'
     },
 
 {{/if}}
