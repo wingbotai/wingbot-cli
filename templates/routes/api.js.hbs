@@ -79,7 +79,7 @@ module.exports.worker = wrapRoute(async () => {
 {{/if}}
 {{/if}}{{#if expressOrAppService}}
 module.exports = [
-    express.json(),
+    express.json({ limit: config.expressBodyLimit }),
     wrapRoute(async (req, res) => {
         const { body } = req;
         const response = await api.request(body, req.headers);

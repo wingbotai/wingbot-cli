@@ -10,6 +10,9 @@ const bot = require('./bot');
 {{#if analytics}}
 const tracker = require('./tracker');
 {{/if}}
+{{#if mssqlStorage}}
+const status = require('./status');
+{{/if}}
 {{#if withDesigner}}
 const api = require('./api');
 {{/if}}

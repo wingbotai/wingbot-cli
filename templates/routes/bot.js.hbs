@@ -191,7 +191,8 @@ module.exports = [
     express.json({
         verify: (req, res, buf) => {
             req.rawBody = buf;
-        }
+        },
+        limit: config.expressBodyLimit
     }),
     wrapRoute(async (req, res) => {
         if (req.method === 'GET') {
@@ -280,7 +281,6 @@ module.exports = [
 
         await channel.processEvent(invokeEvent);
         {{/if}}
-        
         {{#unless webchat}}
         {{#if frontendTokenStorage}}
         const { botToken = null, senderId = null } = req.query;
@@ -310,8 +310,6 @@ module.exports = [
             });
         {{/if}}
         {{/unless}}
-
-
         res.send('OK');
     })
 ];
