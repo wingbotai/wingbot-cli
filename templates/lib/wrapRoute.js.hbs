@@ -6,7 +6,7 @@
 {{#if awsServerless}}
 const log = require('./log');
 
-{{#if logzioToken}}
+{{#if isLogzioTokenOrSentry}}
 // next tick
 function wait (ms) {
     return new Promise(r => setTimeout(r, ms));

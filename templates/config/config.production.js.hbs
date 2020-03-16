@@ -73,6 +73,11 @@ module.exports = {
 {{/if}}
 {{#if mssqlStorage}}
     mssql: {
+    {{#unless keyvault}}
+        server: '{{mssqlServerName}}',
+        port: '{{mssqlPort}}',
+        database: '{{mssqlName}}',
+    {{/unless}}
         options: {
             encrypt: true
         }

@@ -86,10 +86,9 @@ function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
     bot.use(PASS_THREAD_ACTION, (req, res) => {
         if (req.expected()) {
             // keep the expected action
-            const { action, data } = req.expected();
-            res.expected(action, data);
+            req.setState(req.expectedContext(false, false));
         }
-        res.setState({ _threadPassed: false, _actionReceived: true });
+        res.setState({ _threadPassed: false });
         res.takeThead(config.facebook.appId);
         return Router.END;
     });
@@ -127,32 +126,6 @@ function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
             }
             // IGNORED TOO
             return Router.END;
-        }
-
-        // initial text interactions will be
-        if (!req.state._actionReceived && !action) {
-
-            // let's respond intents
-            if (req.intent(ai.confidence)) {
-                res.setState({ _actionReceived: true });
-                return Router.CONTINUE;
-            }
-
-            // redirected existing users to the inbox
-            if (!req.isReferral()) {
-                res.setState({ _threadPassed: true })
-                    .passThread(263902037430900);
-            } else {
-                // this was probably an action from the Ad.
-                res.setState({ _actionReceived: true });
-            }
-
-            // IGNORED
-            return Router.END;
-        }
-
-        if (!req.state._actionReceived && action) {
-            res.setState({ _actionReceived: true });
         }
 
         return Router.CONTINUE;
