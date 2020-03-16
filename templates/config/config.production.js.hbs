@@ -52,7 +52,7 @@ module.exports = {
     },
 
     webchat: {
-        appId: '{{wchAppId}}',
+        appId: '{{fbAppId}}',
         channelId: '{{wchChannelId}}'
     },
 
@@ -72,9 +72,10 @@ module.exports = {
 
 {{/if}}
 {{#if mssqlStorage}}
-    db: {
-        db: '{{mssqlName}}',
-        url: '{{{mssqlConnectionString}}}'
+    mssql: {
+        options: {
+            encrypt: true
+        }
     },
 
 {{/if}}

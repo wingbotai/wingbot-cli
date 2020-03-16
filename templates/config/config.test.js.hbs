@@ -50,7 +50,7 @@ module.exports = {
     },
 
     webchat: {
-        appId: '{{wchAppIdTest}}',
+        appId: '{{fbAppIdTest}}',
         channelId: '{{wchChannelIdTest}}'
     },
 
@@ -70,9 +70,10 @@ module.exports = {
 
 {{/if}}
 {{#if mssqlStorage}}
-    db: {
-        db: '{{testMssqlName}}',
-        url: '{{{testMssqlConnectionString}}}'
+    mssql: {
+        options: {
+            encrypt: true
+        }
     },
 
 {{/if}}
@@ -87,6 +88,7 @@ module.exports = {
     sentryDsn: '{{sentry}}',
 
 {{/if}}
+
     gaCode: '{{gaCodeTest}}'
 
 };

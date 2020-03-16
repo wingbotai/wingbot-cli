@@ -48,7 +48,7 @@ const config = {
     },
 
     webchat: {
-        appId: '{{wchAppId}}',
+        appId: '{{fbAppId}}',
         channelId: '{{wchChannelId}}',
         secret: getSecret(keyvaultDomain, 'defaultbotsecret', '-')
 
@@ -102,7 +102,7 @@ const config = {
 {{#if mssqlStorage}}
     mssql: {
         user: process.env.SQL_USER || 'SA',
-        password: getSecret(keyvaultDomain, 'sqlpassword'),
+        password: getSecret(keyvaultDomain, 'sqlpassword', process.env.SQL_PASSWORD || 'NeotravujPotvoro1'),
         server: process.env.SQL_HOST || 'localhost',
         port: parseInt(process.env.SQL_PORT || '1433', 10),
         database: process.env.SQL_DB || 'loginbot',

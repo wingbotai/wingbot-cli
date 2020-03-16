@@ -70,9 +70,10 @@ module.exports = {
 
 {{/if}}
 {{#if mssqlStorage}}
-    db: {
-        db: '{{stagingMssqlName}}',
-        url: '{{{stagingMssqlConnectionString}}}'
+    mssql: {
+        options: {
+            encrypt: true
+        }
     },
 
 {{/if}}

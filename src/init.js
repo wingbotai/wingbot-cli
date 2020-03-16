@@ -640,78 +640,6 @@ async function processGenerator (args, skipForm) {
 
                 break;
             }
-            case MSSQL: {
-                await form.ask([
-                    {
-                        type: 'input',
-                        message: form.group(
-                            'MSSQL connection',
-                            'you can fill theese data later into config files, but it\'s recommended to keep connection string in ENV variables',
-                            form.label('Database name')
-                        ),
-                        name: 'mssqlName',
-                        default: urlProjectName
-                    },
-                    {
-                        type: 'input',
-                        message: form.label('Connection string', 'for production environment', true),
-                        name: 'mssqlConnectionString'
-                    }
-                ]);
-
-                if (form.data.stagingEnvironment) {
-                    await form.ask([
-                        {
-                            type: 'input',
-                            message: form.label('Staging database name', 'for staging environment', true),
-                            name: 'stagingMssqlName',
-                            default: form.data.mssqlName
-                        },
-                        {
-                            type: 'input',
-                            message: form.label('Staging connection string', 'for staging environment', true),
-                            name: 'stagingMssqlConnectionString',
-                            default: form.data.mssqlConnectionString
-                        }
-                    ]);
-                }
-
-                if (form.data.devEnvironment) {
-                    await form.ask([
-                        {
-                            type: 'input',
-                            message: form.label('Dev database name', 'for dev environment', true),
-                            name: 'devMssqlName',
-                            default: form.data.mssqlName
-                        },
-                        {
-                            type: 'input',
-                            message: form.label('Dev connection string', 'for dev environment', true),
-                            name: 'devMssqlConnectionString',
-                            default: form.data.mssqlConnectionString
-                        }
-                    ]);
-                }
-
-                if (form.data.testEnvironment) {
-                    await form.ask([
-                        {
-                            type: 'input',
-                            message: form.label('Test database name', 'for test environment', true),
-                            name: 'testMssqlName',
-                            default: form.data.mssqlName
-                        },
-                        {
-                            type: 'input',
-                            message: form.label('Test connection string', 'for test environment', true),
-                            name: 'testMssqlConnectionString',
-                            default: form.data.mssqlConnectionString
-                        }
-                    ]);
-                }
-
-                break;
-            }
             case AZURE_COSMOS_DB: {
                 await form.ask([
                     {
@@ -938,12 +866,17 @@ async function processGenerator (args, skipForm) {
                             'Information about webchat configuration\nYou will be able to edit these data later in config directory.',
                             form.label('Webchat App ID', '', true),
                         ),
-                        name: 'wchAppId'
+                        name: 'fbAppId'
                     },
                     {
                         type: 'input',
                         message: form.label('Webchat Channel ID', '', true),
                         name: 'wchChannelId'
+                    },
+                    {
+                        type: 'input',
+                        message: form.label('Webchat APP URL', '', true),
+                        name: 'wchApiUrl'
                     }
                 ]);
 
@@ -952,16 +885,21 @@ async function processGenerator (args, skipForm) {
                         {
                             type: 'input',
                             message: form.group(
-                                'FB Messanger settings - Stage',
+                                'Webchat settings - Stage',
                                 'Information about webchat configuration\nYou will be able to edit these data later in config directory.',
                                 form.label('Webchat App ID', '', true),
                             ),
-                            name: 'wchAppIdStaging'
+                            name: 'fbAppIdStaging'
                         },
                         {
                             type: 'input',
                             message: form.label('Webchat Channel ID', '', true),
                             name: 'wchChannelIdStaging'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Webchat APP URL', '', true),
+                            name: 'wchApiUrlStaging'
                         }
                     ]);
                 }
@@ -971,16 +909,21 @@ async function processGenerator (args, skipForm) {
                         {
                             type: 'input',
                             message: form.group(
-                                'FB Messanger settings - Dev',
+                                'Webchat settings - Dev',
                                 'Information about webchat configuration\nYou will be able to edit these data later in config directory.',
                                 form.label('Webchat App ID', '', true),
                             ),
-                            name: 'wchAppIdDev'
+                            name: 'fbAppIdDev'
                         },
                         {
                             type: 'input',
                             message: form.label('Webchat Channel ID', '', true),
                             name: 'wchChannelIdDev'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Webchat APP URL', '', true),
+                            name: 'wchApiUrlDev'
                         }
                     ]);
                 }
@@ -990,16 +933,21 @@ async function processGenerator (args, skipForm) {
                         {
                             type: 'input',
                             message: form.group(
-                                'FB Messanger settings - Test',
+                                'Webchat settings - Test',
                                 'Information about webchat configuration\nYou will be able to edit these data later in config directory.',
                                 form.label('Webchat App ID', '', true),
                             ),
-                            name: 'wchAppIdTest'
+                            name: 'fbAppIdTest'
                         },
                         {
                             type: 'input',
                             message: form.label('Webchat Channel ID', '', true),
                             name: 'wchChannelIdTest'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Webchat APP URL', '', true),
+                            name: 'wchApiUrlTest'
                         }
                     ]);
                 }
