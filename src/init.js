@@ -67,6 +67,10 @@ const options = {
         None: null,
         'Gsheet testing suit': G_SHEET_TESTING_SUIT
     },
+    keyvault: {
+        'Use keyvault for storing password (MSSQL only)': 1,
+        'I\'will store passwd locally.': 0
+    },
     frontendTokenStorage: {
         'No frontend token storage': null,
         'JWT token storage': JWT_TOKEN_STORAGE,
@@ -84,11 +88,11 @@ const options = {
     },
     monitoring: {
         Sentry: SENTRY,
-        LogzIO: LOGZIO_TOKEN
-    },
-    monitoringAzure: {
-        AppInsights: APP_INSIGHTS
+        LogzIO: LOGZIO_TOKEN,
+        'AppInsights (only for Azure Cloud)': APP_INSIGHTS
+
     }
+
 };
 
 
@@ -205,6 +209,7 @@ async function processGenerator (args, skipForm) {
             [MESSENGER]: true,
             analytics: UNIVERSAL_ANALYTICS,
             conversationTesting: G_SHEET_TESTING_SUIT,
+            keyvault: false,
             [UNIVERSAL_ANALYTICS]: true,
             withDesigner: true,
             notifications: true,
@@ -242,7 +247,7 @@ async function processGenerator (args, skipForm) {
                 message: form.group(
                     'Project settings',
                     'We have to set up the basics: name, desired infrastructure, database and messaging platform',
-                    form.label('Choose a name for your project')
+                    form.label('Choose a name for your project (has to match the project name in the WB designer)')
                 ),
                 default: path.basename(destination)
             },
@@ -255,7 +260,9 @@ async function processGenerator (args, skipForm) {
             form.list('database', form.label('Choose a database')),
             form.list('analytics', form.label('Choose an analytic tool')),
             form.list('conversationTesting', form.label('Choose a conversation testing tool')),
-            form.list('withDesigner', form.label('Connect with wingbot.ai designer', 'for experimental purposes you can make a chatbot on your own'))
+            form.list('withDesigner', form.label('Connect with wingbot.ai designer', 'for experimental purposes you can make a chatbot on your own')),
+            form.list('keyvault', form.label('Choose if you want to use keyvault'))
+
         ]);
 
 
@@ -284,12 +291,6 @@ async function processGenerator (args, skipForm) {
                 default: form.data.infrastructure === EXPRESS_AZURE ? `${urlProjectName}.azurewebsites.net` : undefined
             }
         ]);
-
-        if (form.data.infrastructure === SERVERLESS_AZURE
-            || form.data.infrastructure === EXPRESS_AZURE) {
-
-            Object.assign(form.options.monitoring, form.options.monitoringAzure);
-        }
 
         await form.ask([
             form.list('monitoring', form.label('Choose a monitoring'))
@@ -518,7 +519,7 @@ async function processGenerator (args, skipForm) {
                     {
                         type: 'input',
                         name: 'wingbotDevToken',
-                        message: form.label('Wingbot "dev" snapshot token', 'you can fill it later into config/config.staging.js', true)
+                        message: form.label('Wingbot "dev" snapshot token', 'you can fill it later into config/config.dev.js', true)
                     },
                     {
                         type: 'input',
@@ -534,7 +535,7 @@ async function processGenerator (args, skipForm) {
                     {
                         type: 'input',
                         name: 'wingbotTestToken',
-                        message: form.label('Wingbot "test" snapshot token', 'you can fill it later into config/config.staging.js', true)
+                        message: form.label('Wingbot "test" snapshot token', 'you can fill it later into config/config.test.js', true)
                     },
                     {
                         type: 'input',
@@ -638,6 +639,111 @@ async function processGenerator (args, skipForm) {
                     ]);
                 }
 
+                break;
+            }
+            case MSSQL: {
+                if (!form.data.keyvault) {
+                    await form.ask([
+                        {
+                            type: 'input',
+                            message: form.group(
+                                'MSSQL connection',
+                                'you can fill these data later into config files, but it\'s recommended to keep connection string in ENV variables',
+                                form.label('Database name')
+                            ),
+                            name: 'mssqlName',
+                            default: urlProjectName
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Server name', 'for production environment', true),
+                            name: 'mssqlServerName'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Port', 'for production environment', true),
+                            name: 'mssqlPort'
+                        }
+                    ]);
+
+                    if (form.data.stagingEnvironment) {
+                        await form.ask([
+                            {
+                                type: 'input',
+                                message: form.label('Staging database name', 'for staging environment', true),
+                                name: 'stagingMssqlName',
+                                default: form.data.mssqlName
+                            },
+                            {
+                                type: 'input',
+                                message: form.label('Server name', 'for staging environment', true),
+                                name: 'stagingMssqlServerName'
+                            },
+                            {
+                                type: 'input',
+                                message: form.label('Server name', 'for staging environment', true),
+                                name: 'stagingMssqlServerName'
+                            },
+                            {
+                                type: 'input',
+                                message: form.label('Port', 'for staging environment', true),
+                                name: 'stagingMssqlPort'
+                            }
+                        ]);
+                    }
+
+                    if (form.data.devEnvironment) {
+                        await form.ask([
+                            {
+                                type: 'input',
+                                message: form.label('Dev database name', 'for dev environment', true),
+                                name: 'devMssqlName',
+                                default: form.data.mssqlName
+                            },
+                            {
+                                type: 'input',
+                                message: form.label('Server name', 'for dev environment', true),
+                                name: 'devMssqlServerName'
+                            },
+                            {
+                                type: 'input',
+                                message: form.label('Server name', 'for dev environment', true),
+                                name: 'devMssqlServerName'
+                            },
+                            {
+                                type: 'input',
+                                message: form.label('Port', 'for dev environment', true),
+                                name: 'devMssqlPort'
+                            }
+                        ]);
+                    }
+
+                    if (form.data.testEnvironment) {
+                        await form.ask([
+                            {
+                                type: 'input',
+                                message: form.label('Test database name', 'for test environment', true),
+                                name: 'testMssqlName',
+                                default: form.data.mssqlName
+                            },
+                            {
+                                type: 'input',
+                                message: form.label('Server name', 'for test environment', true),
+                                name: 'testMssqlServerName'
+                            },
+                            {
+                                type: 'input',
+                                message: form.label('Server name', 'for test environment', true),
+                                name: 'testMssqlServerName'
+                            },
+                            {
+                                type: 'input',
+                                message: form.label('Port', 'for test environment', true),
+                                name: 'testMssqlPort'
+                            }
+                        ]);
+                    }
+                }
                 break;
             }
             case AZURE_COSMOS_DB: {

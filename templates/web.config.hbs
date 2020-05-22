@@ -2,6 +2,11 @@
 <configuration>
   <system.webServer>
 
+    <applicationInitialization doAppInitAfterRestart="true">
+      <add initializationPage="/" />
+      <add initializationPage="/api/status" />
+    </applicationInitialization>
+
     <!-- indicates that the hello.js file is a node.js application
     to be handled by the iisnode module -->
     <webSocket enabled="false" />
@@ -16,12 +21,20 @@
           <match url="^server.js\/debug[\/]?" />
         </rule> -->
 
-        {{#if publicStorage}}
+        <rule name="Redirect to HTTPS" stopProcessing="true">
+          <match url="(.*)" />
+          <conditions>
+            <add input="{WARMUP_REQUEST}" pattern="1" negate="true" />
+            <add input="{REMOTE_ADDR}" pattern="^100?\." negate="true" />
+            <add input="{HTTPS}" pattern="^OFF$" />
+          </conditions>
+          <action type="Redirect" url="https://{HTTP_HOST}/{R:1}" redirectType="Permanent" />
+        </rule>
+
         <!-- First we consider whether the incoming URL matches a physical file in the /dist folder -->
         <rule name="StaticContent">
           <action type="Rewrite" url="dist{REQUEST_URI}"/>
         </rule>
-        {{/if}}
 
         <!-- All other URLs are mapped to the node.js site entry point -->
         <rule name="DynamicContent">
