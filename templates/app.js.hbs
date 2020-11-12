@@ -32,11 +32,9 @@ app.use(routes);
 {{#if publicStorage}}
 // serve static files
 app.use('/', express.static(path.join(__dirname, 'dist')));
-
 {{else}}
 // serve static files
 // app.use('/', express.static(path.join(__dirname, 'public'));
-
 {{/if}}
 
 // catch 404 and forward to error handler
@@ -45,7 +43,7 @@ app.use((req, res, next) => {
     next(createError(404));
 });
 
-const esc = str => (str ? `${str}`.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '');
+const esc = (str) => (str ? `${str}`.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '');
 
 // error handler
 app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars

@@ -1,14 +1,15 @@
 {{#if awsServerless}}
+{{#unless webchatOrMessenger}}
 /*
  * @author wingbot.ai
  */
 'use strict';
 
 const wrapRoute = require('../lib/wrapRoute');
-const { channel{{#if wingbot}}: facebook, botservice{{/if}} } = require('../bot');
+const { channel } = require('../bot');
 
 function waitFn (ms) {
-    return new Promise(r => setTimeout(r, ms));
+    return new Promise((r) => setTimeout(r, ms));
 }
 
 module.exports.handler = wrapRoute(async (event) => {
@@ -20,18 +21,6 @@ module.exports.handler = wrapRoute(async (event) => {
         await waitFn(wait);
     }
 
-    {{#if wingbot}}
-    let channel;
-    switch (event.channel) {
-        case 'botservice';
-            channel = botservice;
-            break;
-        default:
-            channel = facebook;
-            break;
-    }
-
-    {{/if}}
     if (parsedBody) {
         await channel.processEvent(parsedBody);
     } else {
@@ -42,4 +31,5 @@ module.exports.handler = wrapRoute(async (event) => {
         ok: 1
     };
 });
+{{/unless}}
 {{/if}}

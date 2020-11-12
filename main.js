@@ -11,7 +11,6 @@ const { normalize } = require('./src/textTools/filters');
 const TemplateRenderer = require('./src/templateRenderer/TemplateRenderer');
 const { preprocessData } = require('./src/init');
 
-
 module.exports = {
     jsonToText,
     EntitiesFromJson,

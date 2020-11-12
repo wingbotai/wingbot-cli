@@ -42,7 +42,7 @@ class MultiplicatorStream extends Transform {
     _transform (data, enc, callback) {
         multiplicator(data, this._getVariants)
             .then((variants) => {
-                variants.forEach(variant => this.push(variant));
+                variants.forEach((variant) => this.push(variant));
                 callback();
             })
             .catch(callback);

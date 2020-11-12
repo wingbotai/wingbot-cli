@@ -12,32 +12,38 @@ const crypto = require('crypto');
 const verify = promisify(jwt.verify);
 {{/if}}
 {{#if awsServerless}}
+{{#unless wingbotOrchestrator}}
 const AWS = require('aws-sdk');
 const config = require('../config');
+{{/unless}}
 {{/if}}
 {{#if expressOrAppService}}
-const express = require('express');
-const log = require('../lib/log');
+const express = require('express');{{#unless wingbotOrchestrator}}
+const log = require('../lib/log');{{/unless}}{{#unless webchatOrMessenger}}
+const config = require('../config');{{/unless}}
 {{/if}}
-{{#if webchatOrMessenger}}{{#unless awsServerless}}
+{{#if webchatOrMessenger}}
+{{#unless awsServerless}}
 const config = require('../config');
-{{/unless}}{{/if}}
+{{/unless}}
+{{/if}}
 {{#unless azureServerless}}
 const wrapRoute = require('../lib/wrapRoute');
 {{/unless}}
-const { channel, processor } = require('../bot');
+const { {{#if wingbotOrchestrator}}app{{else}}channel{{#if webchat}}, processor{{/if}}{{/if}} } = require('../bot');
 {{#if frontendTokenStorage}}
 const botTokenStorage = require('../lib/botTokenStorage');
 {{/if}}
 
-
 {{#if awsServerless}}
+{{#unless wingbotOrchestrator}}
 const SEND_MESSAGE_LAMBDA_NAME = `${config.prefix}-send`;
 
 const lambda = new AWS.Lambda({
     lambda: '2015-03-31'
 });
 
+{{/unless}}
 module.exports.handler = wrapRoute(async (event) => {
 
     if (event.httpMethod === 'GET') {
@@ -73,7 +79,9 @@ module.exports.handler = wrapRoute(async (event) => {
         };
         {{/if}}
     }
-
+    {{#if wingbotOrchestrator}}
+    return app.request(event.body, event.headers);
+    {{else}}
     const parsedBody = JSON.parse(event.body);
     {{#if frontendTokenStorage}}
     const { botToken = null, senderId = null } = event.queryStringParameters || {};
@@ -120,6 +128,7 @@ module.exports.handler = wrapRoute(async (event) => {
         },
         body: 'OK'
     };
+    {{/if}}
 });
 {{/if}}
 {{#if azureServerless}}
@@ -156,6 +165,14 @@ module.exports = async function (context, req) {
         {{/if}}
     }
 
+    {{#if wingbotOrchestrator}}
+    const { statusCode, body, headers } = await app.request(req.rawBody, req.headers);
+    return {
+        status: statusCode,
+        body,
+        headers
+    };
+    {{else}}
     {{#if frontendTokenStorage}}
     const { botToken = null, senderId = null } = req.query || {};
 
@@ -184,27 +201,29 @@ module.exports = async function (context, req) {
         status: 200,
         body: '{"message":"OK"}'
     };
+    {{/if}}
 };
 {{/if}}
 {{#if expressOrAppService}}
 module.exports = [
     express.json({
         verify: (req, res, buf) => {
+            // @ts-ignore
             req.rawBody = buf;
         },
         limit: config.expressBodyLimit
     }),
     wrapRoute(async (req, res) => {
         if (req.method === 'GET') {
-        {{#if webchatOrMessenger}}
-            {{#if messenger}}
+{{#if webchatOrMessenger}}
+{{#if messenger}}
             if (req.query.ref) {
                 res.redirect(`https://m.me/${config.facebook.pageId}?ref=${encodeURIComponent(req.query.ref)}`);
                 return;
             }
             const body = await channel.verifyWebhook(req.query);
             res.send(body);
-            {{else}}{{! else if webchat }}
+{{else}}{{! else if webchat }}
             if (req.query.text) {
                 const aiActions = await processor.aiActionsForText(req.query.text);
 
@@ -243,17 +262,28 @@ module.exports = [
             }
             const body = await channel.verifyWebhook(req.query);
             res.send(body);
-            {{/if}}
-        {{else}}
+{{/if}}
+{{else}}
             if (req.query.ref) {
                 res.redirect(`/?ref=${encodeURIComponent(req.query.ref)}`);
                 return;
             }
             res.send('RUNNING');
-        {{/if}}
+{{/if}}
             return;
         }
-        {{#if webchat}}
+{{#if wingbotOrchestrator}}
+        const {
+            statusCode,
+            body,
+            headers
+        } = await app.request(req.rawBody, req.headers);
+
+        res.set(headers)
+            .status(statusCode)
+            .send(body);
+{{else}}
+{{#if webchat}}
 
         const secret = await Promise.resolve(config.webchat.secret);
 
@@ -280,8 +310,9 @@ module.exports = [
         log.log('received event', invokeEvent);
 
         await channel.processEvent(invokeEvent);
-        {{/if}}
-        {{#unless webchat}}
+        res.send('OK');
+{{/if}}
+{{#unless webchat}}
         {{#if frontendTokenStorage}}
         const { botToken = null, senderId = null } = req.query;
 
@@ -309,8 +340,9 @@ module.exports = [
                 log.error('Request failed', e);
             });
         {{/if}}
-        {{/unless}}
         res.send('OK');
+{{/unless}}
+{{/if}}
     })
 ];
 {{/if}}

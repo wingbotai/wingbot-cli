@@ -10,8 +10,9 @@ const app = require('../app');
 
 /**
  * Normalize a port into a number, string, or false.
+ *
+ * @param {number|string} val
  */
-
 function normalizePort (val) {
     const port = parseInt(val, 10);
 
@@ -31,21 +32,19 @@ function normalizePort (val) {
 /**
  * Get port from environment and store in Express.
  */
-
 const port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 /**
  * Create HTTP server.
  */
-
 const server = http.createServer(app);
-
 
 /**
  * Event listener for HTTP server "error" event.
+ *
+ * @param {Error} error
  */
-
 function onError (error) {
     if (error.syscall !== 'listen') {
         throw error;
@@ -73,7 +72,6 @@ function onError (error) {
 /**
  * Event listener for HTTP server "listening" event.
  */
-
 function onListening () {
     const addr = server.address();
     const bind = typeof addr === 'string'
@@ -82,7 +80,6 @@ function onListening () {
 
     console.info(`Listening on ${bind}`); // eslint-disable-line no-console
 }
-
 
 /**
  * Listen on provided port, on all network interfaces.

@@ -11,12 +11,10 @@ const path = require('path');
 const filters = require('./textTools/filters');
 const Pipeline = require('./textTools/Pipeline');
 
-
 async function wikiToText (fromJson, toText) {
 
     const input = path.resolve(process.cwd(), fromJson);
     const output = path.resolve(process.cwd(), toText);
-
 
     let inp;
     let out;

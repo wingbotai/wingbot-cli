@@ -9,7 +9,7 @@ const log = require('./log');
 {{#if isLogzioTokenOrSentry}}
 // next tick
 function wait (ms) {
-    return new Promise(r => setTimeout(r, ms));
+    return new Promise((r) => setTimeout(r, ms));
 }
 {{/if}}
 {{/if}}

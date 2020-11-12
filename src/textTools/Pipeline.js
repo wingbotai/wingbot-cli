@@ -51,7 +51,7 @@ class Pipeline {
         }
 
         if (Array.isArray(pipe)) {
-            pipe.forEach(p => this.add(p));
+            pipe.forEach((p) => this.add(p));
             return this;
         }
 

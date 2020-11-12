@@ -13,8 +13,17 @@ const { Facebook } = require('wingbot-facebook');
 const attachmentCache = require('../lib/attachmentCache');
 const { PASS_THREAD_ACTION, TAKE_THEAD_ACTION, REQUEST_THREAD_ACTION } = require('./actions');
 {{/if}}
-{{#if wingbot}}
-const { BotService } = require('wingbot-botservice');
+{{#if wingbotOrchestrator}}
+const { BotApp } = require('wingbot');
+const log = require('../lib/log');
+{{#if notifications}}
+const notifications = require('../lib/notifications');
+{{/if}}
+{{#if frontendTokenStorage}}
+const tokenStorage = require('../lib/botTokenStorage');
+{{/if}}
+const stateStorage = require('../lib/stateStorage');
+const { onAction, onEvent } = require('./onAction');
 {{/if}}
 {{#if botService}}
 const { BotService } = require('wingbot-botservice');
@@ -27,11 +36,13 @@ const chatLogStorage = require('../lib/chatLogStorage');
 {{#if anonymizeConversationLogs}}
 const anonymize = require('./anonymize');
 {{/if}}
+{{#unless wingbotOrchestrator}}
 const processor = require('./processor');
+{{/unless}}
 const botFactory = require('./bot');
 const botSettings = require('./botSettings');
-
 {{#if webchat}}
+
 async function requestLib (input) {
     const body = JSON.stringify(input.body);
 
@@ -46,7 +57,8 @@ async function requestLib (input) {
         appId: config.webchat.appId, cid: config.webchat.channelId, sha1, t: 'a'
     }, secret);
 
-    const out = Object.assign({}, input, {
+    const out = {
+        ...input,
         headers: {
             'Content-type': 'application/json; charset=utf-8',
             Authorization: token
@@ -54,7 +66,7 @@ async function requestLib (input) {
         body,
         timeout: 30000,
         json: false
-    });
+    };
 
     return request(out);
 }
@@ -63,37 +75,50 @@ async function requestLib (input) {
 {{#if webchatOrMessenger}}
 const channel = new Facebook(
     processor,
-    Object.assign({
+    {
         attachmentStorage: attachmentCache,
         passThreadAction: PASS_THREAD_ACTION,
         takeThreadAction: TAKE_THEAD_ACTION,
-        requestThreadAction: REQUEST_THREAD_ACTION{{#if anonymizeConversationLogs}},
-        textFilter: anonymize{{/if}}{{#if webchat}},
+        requestThreadAction: REQUEST_THREAD_ACTION,{{#if anonymizeConversationLogs}}
+        textFilter: anonymize,{{/if}}{{#if webchat}}
         requestLib,
-        throwsExceptions: true{{/if}}
-    }, config.facebook){{#if storeConversationHistory}},
+        throwsExceptions: true,{{/if}}
+        ...config.facebook
+    }{{#if storeConversationHistory}},
     chatLogStorage{{/if}}
 );
 {{/if}}
 {{#if botService}}
-const channel = new BotService(processor, Object.assign({
+const channel = new BotService(processor, {
     // set to null when using an initAction option in the Wingbot Browser Lib
-    welcomeAction: START_ACTION{{#if anonymizeConversationLogs}},
-    textFilter: anonymize{{/if}}
-}, config.botService){{#if storeConversationHistory}}, chatLogStorage{{/if}});
+    welcomeAction: START_ACTION,{{#if anonymizeConversationLogs}}
+    textFilter: anonymize,{{/if}}
+    ...config.botService
+}{{#if storeConversationHistory}}, chatLogStorage{{/if}});
 {{/if}}
-{{#if wingbot}}
-const botservice = new BotService(processor, Object.assign({
+{{#if wingbotOrchestrator}}
+const bot = botFactory();
+
+const app = new BotApp(bot, {
     // set to null when using an initAction option in the Wingbot Browser Lib
-    welcomeAction: START_ACTION{{#if anonymizeConversationLogs}},
-    textFilter: anonymize{{/if}}
-}, config.botService){{#if storeConversationHistory}}, chatLogStorage{{/if}});
+    stateStorage,{{#if frontendTokenStorage}}
+    tokenStorage,{{/if}}{{#if storeConversationHistory}}
+    chatLogStorage,{{/if}}
+    log,
+    autoTyping: true,
+    autoSeen: true,{{#if anonymizeConversationLogs}}
+    textFilter: anonymize,{{/if}}
+    ...config.orchestrator
+});
+
+bot.on('action', onAction);
+app.processor.on('event', onEvent);
 {{/if}}
 
 module.exports = {
     botSettings,
-    botFactory,{{#if wingbot}}
-    botservice,{{/if}}
-    channel{{#if webchat}},
+    botFactory,{{#if wingbotOrchestrator}}
+    app{{else}}
+    channel{{/if}}{{#if webchat}},
     processor{{/if}}
 };

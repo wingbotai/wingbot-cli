@@ -11,30 +11,70 @@ const { TemplateRenderer } = require('../src/templateRenderer');
 const { options, preprocessData } = require('../src/init');
 
 const defaultData = {
+    mssqlName: 'clitest',
     wingbotBotName: 'wingbot-cli-test',
     wingbotBotId: '230abe59-565c-4dd1-ae02-119a71b1ae51',
     wingbotDevelopmentToken: 'Izo88ZlCWgRQmqBDZHpcEYfE9TGtwVJJ3U5lmhaZMYbF4gICKhBu9buVTCtsIbwykfXzJPuaFMD28n7iezz69jUpSIgcrkAIucDUkHektkDCGNcOkept5XSMCpI7B6P8',
     bsBotSku: 'F0'
 };
 
-const useOptions = Object.assign({}, options);
+const useOptions = { ...options };
 
 delete useOptions.bsBotSku;
 delete useOptions.database['Azure Cosmos DB (MongoDB protocol)'];
 // delete useOptions.infrastructure['Express application'];
 // delete useOptions.infrastructure['Serverless AWS'];
-delete useOptions.infrastructure['Azure Web Apps'];
+// delete useOptions.infrastructure['Azure Web Apps'];
 // delete useOptions.infrastructure['Azure Functions'];
+
+// delete useOptions.platform['Facebook Messenger'];
+// delete useOptions.platform['Azure Bot Service'];
+// delete useOptions.platform.Webchat;
 
 const skipOptions = [
     { azureExpress: true, dynamodbStorage: true },
     { express: true, dynamodbStorage: true },
     { azureServerless: true, dynamodbStorage: true },
-    { botService: true, fbLoadProfile: true }
+    { botService: true, fbLoadProfile: true },
+    { keyvault: true, express: true },
+    { keyvault: true, awsServerless: true },
+    { appInsights: true, express: true },
+    { appInsights: true, awsServerless: true },
+    { webchat: true, fbLoadProfile: true },
+    { wingbot: true, fbLoadProfile: true },
+    { storeConversationHistory: true, sentry: true },
+    { storeConversationHistory: true, appInsights: true },
+    { storeConversationHistory: true, logzioToken: true },
+    { dbTokenStorage: true, sentry: true },
+    { dbTokenStorage: true, appInsights: true },
+    { dbTokenStorage: true, logzioToken: true },
+    { jwtTokenStorage: true, sentry: true },
+    { jwtTokenStorage: true, appInsights: true },
+    { jwtTokenStorage: true, logzioToken: true },
+    { keyvault: true, sentry: true },
+    { keyvault: true, appInsights: true },
+    { keyvault: true, logzioToken: true },
+    { conversationTesting: true, sentry: true },
+    { conversationTesting: true, appInsights: true },
+    { conversationTesting: true, logzioToken: true },
+    { conversationTesting: true, fbLoadProfile: true },
+    { storeConversationHistory: true, dbTokenStorage: true },
+    { storeConversationHistory: true, jwtTokenStorage: true },
+    { storeConversationHistory: true, jwtTokenStorage: true },
+    { storeConversationHistory: true, fbLoadProfile: true },
+    { sentry: true, fbLoadProfile: true },
+    { sentry: true, fbLoadProfile: true },
+    { logzioToken: true, fbLoadProfile: true },
+    { appInsights: true, fbLoadProfile: true },
+    { wingbotOrchestrator: true, fbLoadProfile: true },
+    { webchat: true, awsServerless: true },
+    { webchat: true, express: true },
+    { webchat: true, azureServerless: true },
+    { webchat: true, dynamodbStorage: true },
+    { webchat: true, logzioToken: true }
 ];
 
 let prevousCwd;
-
 
 function rmdir (dir) {
     return new Promise((resolve) => {
@@ -43,7 +83,6 @@ function rmdir (dir) {
         });
     });
 }
-
 
 function reuseNodeModules (cwd) {
     if (!prevousCwd) {
@@ -103,8 +142,8 @@ function test (cwd) {
 
 function isSkipped (config) {
     return skipOptions
-        .some(opts => Object.keys(opts)
-            .every(key => config[key]));
+        .some((opts) => Object.keys(opts)
+            .every((key) => config[key]));
 }
 
 function generateTests (keysStack = Object.keys(useOptions).reverse()) {
@@ -113,11 +152,12 @@ function generateTests (keysStack = Object.keys(useOptions).reverse()) {
 
     let ret;
     if (nextStack.length === 0) {
-        ret = [Object.assign({
+        ret = [{
             _testName: '',
             _opts: 't',
-            _x: []
-        }, defaultData)];
+            _x: [],
+            ...defaultData
+        }];
     } else {
         ret = generateTests(nextStack);
     }
@@ -126,13 +166,14 @@ function generateTests (keysStack = Object.keys(useOptions).reverse()) {
         // boolean
         return ret.reduce((arr, option) => {
             arr.push(...[true, false]
-                .map(variant => Object.assign({}, option, {
+                .map((variant) => ({
+                    ...option,
                     _testName: `${option._testName}${variant ? `, ${key}` : ''}`,
                     _x: [...option._x, { variant, key }],
                     _opts: `${option._opts}${variant ? `-${key.substr(0, 9)}` : ''}`,
                     [key]: variant
                 }))
-                .filter(newOption => !isSkipped(newOption)));
+                .filter((newOption) => !isSkipped(newOption)));
             return arr;
         }, []);
     }
@@ -140,14 +181,15 @@ function generateTests (keysStack = Object.keys(useOptions).reverse()) {
     return ret.reduce((arr, option) => {
         const variants = options[key];
         const newOptions = Object.keys(variants)
-            .map(variant => Object.assign({}, option, {
+            .map((variant) => ({
+                ...option,
                 _testName: `${option._testName}, ${variant}`,
                 _x: [...option._x, { v: `${variants[variant]}`, variant }],
                 _opts: `${option._opts}${variants[variant] ? `-${variants[variant]}`.substr(0, 10) : ''}`,
                 [key]: variants[variant],
                 [variants[variant]]: true
             }))
-            .filter(newOption => !isSkipped(newOption));
+            .filter((newOption) => !isSkipped(newOption));
 
         arr.push(...newOptions);
         return arr;
@@ -161,31 +203,34 @@ describe('$ init', function () {
 
     this.timeout(0);
 
-    generateTests()
-        .forEach((t) => {
+    const tests = generateTests();
 
-            it(t._testName.substr(2), async () => {
-                const data = preprocessData(t); // eslint-disable-line
+    console.log(`## TOTALLY: ${tests.length} TESTS`); // eslint-disable-line no-console
 
-                console.log(`    temp/${data._opts}`); // eslint-disable-line no-console
+    tests.forEach((t) => {
 
-                const botDir = path.join(tempDir, data._opts);
+        it(t._testName.substr(2), async () => {
+            const data = preprocessData(t); // eslint-disable-line
 
-                try {
-                    fs.rmdirSync(botDir);
-                } catch (e) {
-                    // mute
-                }
+            console.log(`    temp/${data._opts}`); // eslint-disable-line no-console
 
-                const tr = new TemplateRenderer(templateRoot, botDir, data);
+            const botDir = path.join(tempDir, data._opts);
 
-                await tr.render();
-                await rmdir(path.join(botDir, 'node_modules'));
-                await reuseNodeModules(botDir);
-                await npmI(botDir);
-                await test(botDir);
-            });
+            try {
+                fs.rmdirSync(botDir);
+            } catch (e) {
+                // mute
+            }
 
+            const tr = new TemplateRenderer(templateRoot, botDir, data);
+
+            await tr.render();
+            await rmdir(path.join(botDir, 'node_modules'));
+            await reuseNodeModules(botDir);
+            await npmI(botDir);
+            await test(botDir);
         });
+
+    });
 
 });

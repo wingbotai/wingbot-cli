@@ -10,7 +10,6 @@ const loggerOveridderFactory = require('./loggerOveridderFactory');
 let logger = console;
 
 {{#if appInsights}}
-
 if (config.appInsights) {
     // @ts-ignore
     const appInsights = module.require('applicationinsights');
@@ -47,14 +46,15 @@ if (config.appInsights) {
 } else {
     logger.sendAndClose = () => {};
 }
-
 {{/if}}
 {{#if sentry}}
-
 if (config.sentryDsn) {
 
     Sentry.init({
-        dsn: config.sentryDsn
+        dsn: config.sentryDsn,
+        environment: config.environment,
+        tracesSampleRate: 1.0,
+        normalizeDepth: 5
     });
 
     logger = loggerOveridderFactory((obj) => {
@@ -75,10 +75,8 @@ if (config.sentryDsn) {
 } else {
     logger.sendAndClose = () => {};
 }
-
 {{/if}}
 {{#if logzioToken}}
-
 if (config.logzioToken) {
 
     const logzio = module.require('logzio-nodejs').createLogger({
@@ -88,14 +86,14 @@ if (config.logzioToken) {
         debug: !config.isProduction
     });
 
-    logger = loggerOveridderFactory(obj => logzio.log(obj));
+    logger = loggerOveridderFactory((obj) => logzio.log(obj));
 
     logger.sendAndClose = () => logzio.sendAndClose();
 } else {
     logger.sendAndClose = () => {};
 }
-
 {{/if}}
+
 // overide logger here
 module.exports = logger;
 {{else}}

@@ -51,7 +51,7 @@ function jsonToText (input, output, pipeline = [], mapFn = null) {
 
     pipes.add(inp);
 
-    pipes.add(eventStream.mapSync(data => data.toString().replace(/^\s|\s+$/g, ' ')));
+    pipes.add(eventStream.mapSync((data) => data.toString().replace(/^\s|\s+$/g, ' ')));
 
     pipes.add(JSONStream.parse('rasa_nlu_data.common_examples.*'));
 

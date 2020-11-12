@@ -22,7 +22,7 @@ const SERVERLESS_AZURE = 'azureServerless';
 const MESSENGER = 'messenger';
 const BOT_SERVICE = 'botService';
 const WEBCHAT = 'webchat';
-const WINGBOT = 'wingbot';
+const WINGBOT_ORCHESTRATOR = 'wingbotOrchestrator';
 
 const AWS_DYNAMO_DB = 'dynamodbStorage';
 const MONGODB = 'mongodbStorage';
@@ -46,11 +46,11 @@ const options = {
         'Serverless AWS': SERVERLESS_AWS,
         'Azure Functions': SERVERLESS_AZURE,
         'Azure Web Apps': EXPRESS_AZURE
-        // 'Wb.ai': WINGBOT
     },
     platform: {
-        'Facebook messenger': MESSENGER,
+        'Facebook Messenger': MESSENGER,
         'Azure Bot Service': BOT_SERVICE,
+        'Wingbot Orchestrator': WINGBOT_ORCHESTRATOR,
         Webchat: WEBCHAT
     },
     database: {
@@ -90,16 +90,14 @@ const options = {
         Sentry: SENTRY,
         LogzIO: LOGZIO_TOKEN,
         'AppInsights (only for Azure Cloud)': APP_INSIGHTS
-
     }
 
 };
 
-
 function preprocessData (data) {
-    return Object.assign({
-        eslint: true
-    }, data, {
+    return {
+        eslint: true,
+        ...data,
         isMongoOrCosmos: data[MONGODB] || data[AZURE_COSMOS_DB],
         isAwsOrAzure: data[SERVERLESS_AWS] || data[SERVERLESS_AZURE],
         isAzure: data[SERVERLESS_AZURE] || data[EXPRESS_AZURE],
@@ -136,7 +134,7 @@ function preprocessData (data) {
             ? data.cosmosdbConnectionString
                 .replace(
                     /mongodb:\/\/[^:]+:[^@=]+(=+)/,
-                    x => x.replace(/=+$/, z => encodeURIComponent(z))
+                    (x) => x.replace(/=+$/, (z) => encodeURIComponent(z))
                 )
                 .replace(
                     /[&?]?replicaSet=globaldb/,
@@ -147,14 +145,14 @@ function preprocessData (data) {
             ? data.stagingCosmosdbConnectionString
                 .replace(
                     /mongodb:\/\/[^:]+:[^@=]+(=+)/,
-                    x => x.replace(/=+$/, z => encodeURIComponent(z))
+                    (x) => x.replace(/=+$/, (z) => encodeURIComponent(z))
                 )
                 .replace(
                     /[&?]?replicaSet=globaldb/,
                     ''
                 )
             : null
-    });
+    };
 }
 
 async function finish (formData, destination) {
@@ -198,27 +196,6 @@ async function processGenerator (args, skipForm) {
 
     const destination = process.cwd();
 
-    if (args.W) {
-        await finish({
-            infrastructure: WINGBOT,
-            [WINGBOT]: true,
-            [SERVERLESS_AWS]: true,
-            database: [MONGODB],
-            [MONGODB]: true,
-            platform: MESSENGER,
-            [MESSENGER]: true,
-            analytics: UNIVERSAL_ANALYTICS,
-            conversationTesting: G_SHEET_TESTING_SUIT,
-            keyvault: false,
-            [UNIVERSAL_ANALYTICS]: true,
-            withDesigner: true,
-            notifications: true,
-            storeConversationHistory: false,
-            monitoring: SENTRY
-        }, destination);
-        return;
-    }
-
     const inputsStorage = path.resolve(process.cwd(), '.wingbot');
     let previousData;
     let formData;
@@ -251,20 +228,21 @@ async function processGenerator (args, skipForm) {
                 ),
                 default: path.basename(destination)
             },
-            form.list('infrastructure', form.group(
+            form.list('platform', form.group(
                 'Project settings',
                 'We have to set up the basics: desired infrastructure, database and messaging platform',
-                form.label('Choose a deployment infrastructure')
-            )),
-            form.list('platform', form.label('Choose a messaging platform')),
+                form.label('Choose a messaging platform')
+            ))
+        ]);
+
+        await form.ask([
+            form.list('infrastructure', form.label('Choose a deployment infrastructure'), null, (key) => form.data.platform !== WEBCHAT || key === EXPRESS_AZURE),
             form.list('database', form.label('Choose a database')),
             form.list('analytics', form.label('Choose an analytic tool')),
             form.list('conversationTesting', form.label('Choose a conversation testing tool')),
             form.list('withDesigner', form.label('Connect with wingbot.ai designer', 'for experimental purposes you can make a chatbot on your own')),
             form.list('keyvault', form.label('Choose if you want to use keyvault'))
-
         ]);
-
 
         /**
          * publicStorage
@@ -970,7 +948,7 @@ async function processGenerator (args, skipForm) {
                         message: form.group(
                             'Webchat settings - production',
                             'Information about webchat configuration\nYou will be able to edit these data later in config directory.',
-                            form.label('Webchat App ID', '', true),
+                            form.label('Webchat App ID', '', true)
                         ),
                         name: 'fbAppId'
                     },
@@ -993,7 +971,7 @@ async function processGenerator (args, skipForm) {
                             message: form.group(
                                 'Webchat settings - Stage',
                                 'Information about webchat configuration\nYou will be able to edit these data later in config directory.',
-                                form.label('Webchat App ID', '', true),
+                                form.label('Webchat App ID', '', true)
                             ),
                             name: 'fbAppIdStaging'
                         },
@@ -1017,7 +995,7 @@ async function processGenerator (args, skipForm) {
                             message: form.group(
                                 'Webchat settings - Dev',
                                 'Information about webchat configuration\nYou will be able to edit these data later in config directory.',
-                                form.label('Webchat App ID', '', true),
+                                form.label('Webchat App ID', '', true)
                             ),
                             name: 'fbAppIdDev'
                         },
@@ -1041,7 +1019,7 @@ async function processGenerator (args, skipForm) {
                             message: form.group(
                                 'Webchat settings - Test',
                                 'Information about webchat configuration\nYou will be able to edit these data later in config directory.',
-                                form.label('Webchat App ID', '', true),
+                                form.label('Webchat App ID', '', true)
                             ),
                             name: 'fbAppIdTest'
                         },
@@ -1177,6 +1155,105 @@ async function processGenerator (args, skipForm) {
                     ]);
                 }
                 break;
+            case WINGBOT_ORCHESTRATOR:
+                await form.ask([
+                    {
+                        type: 'input',
+                        message: form.group(
+                            'Wingbot orchestrator settings - production',
+                            'Put orchestrator configuration here.',
+                            form.label('Orchestrator API Url', 'Target orchestration url')
+                        ),
+                        name: 'orchestratorApiUrl',
+                        default: 'https://orchestrator-api.wingbot.ai'
+                    }
+                ]);
+
+                if (!form.data.keyvault) {
+                    await form.ask([
+                        {
+                            type: 'input',
+                            message: form.label('Production orchestrator secret', 'Secret for bot-orchestrator communication'),
+                            name: 'wingbotOrchestratorProductionSecret'
+                        }
+                    ]);
+                }
+
+                if (form.data.stagingEnvironment) {
+                    await form.ask([
+                        {
+                            type: 'input',
+                            message: form.group(
+                                'Wingbot orchestrator settings - staging',
+                                'Put orchestrator configuration here.',
+                                form.label('Orchestrator API Url', 'Target orchestration url')
+                            ),
+                            name: 'orchestratorStagingApiUrl',
+                            default: form.data.orchestratorApiUrl
+                        }
+                    ]);
+
+                    if (!form.data.keyvault) {
+                        await form.ask([
+                            {
+                                type: 'input',
+                                message: form.label('Staging orchestrator secret', 'Secret for bot-orchestrator communication'),
+                                name: 'wingbotOrchestratorStagingSecret'
+                            }
+                        ]);
+                    }
+                }
+
+                if (form.data.devEnvironment) {
+                    await form.ask([
+                        {
+                            type: 'input',
+                            message: form.group(
+                                'Wingbot orchestrator settings - dev',
+                                'Put orchestrator configuration here.',
+                                form.label('Orchestrator API Url', 'Target orchestration url')
+                            ),
+                            name: 'orchestratorDevApiUrl',
+                            default: form.data.orchestratorApiUrl
+                        }
+                    ]);
+
+                    if (!form.data.keyvault) {
+                        await form.ask([
+                            {
+                                type: 'input',
+                                message: form.label('Dev orchestrator secret', 'Secret for bot-orchestrator communication'),
+                                name: 'wingbotOrchestratorDevSecret'
+                            }
+                        ]);
+                    }
+                }
+
+                if (form.data.testEnvironment) {
+                    await form.ask([
+                        {
+                            type: 'input',
+                            message: form.group(
+                                'Wingbot orchestrator settings - test',
+                                'Put orchestrator configuration here.',
+                                form.label('Orchestrator API Url', 'Target orchestration url')
+                            ),
+                            name: 'orchestratorTestApiUrl',
+                            default: form.data.orchestratorApiUrl
+                        }
+                    ]);
+
+                    if (!form.data.keyvault) {
+                        await form.ask([
+                            {
+                                type: 'input',
+                                message: form.label('Test orchestrator secret', 'Secret for bot-orchestrator communication'),
+                                name: 'wingbotOrchestratorTestSecret'
+                            }
+                        ]);
+                    }
+                }
+                break;
             default:
                 break;
         }
@@ -1297,7 +1374,7 @@ async function processGenerator (args, skipForm) {
     }
 
     try {
-        const save = Object.assign({}, formData, { cliVersion: packageJson.version });
+        const save = { ...formData, cliVersion: packageJson.version };
         fs.writeFileSync(inputsStorage, JSON.stringify(save, undefined, 2));
     } catch (e) {
         // noop

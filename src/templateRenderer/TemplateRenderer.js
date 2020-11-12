@@ -16,9 +16,7 @@ class TemplateRenderer {
         this.templateRoot = templateRoot;
         this.destination = destination;
 
-        this.data = Object.assign({
-            projectName: path.basename(destination)
-        }, data);
+        this.data = { projectName: path.basename(destination), ...data };
 
         this._originalHashes = {};
         this._writtenHashes = {};
@@ -62,7 +60,6 @@ class TemplateRenderer {
             fs.mkdir(dir, resolve);
         });
     }
-
 
     _ensureDirExists (fileName) {
         const dir = path.dirname(fileName);
@@ -244,7 +241,7 @@ class TemplateRenderer {
     _loadHashFile () {
         const hashFilePath = path.join(this.destination, 'wingbot-files.json');
         return this._readFile(hashFilePath)
-            .then(contents => JSON.parse(contents))
+            .then((contents) => JSON.parse(contents))
             .catch(() => ({}))
             .then((hashes) => {
                 this._originalHashes = hashes;
@@ -253,7 +250,7 @@ class TemplateRenderer {
 
     _saveHashFile () {
         const hashes = Object.keys(this._writtenHashes)
-            .map(key => [key, this._writtenHashes[key]])
+            .map((key) => [key, this._writtenHashes[key]])
             .sort((a, b) => {
                 const aSlash = a[0].match(/\//);
                 const bSlash = b[0].match(/\//);
@@ -277,7 +274,7 @@ class TemplateRenderer {
             this._loadHashFile()
         ])
             .then(([files]) => Promise.all(files
-                .map(fileName => this._renderFile(fileName))))
+                .map((fileName) => this._renderFile(fileName))))
             .then(() => this._saveHashFile());
     }
 

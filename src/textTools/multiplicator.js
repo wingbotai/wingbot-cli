@@ -7,7 +7,7 @@ const assert = require('assert');
 
 function expand (combinations, vector) {
     if (combinations.length === 0) {
-        return vector.map(w => [w]);
+        return vector.map((w) => [w]);
     }
     return combinations
         .reduce((ret, combination) => {
@@ -58,10 +58,11 @@ function generateOptions (intent, combinations) {
         }
         const text = join.join('');
 
-        return Object.assign({}, intent, {
+        return {
+            ...intent,
             text,
             entities: [] // not necessary now
-        });
+        };
     });
 }
 
@@ -73,7 +74,7 @@ function multiplicator (intent, getVariants) {
     intent.entities.sort((a, b) => (a.start < b.start ? -1 : 1));
 
     const variantsPromise = intent.entities
-        .map(entity => getVariants(entity.entity, entity.value));
+        .map((entity) => getVariants(entity.entity, entity.value));
 
     return Promise.all(variantsPromise)
         .then((variants) => {

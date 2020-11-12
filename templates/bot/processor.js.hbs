@@ -1,3 +1,4 @@
+{{#unless wingbotOrchestrator}}
 /*
  * @author wingbot.ai
  */
@@ -30,10 +31,9 @@ const processor = new Processor(bot, {
 });
 
 processor.on('event', onEvent);
-
 {{#if notifications}}
 processor.plugin(notifications);
 
 {{/if}}
-
 module.exports = processor;
+{{/unless}}

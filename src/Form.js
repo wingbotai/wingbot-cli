@@ -46,15 +46,16 @@ class Form {
         return ret;
     }
 
-    list (name, message, defaults = null) {
+    list (name, message, defaults = null, filterFn = (() => true)) {
         const choices = this.options[name];
 
         const ret = {
             type: 'list',
             name,
             message,
-            choices: Object.keys(this.options[name]),
-            filter: val => choices[val]
+            choices: Object.keys(this.options[name]).filter((key) => filterFn(choices[key])),
+            filterFn,
+            filter: (val) => choices[val]
         };
 
         if (defaults) {
@@ -70,12 +71,13 @@ class Form {
             name,
             message,
             choices,
-            filter: choice => choice === 'Yes'
+            filter: (choice) => choice === 'Yes'
         };
     }
 
     async ask (questions) {
         const prompts = questions.map((input) => {
+
             if (typeof this.previousData[input.name] === 'undefined') {
                 return input;
             }
@@ -99,9 +101,7 @@ class Form {
                     });
             }
 
-            return Object.assign({}, input, {
-                default: def
-            });
+            return { ...input, default: def };
         });
 
         const data = await inquirer.prompt(prompts);

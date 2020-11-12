@@ -1,13 +1,15 @@
 {
   "name": "{{projectName}}",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Wingbot chatbot: {{projectName}}",
   "main": "handler.js",
   "engines": {
-    "node": "^8.10.0"
+    "node": ">=12.0.0"
   },
   "scripts": {
-    "start": {{#if wingbot}}"echo \"Error: start command not available\",{{/if}}{{#if isAwsOrAzure}}"echo \"Error: start command not available\" && exit 1",
+{{#if mssqlStorage}}    "sql:start": "(docker rm sqlwingbottest || true) && docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=NeotravujPotvoro1' -p 1433:1433 --name sqlwingbottest -d mcr.microsoft.com/mssql/server:2017-latest && sleep 12 && docker exec -it sqlwingbottest /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P 'NeotravujPotvoro1' -Q 'CREATE DATABASE {{mssqlName}}'",
+    "sql:stop": "docker kill sqlwingbottest && docker rm sqlwingbottest",{{/if}}
+    "start": {{#if isAwsOrAzure}}"echo \"Error: start command not available\" && exit 1",
 {{/if}}{{#if expressOrAppService}}"node ./bin/www.js",{{/if}}
     "test": "npm run test:lint && npm run test:bot",
     "test:coverage": "nyc --reporter=html mocha ./test && nyc report",
@@ -16,10 +18,10 @@
     "test:lint": "eslint --ext .js lib config test routes bot{{#if expressOrAppService}} bin *.js{{/if}}",
     {{#if stagingEnvironment}}
     "build:staging": ":"{{#if awsServerless}},
-    "deploy:staging": "npm run build:staging && sls deploy -s staging"{{/if}},
+    "deploy:staging": "npm i && npm run build:staging && sls deploy -s staging"{{/if}},
     {{/if}}
     "build:production": ":"{{#if awsServerless}},
-    "deploy:production": "npm run build:production && sls deploy -s production"{{/if}}{{#if isAzure}},
+    "deploy:production": "npm i && npm run build:production && sls deploy -s production"{{/if}}{{#if isAzure}},
     "deploy:production": "./bin/universaldeploy.cmd",
     "pack": "npm-pack-zip"{{/if}}
   },
@@ -31,39 +33,36 @@
   "devDependencies": { {{#if awsServerless}}
     "aws-sdk": "^2.101.0",{{else}}{{#if dynamodbStorage}}"aws-sdk": "^2.101.0",{{/if}}{{/if}}
     "env-test": "^1.0.0",{{#if eslint}}
-    "eslint": "^5.12.1",
-    "eslint-config-airbnb": "^17.1.0",
-    "eslint-mocha": "^0.5.0",
-    "eslint-plugin-import": "^2.16.0",
-    "eslint-plugin-jsx-a11y": "^6.2.0",
-    "eslint-plugin-mocha": "^5.2.1",
-    "eslint-plugin-react": "^7.12.4",{{/if}}
-    "mocha": "^6.1.4",
-    "nyc": "^14.1.0"{{#if isAzure}},
+    "eslint": "^7.12.1",
+    "eslint-config-airbnb": "^18.2.0",
+    "eslint-mocha": "^0.7.3",
+    "eslint-plugin-mocha": "^8.0.0",{{/if}}
+    "mocha": "^8.2.1",
+    "nyc": "^15.1.0"{{#if isAzure}},
     "npm-pack-zip": "^1.2.6"{{/if}}{{#if publicStorage}},
     "serverless-s3-sync": "^1.7.1"{{/if}}
   },
   "dependencies": { {{#if expressOrAppService}}
-    "cookie-parser": "^1.4.3",
-    "express": "^4.16.3",
-    "http-errors": "^1.6.3",
-    "morgan": "^1.9.0",{{/if}}{{#if logzioToken}}
-    "logzio-nodejs": "^1.0.3",{{/if}}{{#if sentry}}
-    "@sentry/node": "^5.11.0",{{/if}}{{#if appInsights}}
+    "cookie-parser": "^1.4.5",
+    "express": "^4.17.1",
+    "http-errors": "^1.8.0",
+    "morgan": "^1.10.0",{{/if}}{{#if logzioToken}}
+    "logzio-nodejs": "^2.0.2",{{/if}}{{#if sentry}}
+    "@sentry/node": "^5.27.2",{{/if}}{{#if appInsights}}
     "applicationinsights": "^1.6.0",{{/if}}{{#if isMongoOrCosmos}}
-    "mongodb": "^3.2.3",
-    "mongodb-core": "3.2.3",{{/if}}
-    "wingbot": "^3.0.0-alpha.29"{{#if dynamodbStorage}},
+    "mongodb": "^3.6.2",
+    "mongodb-core": "3.2.7",{{/if}}
+    "handlebars": "^4.7.6",
+    "wingbot": "^3.6.2"{{#if dynamodbStorage}},
     "wingbot-dynamodb": "^2.5.0"{{/if}}{{#if mssqlStorage}},
-    "wingbot-mssql": "^1.0.3",
+    "wingbot-mssql": "^1.2.5"{{/if}}{{#if keyvault}},
     "azure-keyvault": "^3.0.5",
-    "ms-rest": "^2.5.3"{{/if}}{{#if jwtTokenStorage}},
+    "ms-rest": "^2.5.4"{{/if}}{{#if jwtTokenStorage}},
     "wingbot-jwt": "^1.1.0"{{/if}}{{#if webchatOrMessenger}},
-    "wingbot-facebook": "^3.0.0-alpha.8"{{/if}}{{#if wingbot}},
-    "wingbot-botservice": "^2.0.1"{{/if}}{{#if botService}},
-    "wingbot-botservice": "^2.0.1"{{/if}}{{#if isMongoOrCosmos}},
-    "wingbot-mongodb": "^2.15.2"{{/if}}{{#if googleAnalytics}},
-    "universal-analytics": "^0.4.20"{{/if}}{{#if analytics}},
+    "wingbot-facebook": "^3.1.0"{{/if}}{{#if botService}},
+    "wingbot-botservice": "^2.2.0"{{/if}}{{#if isMongoOrCosmos}},
+    "wingbot-mongodb": "^2.15.3"{{/if}}{{#if googleAnalytics}},
+    "universal-analytics": "^0.4.23"{{/if}}{{#if analytics}},
     "webalize": "^0.1.0"{{/if}}{{#if gSheetTestingSuit}},
     "wingbot-tests-gsheets": "^1.2.3"{{/if}}
   }

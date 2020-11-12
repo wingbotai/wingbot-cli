@@ -112,7 +112,7 @@ for (let i = 0; i < DEFAULT_REMOVAL_MAP.length; i++) {
  */
 function normalize (str) {
     return str
-        .replace(/[^A-Za-z0-9\s'`]/g, a => (diacriticsMap[a] ? diacriticsMap[a] : ' '))
+        .replace(/[^A-Za-z0-9\s'`]/g, (a) => (diacriticsMap[a] ? diacriticsMap[a] : ' '))
         .replace(/[`']+(\s|$)|(\s|^)['`]+/g, ' ')
         .replace(/\s+/g, ' ')
         .toLocaleLowerCase();

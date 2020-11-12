@@ -28,9 +28,7 @@ class Deployments {
     }
 
     _uploadFile (url, fields, file) {
-        const formData = Object.assign({}, fields, {
-            file
-        });
+        const formData = { ...fields, file };
         return request({
             url,
             method: 'POST',
@@ -40,7 +38,7 @@ class Deployments {
 
     deploy (token, id, file) {
         return this._createDeployment(token, id)
-            .then(res => this._uploadFile(res.uploadUrl.url, res.uploadUrl.fields, file));
+            .then((res) => this._uploadFile(res.uploadUrl.url, res.uploadUrl.fields, file));
     }
 
     list (token) {

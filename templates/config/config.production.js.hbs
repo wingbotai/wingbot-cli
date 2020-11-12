@@ -18,7 +18,6 @@ module.exports = {
     {{#unless productionDomain}}// {{/unless}}apiUrl: '{{#if productionDomain}}https://{{productionDomain}}{{else}}putUrlHereAfterDeploy{{/if}}',
 {{/if}}
 
-
 {{#if withDesigner}}
     wingbot: {
         snapshot: 'production',
@@ -48,12 +47,18 @@ module.exports = {
         pageToken: '{{fbPageToken}}',
         botToken: '{{fbBotToken}}',
         apiUrl: '{{wchApiUrl}}'
-
     },
 
     webchat: {
         appId: '{{fbAppId}}',
         channelId: '{{wchChannelId}}'
+    },
+
+{{/if}}
+{{#if wingbotOrchestrator}}
+    orchestrator: {
+        apiUrl: '{{orchestratorApiUrl}}',{{#unless keyvault}}
+        secret: '{{wingbotOrchestratorProductionSecret}}'{{/unless}}
     },
 
 {{/if}}

@@ -23,7 +23,7 @@ async function deploy (id, file, cmd) {
     const sourceFile = fs.createReadStream(path.resolve(process.cwd(), file));
 
     await spinAndCatch(async (s) => {
-        const updaterFn = progress => s.setSpinnerTitle(progress);
+        const updaterFn = (progress) => s.setSpinnerTitle(progress);
         const fileStream = await compressAndStream(sourceFile, updaterFn);
         await deployer.deploy(id, fileStream, cmd.token);
     });

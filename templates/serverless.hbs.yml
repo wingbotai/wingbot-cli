@@ -80,7 +80,7 @@ provider:
       Action:
         - "lambda:InvokeFunction"
       Resource:
-        - "arn:aws:lambda:${self:provider.region}:${self:custom.accountId}:function:${self:custom.prefix}-send"
+        - "arn:aws:lambda:${self:provider.region}:${self:custom.accountId}:function:${self:custom.prefix}-{{#if wingbotOrchestrator}}bot{{else}}send{{/if}}"
 {{#if dynamodbStorage}}
     - Effect: Allow
       Action: # Gives permission to DynamoDB tables in a specific region
@@ -193,7 +193,7 @@ resources:
                   Action:
                     - "lambda:InvokeFunction"
                   Resource:
-                    - "arn:aws:lambda:${self:provider.region}:${self:custom.accountId}:function:${self:custom.prefix}-send"
+                    - "arn:aws:lambda:${self:provider.region}:${self:custom.accountId}:function:${self:custom.prefix}-{{#if wingbotOrchestrator}}bot{{else}}send{{/if}}"
                 - Effect: Allow
                   Action:
                     - "logs:CreateLogGroup"
@@ -210,7 +210,7 @@ resources:
                     - "lambda:GetFunctionConfiguration"
                     - "lambda:UpdateFunctionConfiguration"
                   Resource:
-                    - "arn:aws:lambda:${self:provider.region}:${self:custom.accountId}:function:${self:custom.prefix}-send"
+                    - "arn:aws:lambda:${self:provider.region}:${self:custom.accountId}:function:${self:custom.prefix}-{{#if wingbotOrchestrator}}bot{{else}}send{{/if}}"
                     {{#if notifications}}
                     - "arn:aws:lambda:${self:provider.region}:${self:custom.accountId}:function:${self:custom.prefix}-worker"
                     {{/if}}

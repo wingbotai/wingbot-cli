@@ -59,7 +59,6 @@ const api = new GraphApi([
     appToken: config.appToken,
     groups: DEFAULT_ACCESS_GROUPS
 });
-
 {{#if awsServerless}}
 module.exports.handler = wrapRoute(async (event) => {
     const body = JSON.parse(event.body);
@@ -72,7 +71,6 @@ module.exports.handler = wrapRoute(async (event) => {
     };
 });
 {{#if notifications}}
-
 module.exports.worker = wrapRoute(async () => {
     await notifications.processQueue(channel, 90000);
 });

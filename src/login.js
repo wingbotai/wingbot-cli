@@ -29,13 +29,13 @@ async function login () {
 
     const data = await spinAndCatch(() => api.auth.login(email, password));
 
-
     const { token } = data;
 
-    return credentials.saveData(Object.assign({}, cfg, {
+    return credentials.saveData({
+        ...cfg,
         email,
         token
-    }));
+    });
 }
 
 module.exports = login;

@@ -55,6 +55,13 @@ module.exports = {
     },
 
 {{/if}}
+{{#if wingbotOrchestrator}}
+    orchestrator: {
+        apiUrl: '{{orchestratorStagingApiUrl}}',{{#unless keyvault}}
+        secret: '{{wingbotOrchestratorStagingSecret}}'{{/unless}}
+    },
+
+{{/if}}
 {{#if botService}}
     botService: {
         appId: process.env.BOT_APP_ID || '{{bsAppIdStaging}}',

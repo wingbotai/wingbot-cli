@@ -19,8 +19,8 @@ function getEventTracker (senderId, skill = null) {
     if (skill) {
         const contentGroup = `${skill}`
             .split('/')
-            .filter(s => s.trim().length !== 0)
-            .map(s => webalize(s))
+            .filter((s) => s.trim().length !== 0)
+            .map((s) => webalize(s))
             .join('/');
 
         tracker.set('cg1', contentGroup);
@@ -30,15 +30,16 @@ function getEventTracker (senderId, skill = null) {
 }
 
 {{/if}}
-
 /**
  * Trigged, when messaging event arrives to be able to record it
  *
  * @param {string} senderId
  * @param {string} action
  * @param {string} text
- * @param {Request} req
+ * @param {import('wingbot/src/Request')} req
  * @param {string} prevAction
+ * @param {boolean} doNotTrack
+ * @param {string} skill
  */
 function onEvent (senderId, action, text, req, prevAction, doNotTrack, skill) { // eslint-disable-line no-unused-vars, max-len
 {{#if googleAnalytics}}
@@ -141,11 +142,9 @@ function onEvent (senderId, action, text, req, prevAction, doNotTrack, skill) { 
         tracker.event(actionCategory, action || '(not set)', label, value);
     }
 
-
     tracker.send();
 {{/if}}
 }
-
 
 /**
  * Trigged, when action is executed to be able to record it
@@ -153,9 +152,10 @@ function onEvent (senderId, action, text, req, prevAction, doNotTrack, skill) { 
  * @param {string} senderId
  * @param {string} action
  * @param {string} text
- * @param {Request} req
- * @param {string} prevAction
-
+ * @param {import('wingbot/src/Request')} req
+ * @param {string} lastAction
+ * @param {boolean} doNotTrack
+ * @param {string} skill
  */
 function onAction (senderId, action, text, req, lastAction, doNotTrack, skill) { // eslint-disable-line no-unused-vars, max-len
 {{#if googleAnalytics}}

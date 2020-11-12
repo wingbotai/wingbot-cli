@@ -70,7 +70,6 @@ commander
     .description(chalk.blue('Prints this message'))
     .action(() => commander.help());
 
-
 commander.parse(process.argv);
 
 if (!source || !algorithm) {
@@ -217,7 +216,6 @@ const minExamples = (commander.min && parseInt(commander.min, 10)) || 1;
         }));
     }
 
-
     // eslint-disable-next-line no-console
     console.log('vectoring...');
     const ds = new Array(texts.length);
@@ -233,7 +231,7 @@ const minExamples = (commander.min && parseInt(commander.min, 10)) || 1;
                 }
             });
         });
-        ds[k] = vec.map(v => v * 100);
+        ds[k] = vec.map((v) => v * 100);
     }
 
     // console.log(ds);
@@ -292,7 +290,7 @@ const minExamples = (commander.min && parseInt(commander.min, 10)) || 1;
     // eslint-disable-next-line no-console
     console.log('sorting...');
     /** @type {{t:string,c:number}[][]} */
-    const mapped = res.map(items => Object.assign(items.map(i => texts[i]), {
+    const mapped = res.map((items) => Object.assign(items.map((i) => texts[i]), {
         sum: items.reduce((sum, i) => texts[i].c + sum, 0)
     }));
 
@@ -328,9 +326,9 @@ const minExamples = (commander.min && parseInt(commander.min, 10)) || 1;
 
     const csv = mapped
         // @ts-ignore
-        .filter(items => items.sum >= minExamples)
-        .map(items => items
-            .map(r => r.t.replace(/[,\s]+/g, ' '))
+        .filter((items) => items.sum >= minExamples)
+        .map((items) => items
+            .map((r) => r.t.replace(/[,\s]+/g, ' '))
             .join(','))
         .join('\n');
 

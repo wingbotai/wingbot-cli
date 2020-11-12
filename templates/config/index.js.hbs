@@ -3,7 +3,7 @@
  */
 'use strict';
 
-{{#if mssqlStorage}}
+{{#if keyvault}}
 const { getSecret } = require('./getKeyvaultSecrets');
 
 const keyvaultDomain = process.env.KEYVAULT_DOMAIN || null;
@@ -24,13 +24,13 @@ const config = {
 
 {{#if expressOrAppService}}
     expressBodyLimit: '5mb',
-{{/if}}
 
+{{/if}}
 {{#if messenger}}
     facebook: {
         appId: '-',
         pageId: '-',
-        appSecret: '-',
+        appSecret: {{#if keyvault}}getSecret(keyvaultDomain, 'defaultbotsecret', '-'){{else}}'-'{{/if}},
         pageToken: '-',
         botToken: '-'
     },
@@ -40,18 +40,23 @@ const config = {
     facebook: {
         appId: '{{fbAppId}}',
         pageId: '{{fbPageId}}',
-        appSecret: '{{fbAppSecret}}',
+        appSecret: {{#if keyvault}}getSecret(keyvaultDomain, 'defaultbotsecret', '{{fbAppSecret}}'){{else}}'{{fbAppSecret}}'{{/if}},
         pageToken: '{{fbPageToken}}',
         botToken: '{{fbBotToken}}',
         apiUrl: '{{wchApiUrl}}'
-
     },
 
     webchat: {
         appId: '{{fbAppId}}',
         channelId: '{{wchChannelId}}',
-        secret: getSecret(keyvaultDomain, 'defaultbotsecret', '-')
+        secret: {{#if keyvault}}getSecret(keyvaultDomain, 'defaultbotsecret', '-'){{else}}'-'{{/if}}
+    },
 
+{{/if}}
+{{#if wingbotOrchestrator}}
+    orchestrator: {
+        apiUrl: '{{orchestratorApiUrl}}',
+        secret: {{#if keyvault}}getSecret(keyvaultDomain, 'orchestratorsecret', '-'){{else}}'-'{{/if}}
     },
 
 {{/if}}
@@ -74,8 +79,8 @@ const config = {
 {{/if}}
 {{#if isMongoOrCosmos}}
     db: {
-{{#if mongodbStorage}}        url: process.env.MONGODB_CONNECTION_STRING || 'mongodb://127.0.0.1:27017/{{projectName}}',
-{{else}}{{#if cosmosdbStorage}}        url: process.env.COSMOSDB_CONNECTION_STRING || 'mongodb://localhost:C2y6yDjf5%2FR%2Bob0N8A7Cgv30VRDJIWEHLM%2B4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw%2FJw%3D%3D@localhost:10255/admin?ssl=true',{{/if}}{{/if}}
+{{#if mongodbStorage}}        url: {{#if keyvault}}getSecret(keyvaultDomain, 'dbconnectionstring', 'mongodb://127.0.0.1:27017/{{projectName}}'){{else}}process.env.MONGODB_CONNECTION_STRING || 'mongodb://127.0.0.1:27017/{{projectName}}'{{/if}},
+{{else}}{{#if cosmosdbStorage}}        url: {{#if keyvault}}getSecret(keyvaultDomain, 'dbconnectionstring', 'mongodb://localhost:C2y6yDjf5%2FR%2Bob0N8A7Cgv30VRDJIWEHLM%2B4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw%2FJw%3D%3D@localhost:10255/admin?ssl=true'){{else}}process.env.COSMOSDB_CONNECTION_STRING || 'mongodb://localhost:C2y6yDjf5%2FR%2Bob0N8A7Cgv30VRDJIWEHLM%2B4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw%2FJw%3D%3D@localhost:10255/admin?ssl=true'{{/if}},{{/if}}{{/if}}
 {{#if mongodbStorage}}        db: '{{projectName}}',
 {{else}}{{#if cosmosdbStorage}}        db: '{{projectName}}',
 {{/if}}{{/if}}
@@ -98,14 +103,13 @@ const config = {
     },
 
 {{/if}}
-
 {{#if mssqlStorage}}
     mssql: {
         user: process.env.SQL_USER || 'SA',
-        password: getSecret(keyvaultDomain, 'sqlpassword', process.env.SQL_PASSWORD || 'NeotravujPotvoro1'),
+        password: {{#if keyvault}}getSecret(keyvaultDomain, 'sqlpassword', process.env.SQL_PASSWORD || 'NeotravujPotvoro1'){{else}}process.env.SQL_PASSWORD || 'NeotravujPotvoro1'{{/if}},
         server: process.env.SQL_HOST || 'localhost',
         port: parseInt(process.env.SQL_PORT || '1433', 10),
-        database: process.env.SQL_DB || 'loginbot',
+        database: process.env.SQL_DB || '{{mssqlName}}',
         options: {
             encrypt: false
         }
@@ -151,7 +155,7 @@ const config = {
 /**
  * initialize config file
  *
- * @param {Object} cfg
+ * @param {object} cfg
  * @param {string} env
  */
 function initialize (cfg, env = 'development') {

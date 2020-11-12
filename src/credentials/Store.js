@@ -48,7 +48,7 @@ class Store {
     _saveData (data) {
         const configFile = this._filename();
 
-        return promise(cb => fs.writeFile(configFile, data, cb))
+        return promise((cb) => fs.writeFile(configFile, data, cb))
             .catch(() => {
                 throw new Error(`Can't write to ${configFile}`);
             });
@@ -59,13 +59,13 @@ class Store {
         const serialized = JSON.stringify(data);
 
         return this._saveData(serialized)
-            .catch(() => promise(cb => fs.mkdir(this.dir, cb))
+            .catch(() => promise((cb) => fs.mkdir(this.dir, cb))
                 .then(() => this._saveData(serialized)));
     }
 
     updateData (data) {
         const current = this.loadData();
-        const updated = Object.assign({}, current, data);
+        const updated = { ...current, ...data };
         return this._saveData(JSON.stringify(updated));
     }
 

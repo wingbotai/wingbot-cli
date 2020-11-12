@@ -14,7 +14,7 @@ function attach (fn) {
                 log(chalk.red(`\nError: ${e.message}`));
 
                 if (Array.isArray(e.errors)) {
-                    e.errors.forEach(err => log(chalk.yellow(` ${err.dataPath}: ${err.message}`)));
+                    e.errors.forEach((err) => log(chalk.yellow(` ${err.dataPath}: ${err.message}`)));
                 }
             });
     };

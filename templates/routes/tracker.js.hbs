@@ -21,7 +21,7 @@ function trackEvent (sender, text, url) {
 
     tracker.event('User: Button - url', url, word);
 
-    return new Promise(r => tracker.send(r));
+    return new Promise((r) => tracker.send(r));
 }
 {{#if awsServerless}}
 module.exports.handler = wrapRoute(async (event) => {
