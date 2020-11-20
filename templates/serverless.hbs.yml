@@ -50,20 +50,28 @@ custom:
       params:
         - "*.plist":
             ContentType: text/xml
+            CacheControl: 'max-age=60'
         - "*.png":
             ContentType: image/png
+            CacheControl: 'max-age=3600'
         - "*.jpg":
             ContentType: image/jpeg
+            CacheControl: 'max-age=3600'
         - "*.gif":
             ContentType: image/gif
+            CacheControl: 'max-age=3600'
         - "*.html":
             ContentType: text/html
+            CacheControl: 'max-age=60'
         - "*.css":
             ContentType: text/css
+            CacheControl: 'max-age=60'
         - "*.js":
             ContentType: text/javascript
+            CacheControl: 'max-age=60'
         - "*.mp4":
             ContentType: video/mp4
+            CacheControl: 'max-age=3600'
 {{/if}}
 provider:
   name: aws
