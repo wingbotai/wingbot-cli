@@ -175,6 +175,9 @@ async function finish (formData, destination) {
         default:
             break;
     }
+    if (data.gSheetTestingSuit) {
+        log(`${chalk.white('do not forget to put')} ${chalk.magenta('google-token.json')} ${chalk.white('to project root to be able to run automated tests')}`);
+    }
 }
 
 async function processGenerator (args, skipForm) {
@@ -240,9 +243,14 @@ async function processGenerator (args, skipForm) {
             form.list('database', form.label('Choose a database')),
             form.list('analytics', form.label('Choose an analytic tool')),
             form.list('conversationTesting', form.label('Choose a conversation testing tool')),
-            form.list('withDesigner', form.label('Connect with wingbot.ai designer', 'for experimental purposes you can make a chatbot on your own')),
-            form.list('keyvault', form.label('Choose if you want to use keyvault'))
+            form.list('withDesigner', form.label('Connect with wingbot.ai designer', 'for experimental purposes you can make a chatbot on your own'))
         ]);
+
+        if ([EXPRESS_AZURE, SERVERLESS_AZURE].includes(form.data.infrastructure)) {
+            await form.ask([
+                form.list('keyvault', form.label('Choose if you want to use keyvault'))
+            ]);
+        }
 
         /**
          * publicStorage
@@ -450,7 +458,7 @@ async function processGenerator (args, skipForm) {
                         'We need to know wingbot connection data for every environment.\nBut you can skip these steps and fill these data later.\nYou can find all requested informations in "deployments" settings of your chatbot.',
                         form.label('Wingbot bot name', 'you can fill it later into config/index.js', true)
                     ),
-                    default: path.basename(destination)
+                    default: form.data.projectName
                 },
                 {
                     type: 'input',
@@ -554,14 +562,14 @@ async function processGenerator (args, skipForm) {
                         message: form.group(
                             'MongoDB connection',
                             'you can fill theese data later into config files, but it\'s recommended to keep connection string in ENV variables',
-                            form.label('Database name')
+                            form.label('Production database name')
                         ),
                         name: 'mongodbName',
                         default: urlProjectName
                     },
                     {
                         type: 'input',
-                        message: form.label('Connection string', 'for production environment', true),
+                        message: form.label('Production connection string', 'for production environment', true),
                         name: 'mongodbConnectionString'
                     }
                 ]);
@@ -731,13 +739,13 @@ async function processGenerator (args, skipForm) {
                         message: form.group(
                             'Cosmos DB connection',
                             'you can fill this information later into config files, but it\'s recommended to keep connection string in ENV variable (COSMOSDB_CONNECTION_STRING)',
-                            form.label('Database name', 'Leave empty if you don\'t want to create new database.', true)
+                            form.label('Production database name', 'Leave empty if you don\'t want to create new database.', true)
                         ),
                         name: 'cosmosdbName'
                     },
                     {
                         type: 'input',
-                        message: form.label('Connection string', 'For existing database. Will be ignored if you specified Database name.', true),
+                        message: form.label('Production connection string', 'For existing database. Will be ignored if you specified Database name.', true),
                         name: 'cosmosdbConnectionString'
                     }
                 ]);
@@ -1162,10 +1170,10 @@ async function processGenerator (args, skipForm) {
                         message: form.group(
                             'Wingbot orchestrator settings - production',
                             'Put orchestrator configuration here.',
-                            form.label('Orchestrator API Url', 'Target orchestration url')
+                            form.label('Orchestrator API Url', 'Target orchestration url (keep empty, when using cloud orchestrator)', true)
                         ),
                         name: 'orchestratorApiUrl',
-                        default: 'https://orchestrator-api.wingbot.ai'
+                        default: null
                     }
                 ]);
 
@@ -1179,6 +1187,14 @@ async function processGenerator (args, skipForm) {
                     ]);
                 }
 
+                await form.ask([
+                    {
+                        type: 'input',
+                        message: form.label('Testing orchestrator page ID', 'Will be used as a tesing at bot\'s homepage for to show a chat. You can set it later in dist/index.html.', true),
+                        name: 'wingbotOrchestratorTestingPageId'
+                    }
+                ]);
+
                 if (form.data.stagingEnvironment) {
                     await form.ask([
                         {
@@ -1186,7 +1202,7 @@ async function processGenerator (args, skipForm) {
                             message: form.group(
                                 'Wingbot orchestrator settings - staging',
                                 'Put orchestrator configuration here.',
-                                form.label('Orchestrator API Url', 'Target orchestration url')
+                                form.label('Orchestrator API Url', 'Target orchestration url (keep empty, when using cloud orchestrator)', true)
                             ),
                             name: 'orchestratorStagingApiUrl',
                             default: form.data.orchestratorApiUrl
@@ -1211,7 +1227,7 @@ async function processGenerator (args, skipForm) {
                             message: form.group(
                                 'Wingbot orchestrator settings - dev',
                                 'Put orchestrator configuration here.',
-                                form.label('Orchestrator API Url', 'Target orchestration url')
+                                form.label('Orchestrator API Url', 'Target orchestration url (keep empty, when using cloud orchestrator)', true)
                             ),
                             name: 'orchestratorDevApiUrl',
                             default: form.data.orchestratorApiUrl
@@ -1236,7 +1252,7 @@ async function processGenerator (args, skipForm) {
                             message: form.group(
                                 'Wingbot orchestrator settings - test',
                                 'Put orchestrator configuration here.',
-                                form.label('Orchestrator API Url', 'Target orchestration url')
+                                form.label('Orchestrator API Url', 'Target orchestration url (keep empty, when using cloud orchestrator)', true)
                             ),
                             name: 'orchestratorTestApiUrl',
                             default: form.data.orchestratorApiUrl

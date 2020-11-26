@@ -153,6 +153,7 @@ function generateTests (keysStack = Object.keys(useOptions).reverse()) {
     let ret;
     if (nextStack.length === 0) {
         ret = [{
+            testrun: true,
             _testName: '',
             _opts: 't',
             _x: [],

@@ -43,7 +43,7 @@ commander
     .action(attach(jsonToText));
 
 commander
-    .command('wikiToText <fromJson> <toText>')
+    .command('wikiToText <fromWikiXml> <toText>')
     .description(chalk.blue('Convert wikipedia data to fasttext training data'))
     .action(attach(wikiToText));
 

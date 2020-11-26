@@ -8,6 +8,15 @@ const { getSecret } = require('./getKeyvaultSecrets');
 
 const keyvaultDomain = process.env.KEYVAULT_DOMAIN || null;
 {{/if}}
+{{#if gSheetTestingSuit}}
+let googleToken = {};
+try {
+    // @ts-ignore
+    googleToken = module.require('../google-token.json');
+} catch (e) {
+    // noop
+}
+{{/if}}
 const config = {
 
     environment: process.env.NODE_ENV || 'development',
@@ -55,7 +64,7 @@ const config = {
 {{/if}}
 {{#if wingbotOrchestrator}}
     orchestrator: {
-        apiUrl: '{{orchestratorApiUrl}}',
+        {{#unless orchestratorApiUrl}}// {{/unless}}apiUrl: '{{orchestratorApiUrl}}',
         secret: {{#if keyvault}}getSecret(keyvaultDomain, 'orchestratorsecret', '-'){{else}}'-'{{/if}}
     },
 
@@ -135,16 +144,17 @@ const config = {
 {{/if}}
 {{#if gSheetTestingSuit}}
     gsheet: {
-        type: 'service_account',
-        project_id: '',
-        private_key_id: '',
-        private_key: '',
-        client_email: '',
-        client_id: '',
-        auth_uri: 'https://accounts.google.com/o/oauth2/auth',
-        token_uri: 'https://oauth2.googleapis.com/token',
-        auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
-        client_x509_cert_url: ''
+        // type: 'service_account',
+        // project_id: '',
+        // private_key_id: '',
+        // private_key: '',
+        // client_email: '',
+        // client_id: '',
+        // auth_uri: 'https://accounts.google.com/o/oauth2/auth',
+        // token_uri: 'https://oauth2.googleapis.com/token',
+        // auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
+        // client_x509_cert_url: '',
+        ...googleToken
     },
 
     testCasesGoogleSheetId: '{{gSheetTestingSuit}}',
@@ -160,6 +170,7 @@ const config = {
  */
 function initialize (cfg, env = 'development') {
     try {
+        // @ts-ignore
         const configuration = module.require(`./config.${env}`);
 
         // deeper object assign
@@ -173,8 +184,9 @@ function initialize (cfg, env = 'development') {
                     Object.assign(cfg, { [key]: configuration[key] });
                 }
             });
+        console.info(`Loaded custom configuration for ENV: ${env}`); // eslint-disable-line no-console
     } catch (e) {
-        console.info(`No configuration for ENV: ${env}`); // eslint-disable-line
+        console.info(`No custom configuration for ENV: ${env}`); // eslint-disable-line no-console
     }
 
     return cfg;

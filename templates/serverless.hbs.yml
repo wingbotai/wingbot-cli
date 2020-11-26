@@ -133,15 +133,17 @@ package:
 
 functions:
   bot:
-    handler: routes/bot.handler
-    memorySize: 128
+    handler: routes/bot.handler{{#if wingbotOrchestrator}}
+    timeout: 30
+    memorySize: 192{{else}}
+    memorySize: 128{{/if}}
     events:
       - http: GET /bot
       - http: POST /bot
 
   wingbotApi:
     handler: routes/api.handler
-    memorySize: 192
+    memorySize: 1024
     timeout: 30
     role: DeployRole
     events:

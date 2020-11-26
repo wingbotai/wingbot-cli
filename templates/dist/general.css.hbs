@@ -23,6 +23,11 @@ nav.navbar a, nav.navbar a:active, nav.navbar a.is-active, a, a:active {
     color: #666666;
 }
 
+.logo {
+    width: 118px;
+    margin: 10px;
+}
+
 div.hero-body {
     padding: 0;
 }
@@ -83,6 +88,7 @@ iframe.chat {
 .text-frame {
     padding: 3em 2em;
     color: rgb(68, 92, 117);
+    background: rgba(255,255,255,0.6);
 }
 
 h1, h2, .content h1, .content h2 {
@@ -126,4 +132,10 @@ h1, h2, .content h1, .content h2 {
     }
 
 }
+{{#if wingbotOrchestrator}}
+body {
+    background: url('./cta.png') 95% 95% no-repeat;
+    background-size: contain;
+}
+{{/if}}
 {{/if}}

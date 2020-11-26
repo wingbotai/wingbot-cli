@@ -23,7 +23,7 @@ class TemplateRenderer {
         this._skipLogged = false;
     }
 
-    _readFiles () {
+    _readFiles (globPattern) {
         const globOptions = {
             root: this.templateRoot,
             cwd: this.templateRoot,
@@ -31,7 +31,7 @@ class TemplateRenderer {
         };
 
         return new Promise((resolve, reject) => {
-            glob('**/@(*.hbs.*|*.hbs)', globOptions, (err, matches) => {
+            glob(globPattern, globOptions, (err, matches) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -78,6 +78,18 @@ class TemplateRenderer {
     _readFile (fileName) {
         return new Promise((resolve, reject) => {
             fs.readFile(fileName, 'utf8', (err, contents) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(contents);
+                }
+            });
+        });
+    }
+
+    _readBufferFile (fileName) {
+        return new Promise((resolve, reject) => {
+            fs.readFile(fileName, (err, contents) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -207,6 +219,22 @@ class TemplateRenderer {
             });
     }
 
+    _copyFile (fileName) {
+        const [, file, condition, ext] = fileName.match(/^(.+)\.([a-z0-9]+)\.([a-z0-9]+)$/i);
+
+        const sourceFile = path.join(this.templateRoot, fileName);
+        const destFileName = `${file}.${ext}`;
+        const destFile = path.join(this.destination, destFileName);
+
+        if (!this.data[condition]) {
+            return Promise.resolve();
+        }
+
+        return this._readBufferFile(sourceFile)
+            .then((contents) => this._ensureDirExists(destFile)
+                .then(() => this._writeFile(destFile, contents)));
+    }
+
     _renderFile (fileName) {
         const sourceFile = path.join(this.templateRoot, fileName);
         const destFileName = fileName.replace(/\.hbs(\.|$)/, '$1');
@@ -270,11 +298,16 @@ class TemplateRenderer {
 
     render () {
         return Promise.all([
-            this._readFiles(),
+            this._readFiles('**/@(*.hbs.*|*.hbs)'),
+            this._readFiles('**/@(*.*.png|*.*.jpg|*.*.jpeg|*.*.svg)'),
             this._loadHashFile()
         ])
-            .then(([files]) => Promise.all(files
-                .map((fileName) => this._renderFile(fileName))))
+            .then(([files, otherFiles]) => Promise.all([
+                ...files
+                    .map((fileName) => this._renderFile(fileName)),
+                ...otherFiles
+                    .map((fileName) => this._copyFile(fileName))
+            ]))
             .then(() => this._saveHashFile());
     }
 

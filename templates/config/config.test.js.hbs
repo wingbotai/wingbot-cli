@@ -57,7 +57,7 @@ module.exports = {
 {{/if}}
 {{#if wingbotOrchestrator}}
     orchestrator: {
-        apiUrl: '{{orchestratorApiUrl}}',{{#unless keyvault}}
+        {{#unless orchestratorApiUrl}}// {{/unless}}apiUrl: '{{orchestratorApiUrl}}',{{#unless keyvault}}
         secret: '{{wingbotOrchestratorTestSecret}}'{{/unless}}
     },
 
