@@ -20,9 +20,11 @@ module.exports = {
 
 {{#if withDesigner}}
     wingbot: {
-        snapshot: 'dev',
+        snapshot: 'dev',{{#if wingbotBotNameDevTest}}
+        bot: '{{wingbotBotNameDevTest}}',{{/if}}{{#if wingbotBotIdDevTest}}
+        botId: '{{wingbotBotIdDevTest}}',{{/if}}
         token: '{{wingbotDevToken}}',
-        ai: '{{wingbotBotName}}-dev'
+        ai: '{{#if wingbotBotNameDevTest}}{{wingbotBotNameDevTest}}{{else}}{{wingbotBotName}}{{/if}}-dev'
     },
 
     // token for accessing a chatbot API

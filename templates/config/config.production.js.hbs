@@ -20,7 +20,9 @@ module.exports = {
 
 {{#if withDesigner}}
     wingbot: {
-        snapshot: 'production',
+        snapshot: 'production',{{#if wingbotBotNameDevTest}}
+        bot: '{{wingbotBotName}}',{{/if}}{{#if wingbotBotIdDevTest}}
+        botId: '{{wingbotBotId}}',{{/if}}
         token: '{{wingbotProductionToken}}',
         ai: '{{wingbotBotName}}-production'
     },

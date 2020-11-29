@@ -68,7 +68,7 @@ const options = {
         'Gsheet testing suit': G_SHEET_TESTING_SUIT
     },
     keyvault: {
-        'Use keyvault for storing password (MSSQL only)': 1,
+        'Use keyvault for storing password': 1,
         'I\'will store passwd locally.': 0
     },
     frontendTokenStorage: {
@@ -95,9 +95,18 @@ const options = {
 };
 
 function preprocessData (data) {
+    const languageList = data.languages
+        ? data.languages
+            .split(',')
+            .map((l) => l.trim)
+            .filter((l) => !!l)
+            .map((lang, i) => ({ lang, isDefault: i === 0 }))
+        : [];
     return {
         eslint: true,
         ...data,
+        languageList,
+        hasLanguageList: languageList.length !== 0,
         isMongoOrCosmos: data[MONGODB] || data[AZURE_COSMOS_DB],
         isAwsOrAzure: data[SERVERLESS_AWS] || data[SERVERLESS_AZURE],
         isAzure: data[SERVERLESS_AZURE] || data[EXPRESS_AZURE],
@@ -270,15 +279,6 @@ async function processGenerator (args, skipForm) {
                 'Make configuration ready for the application deployment',
                 form.label('Chatbot will publish static website or assets', 'usefull for including image assets or having a test page for MS BotService')
             ), Form.NO_YES),
-            {
-                type: 'input',
-                name: 'productionDomain',
-                message: form.label('Producton bot domain', 'assets will be stored here', true),
-                default: form.data.infrastructure === EXPRESS_AZURE ? `${urlProjectName}.azurewebsites.net` : undefined
-            }
-        ]);
-
-        await form.ask([
             form.list('monitoring', form.label('Choose a monitoring'))
         ]);
 
@@ -309,6 +309,15 @@ async function processGenerator (args, skipForm) {
             default:
                 break;
         }
+
+        await form.ask([
+            {
+                type: 'input',
+                name: 'productionDomain',
+                message: form.label('Production bot domain', 'assets will be stored here', true),
+                default: form.data.infrastructure === EXPRESS_AZURE ? `${urlProjectName}.azurewebsites.net` : undefined
+            }
+        ]);
 
         if (form.data.infrastructure === SERVERLESS_AWS) {
             await form.ask([
@@ -369,7 +378,7 @@ async function processGenerator (args, skipForm) {
                         type: 'input',
                         name: 'devApiDomain',
                         message: form.label('Dev API domain', 'domain of dev API Gateway endpoint', true),
-                        default: form.data.dev.replace(/\./, '-api.')
+                        default: form.data.devDomain.replace(/\./, '-api.')
                     }
                 ]);
             }
@@ -449,6 +458,21 @@ async function processGenerator (args, skipForm) {
                 ]);
             }
 
+            if (form.data.devEnvironment || form.data.testEnvironment) {
+                await form.ask([
+                    form.yesNo('useDifferentBotForDevTest', form.label('Want to use a different bot for DEV & TEST & DEVELOPMENT?'), Form.NO_YES)
+                ]);
+            }
+            await form.ask([
+                {
+                    type: 'input',
+                    name: 'languages',
+                    message: form.label('List of configured languages, primary language should be first', 'comma separated (cs,en,sk) - keep empty, when languages are not configured', true)
+                }
+            ]);
+
+            const { useDifferentBotForDevTest: twoBotIds } = form.data;
+
             await form.ask([
                 {
                     type: 'input',
@@ -456,15 +480,34 @@ async function processGenerator (args, skipForm) {
                     message: form.group(
                         'Wingbot settings',
                         'We need to know wingbot connection data for every environment.\nBut you can skip these steps and fill these data later.\nYou can find all requested informations in "deployments" settings of your chatbot.',
-                        form.label('Wingbot bot name', 'you can fill it later into config/index.js', true)
+                        form.label(`Wingbot bot name${twoBotIds ? ' for PRODUCTION & STAGING' : ''}`, 'you can fill it later into config/index.js', true)
                     ),
                     default: form.data.projectName
                 },
                 {
                     type: 'input',
                     name: 'wingbotBotId',
-                    message: form.label('Wingbot bot ID', 'you can fill it later into config/index.js', true)
-                },
+                    message: form.label(`Wingbot bot ID${twoBotIds ? ' for PRODUCTION & STAGING' : ''}`, 'you can fill it later into config/index.js', true)
+                }
+            ]);
+
+            if (twoBotIds) {
+                await form.ask([
+                    {
+                        type: 'input',
+                        name: 'wingbotBotNameDevTest',
+                        message: form.label('Wingbot bot name for DEV & TEST & DEVELOPMENT', 'you can fill it later', true),
+                        default: form.data.projectName
+                    },
+                    {
+                        type: 'input',
+                        name: 'wingbotBotIdDevTest',
+                        message: form.label('Wingbot bot ID for DEV & TEST & DEVELOPMENT', 'you can fill it later', true)
+                    }
+                ]);
+            }
+
+            await form.ask([
                 {
                     type: 'input',
                     name: 'wingbotDevelopmentToken',

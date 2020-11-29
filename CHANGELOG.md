@@ -4,6 +4,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2020-11-29
+
+### Added
+- posibility to connect one bot to two workspaces
+- basic support for multilanguage NLPs
+
+### Fixed
+- serverless orchestrator config
+- dev & test environments logic & npm scripts
+
+### Fixed
+- node modules for bot
+- timeout of a lambda function for wingbot orchestrator bots
+- wikiToText has right description
+
+
+## [3.1.3] - 2020-11-12
+
+### Added
+- training data stats for wikiToText
+### Fixed
+- node modules for bot
+- timeout of a lambda function for wingbot orchestrator bots
+- wikiToText has right description
+
+### Changed
+- updated homepage of a bot
+- added an orchestrator frontend chat code
+- more straightforward way to fill DB data
+- suport for google credentials in JSON
+
+### Fixed
+- lot of issues in tests :)
+
 ## [3.1.1] - 2020-11-12
 
 ### Added

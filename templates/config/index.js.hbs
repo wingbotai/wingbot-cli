@@ -78,8 +78,8 @@ const config = {
 {{/if}}
 {{#if withDesigner}}
     wingbot: {
-        bot: '{{wingbotBotName}}',
-        botId: '{{wingbotBotId}}',
+        bot: {{#if wingbotBotNameDevTest}}'{{wingbotBotNameDevTest}}'{{else}}'{{wingbotBotName}}'{{/if}},
+        botId: {{#if wingbotBotIdDevTest}}'{{wingbotBotIdDevTest}}'{{else}}'{{wingbotBotId}}'{{/if}},
         snapshot: 'development',
         token: '{{wingbotDevelopmentToken}}',
         ai: '{{wingbotBotName}}-development'

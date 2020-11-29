@@ -27,6 +27,8 @@ custom:
   stage: ${opt:stage, self:provider.stage}{{#if dynamodbStorage}}
   botDbReservations:
     staging: 1
+    dev: 1
+    test: 1
     production: 10
   botDbReservation: ${self:custom.botDbReservations.${self:custom.stage}}{{/if}}
   prefix: ${self:service}-${self:custom.stage}
@@ -35,10 +37,22 @@ custom:
 {{#if stagingEnvironment}}
     staging: {{stagingDomain}}
 {{/if}}
+{{#if devEnvironment}}
+    dev: {{devDomain}}
+{{/if}}
+{{#if testEnvironment}}
+    test: {{testDomain}}
+{{/if}}
     production: {{productionDomain}}
   certificate:
 {{#if stagingEnvironment}}
     staging: {{certificateArnStaging}}
+{{/if}}
+{{#if devEnvironment}}
+    dev: {{certificateArnDev}}
+{{/if}}
+{{#if testEnvironment}}
+    test: {{certificateArnTest}}
 {{/if}}
     production: {{certificateArnProduction}}
   cors: https://${self:custom.bucket.${self:custom.stage}}

@@ -20,9 +20,11 @@ module.exports = {
 
 {{#if withDesigner}}
     wingbot: {
-        snapshot: 'test',
+        snapshot: 'test',{{#if wingbotBotNameDevTest}}
+        bot: '{{wingbotBotNameDevTest}}',{{/if}}{{#if wingbotBotIdDevTest}}
+        botId: '{{wingbotBotIdDevTest}}',{{/if}}
         token: '{{wingbotTestToken}}',
-        ai: '{{wingbotBotName}}-test'
+        ai: '{{#if wingbotBotNameDevTest}}{{wingbotBotNameDevTest}}{{else}}{{wingbotBotName}}{{/if}}-test'
     },
 
     // token for accessing a chatbot API
@@ -100,7 +102,6 @@ module.exports = {
     sentryDsn: '{{sentry}}',
 
 {{/if}}
-
     gaCode: '{{gaCodeTest}}'
 
 };

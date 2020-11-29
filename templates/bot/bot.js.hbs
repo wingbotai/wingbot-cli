@@ -22,7 +22,13 @@ const configStorage = require('../lib/botConfigStorage');
 const anonymize = require('./anonymize');
 
 // set the NLP model
+{{#if hasLanguageList}}
+{{#each languageList}}
+ai.register(`${config.wingbot.ai}-{{lang}}`{{#unless isDefault}}, '{{lang}}'{{/unless}});
+{{/each}}
+{{else}}
 ai.register(config.wingbot.ai);
+{{/if}}
 
 // set a threshold
 ai.confidence = 0.85;

@@ -32,7 +32,9 @@ const wrapRoute = require('../lib/wrapRoute');
 {{/unless}}
 const { {{#if wingbotOrchestrator}}app{{else}}channel{{#if webchat}}, processor{{/if}}{{/if}} } = require('../bot');
 {{#if frontendTokenStorage}}
+{{#unless wingbotOrchestrator}}
 const botTokenStorage = require('../lib/botTokenStorage');
+{{/unless}}
 {{/if}}
 
 {{#if awsServerless}}

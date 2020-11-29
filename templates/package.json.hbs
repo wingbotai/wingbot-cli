@@ -7,19 +7,21 @@
     "node": ">=12.0.0"
   },
   "scripts": {
-{{#if mssqlStorage}}    "sql:start": "(docker rm sqlwingbottest || true) && docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=NeotravujPotvoro1' -p 1433:1433 --name sqlwingbottest -d mcr.microsoft.com/mssql/server:2017-latest && sleep 12 && docker exec -it sqlwingbottest /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P 'NeotravujPotvoro1' -Q 'CREATE DATABASE {{mssqlName}}'",
+    "test": "npm run test:lint && npm run test:bot",{{#if mssqlStorage}}
+    "sql:start": "(docker rm sqlwingbottest || true) && docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=NeotravujPotvoro1' -p 1433:1433 --name sqlwingbottest -d mcr.microsoft.com/mssql/server:2017-latest && sleep 12 && docker exec -it sqlwingbottest /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P 'NeotravujPotvoro1' -Q 'CREATE DATABASE {{mssqlName}}'",
     "sql:stop": "docker kill sqlwingbottest && docker rm sqlwingbottest",{{/if}}
-    "start": {{#if isAwsOrAzure}}"echo \"Error: start command not available\" && exit 1",
-{{/if}}{{#if expressOrAppService}}"node ./bin/www.js",{{/if}}
-    "test": "npm run test:lint && npm run test:bot",
+    "start": {{#if isAwsOrAzure}}"echo \"Error: start command not available\" && exit 1",{{/if}}{{#if expressOrAppService}}
+    "node ./bin/www.js",{{/if}}
     "test:coverage": "nyc --reporter=html mocha ./test && nyc report",
     "test:coverage:threshold": "nyc check-coverage --lines 80 --functions 80 --branches 75",
     "test:bot": "mocha ./test",
-    "test:lint": "eslint --ext .js lib config test routes bot{{#if expressOrAppService}} bin *.js{{/if}}",
-    {{#if stagingEnvironment}}
+    "test:lint": "eslint --ext .js lib config test routes bot{{#if expressOrAppService}} bin *.js{{/if}}",{{#if stagingEnvironment}}
     "build:staging": ":"{{#if awsServerless}},
-    "deploy:staging": "npm i && npm run build:staging && sls deploy -s staging"{{/if}},
-    {{/if}}
+    "deploy:staging": "npm i && npm run build:staging && sls deploy -s staging"{{/if}},{{/if}}{{#if devEnvironment}}
+    "build:dev": ":"{{#if awsServerless}},
+    "deploy:dev": "npm i && npm run build:dev && sls deploy -s dev"{{/if}},{{/if}}{{#if testEnvironment}}
+    "build:test": ":"{{#if awsServerless}},
+    "deploy:test": "npm i && npm run build:test && sls deploy -s test"{{/if}},{{/if}}
     "build:production": ":"{{#if awsServerless}},
     "deploy:production": "npm i && npm run build:production && sls deploy -s production"{{/if}}{{#if isAzure}},
     "deploy:production": "./bin/universaldeploy.cmd",
