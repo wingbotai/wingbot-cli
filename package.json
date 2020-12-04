@@ -1,6 +1,6 @@
 {
   "name": "wingbot-cli",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "Wingbot.ai CLI tool",
   "main": "main.js",
   "bin": {

@@ -14,8 +14,9 @@ module.exports = new AttachmentCache(`${config.prefix}-attachments`, dynamodb);
 {{#if isMongoOrCosmos}}
 const { AttachmentCache } = require('wingbot-mongodb');
 const mongodb = require('./mongodb');
+const log = require('./log');
 
-module.exports = new AttachmentCache(mongodb, 'attachments');
+module.exports = new AttachmentCache(mongodb, 'attachments', log{{#if cosmosdbStorage}}, true{{/if}});
 {{/if}}
 {{#if mssqlStorage}}
 const { AttachmentCache } = require('wingbot-mssql');

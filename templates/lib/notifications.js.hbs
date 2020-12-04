@@ -13,7 +13,7 @@ const config = require('../config');
 const mongodb = require('./mongodb');
 const log = require('./log');
 
-const storage = new NotificationsStorage(mongodb);
+const storage = new NotificationsStorage(mongodb, '', log{{#if cosmosdbStorage}}, true{{/if}});
 
 const notifications = new Notifications(storage, {
     log,

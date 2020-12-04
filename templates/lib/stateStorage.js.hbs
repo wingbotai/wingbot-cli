@@ -18,8 +18,9 @@ module.exports = new StateStorage(`${config.prefix}-states`, dynamodb);
 {{#if isMongoOrCosmos}}
 const { StateStorage } = require('wingbot-mongodb');
 const mongodb = require('./mongodb');
+const log = require('./log');
 
-module.exports = new StateStorage(mongodb, 'states');
+module.exports = new StateStorage(mongodb, 'states', log{{#if cosmosdbStorage}}, true{{/if}});
 {{/if}}
 {{#if mssqlStorage}}
 const { StateStorage } = require('wingbot-mssql');

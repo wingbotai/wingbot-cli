@@ -9,7 +9,8 @@ const config = require('../config');
 {{else}}{{#if dynamodbStorage}}
 const { BotTokenStorage } = require('wingbot-dynamodb');
 const config = require('../config');{{/if}}{{#if isMongoOrCosmos}}
-const { BotTokenStorage } = require('wingbot-mongodb');{{/if}}
+const { BotTokenStorage } = require('wingbot-mongodb');
+const log = require('./log');{{/if}}
 {{#if dynamodbStorage}}const dynamodb = require('./dynamodb');{{/if}}{{#if isMongoOrCosmos}}
 const mongodb = require('./mongodb');{{/if}}{{/if}}
 {{#if jwtTokenStorage}}
@@ -18,7 +19,7 @@ const tokenStorage = new BotTokenStorage(config.jwt.secret, config.jwt.options);
 {{#if dynamodbStorage}}
 const tokenStorage = new BotTokenStorage(`${config.prefix}-tokens`, 'token', dynamodb);
 {{/if}}{{#if isMongoOrCosmos}}
-const tokenStorage = new BotTokenStorage(mongodb, 'tokens');
+const tokenStorage = new BotTokenStorage(mongodb, 'tokens', log{{#if cosmosdbStorage}}, true{{/if}});
 {{/if}}{{/if}}
 module.exports = tokenStorage;
 {{/if}}

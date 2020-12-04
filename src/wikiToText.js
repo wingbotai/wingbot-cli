@@ -31,6 +31,16 @@ function standardDeviation (values, avg) {
     return stdDev;
 }
 
+function showSimpleStats (name, what, sum, max, cnt) {
+    const avg = sum / cnt;
+
+    // eslint-disable-next-line no-console
+    console.log(`\n${name}\n###############`);
+
+    // eslint-disable-next-line no-console
+    console.log(`${what} COUNT: ${cnt}, MAX: ${max}, AVG: ${avg.toFixed(2)}`);
+}
+
 function showStats (name, what, wordCounts) {
     const min = wordCounts[0];
     const max = wordCounts.length > 0 ? wordCounts[wordCounts.length - 1] : 0;
@@ -47,6 +57,19 @@ function showStats (name, what, wordCounts) {
     console.log(`${what} COUNT: ${wordCounts.length}, MIN: ${min}, MAX: ${max}`);
     // eslint-disable-next-line no-console
     console.log(`AVG: ${avg.toFixed(2)}, MEDIAN: ${median.toFixed(2)}, STDDEV: ${stddev.toFixed(2)}`);
+}
+
+const FNV1_32A_INIT = 0x811c9dc5;
+
+function fnv32a (str) {
+    let hval = FNV1_32A_INIT;
+    for (let i = 0; i < str.length; ++i) {
+        hval ^= str.charCodeAt(i); // eslint-disable-line no-bitwise
+        // eslint-disable-next-line no-bitwise
+        hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24);
+    }
+    // eslint-disable-next-line no-bitwise
+    return hval >>> 0;
 }
 
 async function wikiToText (fromWikiXml, toText) {
@@ -83,8 +106,11 @@ async function wikiToText (fromWikiXml, toText) {
     }));
 
     const words = new Map();
-    const articleLengths = [];
-    const uniqueArticleLengths = [];
+    let cnt = 0;
+    let articleWordSum = 0;
+    let articleWordMax = 0;
+    let articleWordSumUnique = 0;
+    let articleWordMaxUnique = 0;
 
     let cleanText;
     pipes.add(eventStream.mapSync((r) => {
@@ -97,12 +123,21 @@ async function wikiToText (fromWikiXml, toText) {
 
         const splitToWords = normalized.split(/\s+/);
 
-        articleLengths.push(splitToWords.length);
-        uniqueArticleLengths.push(new Set(splitToWords).size);
+        articleWordSum += splitToWords.length;
+        const uqSize = new Set(splitToWords).size;
+        articleWordSumUnique += uqSize;
+        cnt++;
+
+        if (articleWordMax < splitToWords.length) articleWordMax = splitToWords.length;
+        if (articleWordMaxUnique < uqSize) articleWordMaxUnique = uqSize;
 
         splitToWords.forEach((w) => {
-            const a = words.get(w) || 0;
-            words.set(w, a + 1);
+            const key = w.length <= 4
+                ? w
+                : fnv32a(w);
+
+            const a = words.get(key) || 0;
+            words.set(key, a + 1);
         });
 
         const maptitle = map(r.title);
@@ -117,11 +152,9 @@ async function wikiToText (fromWikiXml, toText) {
     const wordCounts = Array.from(words.values());
 
     wordCounts.sort((a, z) => a - z);
-    articleLengths.sort((a, z) => a - z);
-    uniqueArticleLengths.sort((a, z) => a - z);
 
-    showStats('UNIQUE WORD COUNT IN ARTICLE', 'ARTICLE', uniqueArticleLengths);
-    showStats('WORD COUNT IN ARTICLE', 'ARTICLE', articleLengths);
+    showSimpleStats('UNIQUE WORD COUNT IN ARTICLE', 'ARTICLE', articleWordSumUnique, articleWordMaxUnique, cnt);
+    showSimpleStats('WORD COUNT IN ARTICLE', 'ARTICLE', articleWordSum, articleWordMax, cnt);
     showStats('WORD COUNTS OVERALL', 'WORD', wordCounts);
 }
 
