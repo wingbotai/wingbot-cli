@@ -98,7 +98,7 @@ function preprocessData (data) {
     const languageList = data.languages
         ? data.languages
             .split(',')
-            .map((l) => l.trim)
+            .map((l) => l.trim())
             .filter((l) => !!l)
             .map((lang, i) => ({ lang, isDefault: i === 0 }))
         : [];

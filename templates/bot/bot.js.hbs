@@ -19,7 +19,6 @@ const plugins = require('./plugins');
 {{#unless awsServerless}}
 const configStorage = require('../lib/botConfigStorage');
 {{/unless}}
-const anonymize = require('./anonymize');
 
 // set the NLP model
 {{#if hasLanguageList}}
@@ -32,9 +31,6 @@ ai.register(config.wingbot.ai);
 
 // set a threshold
 ai.confidence = 0.85;
-
-// set an anonymization filter
-ai.textFilter = anonymize;
 {{/if}}
 
 function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
