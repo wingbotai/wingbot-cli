@@ -15,9 +15,12 @@ const packageJson = require('../package.json');
 const { log } = console;
 
 const SERVERLESS_AWS = 'awsServerless';
-const EXPRESS = 'express';
-const EXPRESS_AZURE = 'azureExpress';
-const SERVERLESS_AZURE = 'azureServerless';
+const UNIVERSAL_DOCKER = 'universalDocker';
+const UNIVERSAL_AZURE = 'universalAzure';
+
+// const EXPRESS = 'express';
+// const EXPRESS_AZURE = 'azureExpress';
+// const SERVERLESS_AZURE = 'azureServerless';
 
 const MESSENGER = 'messenger';
 const BOT_SERVICE = 'botService';
@@ -42,16 +45,14 @@ const G_SHEET_TESTING_SUIT = 'gSheetTestingSuit';
 
 const options = {
     infrastructure: {
-        'Express application': EXPRESS,
         'Serverless AWS': SERVERLESS_AWS,
-        'Azure Functions': SERVERLESS_AZURE,
-        'Azure Web Apps': EXPRESS_AZURE
+        'Universal app (docker/serverless)': UNIVERSAL_DOCKER,
+        'Universal app (azure app service/serverless)': UNIVERSAL_AZURE
     },
     platform: {
         'Facebook Messenger': MESSENGER,
         'Azure Bot Service': BOT_SERVICE,
-        'Wingbot Orchestrator': WINGBOT_ORCHESTRATOR,
-        Webchat: WEBCHAT
+        'Wingbot Orchestrator': WINGBOT_ORCHESTRATOR
     },
     database: {
         MongoDB: MONGODB,
@@ -107,14 +108,15 @@ function preprocessData (data) {
         ...data,
         languageList,
         hasLanguageList: languageList.length !== 0,
+        isUniversal: data[UNIVERSAL_AZURE] || data[UNIVERSAL_DOCKER],
         isMongoOrCosmos: data[MONGODB] || data[AZURE_COSMOS_DB],
-        isAwsOrAzure: data[SERVERLESS_AWS] || data[SERVERLESS_AZURE],
-        isAzure: data[SERVERLESS_AZURE] || data[EXPRESS_AZURE],
+        // isAwsOrAzure: data[SERVERLESS_AWS] || data[SERVERLESS_AZURE],
+        // isAzure: data[SERVERLESS_AZURE] || data[EXPRESS_AZURE],
         isLogzioTokenOrSentry: data[LOGZIO_TOKEN] || data[SENTRY],
         isLogzioTokenOrSentryorAppIngsights: data[LOGZIO_TOKEN]
             || data[SENTRY] || data[APP_INSIGHTS],
-        expressOrAppService: data[EXPRESS_AZURE] || data[EXPRESS],
-        webchatOrMessenger: data[WEBCHAT] || data[MESSENGER],
+        // expressOrAppService: data[EXPRESS_AZURE] || data[EXPRESS],
+        // webchatOrMessenger: data[WEBCHAT] || data[MESSENGER],
         productionDomain: data.productionDomain
             ? data.productionDomain.trim()
             : data.productionDomain,
@@ -174,16 +176,8 @@ async function finish (formData, destination) {
 
     log(`\n${chalk.green.bold('Your project is ready!')}\n\n${chalk.white('do not forget to run')} ${chalk.magenta('npm install')}`);
     log(`${chalk.white('do not forget to set')} ${chalk.magenta('NODE_ENV = production')} ${chalk.white('on production environment')}`);
-    switch (data.infrastructure) {
-        case SERVERLESS_AWS:
-            log(`${chalk.white('for deployment use')} ${chalk.magenta('npm run deploy:production')}`);
-            break;
-        case EXPRESS_AZURE:
-            log(`${chalk.white('do not forget to set')} ${chalk.magenta('WEBSITE_NODE_DEFAULT_VERSION = 8.11.1')} ${chalk.white('on all environments')}`);
-            break;
-        default:
-            break;
-    }
+    log(`${chalk.white('for deployment use')} ${chalk.magenta('npm run deploy:production')}`);
+    log(`${chalk.white('do not forget to set')} ${chalk.magenta('WEBSITE_NODE_DEFAULT_VERSION = 8.11.1')} ${chalk.white('on all environments')}`);
     if (data.gSheetTestingSuit) {
         log(`${chalk.white('do not forget to put')} ${chalk.magenta('google-token.json')} ${chalk.white('to project root to be able to run automated tests')}`);
     }
@@ -248,14 +242,14 @@ async function processGenerator (args, skipForm) {
         ]);
 
         await form.ask([
-            form.list('infrastructure', form.label('Choose a deployment infrastructure'), null, (key) => form.data.platform !== WEBCHAT || key === EXPRESS_AZURE),
+            form.list('infrastructure', form.label('Choose a deployment infrastructure')),
             form.list('database', form.label('Choose a database')),
             form.list('analytics', form.label('Choose an analytic tool')),
             form.list('conversationTesting', form.label('Choose a conversation testing tool')),
             form.list('withDesigner', form.label('Connect with wingbot.ai designer', 'for experimental purposes you can make a chatbot on your own'))
         ]);
 
-        if ([EXPRESS_AZURE, SERVERLESS_AZURE].includes(form.data.infrastructure)) {
+        if ([UNIVERSAL_AZURE].includes(form.data.infrastructure)) {
             await form.ask([
                 form.list('keyvault', form.label('Choose if you want to use keyvault'))
             ]);
@@ -315,7 +309,7 @@ async function processGenerator (args, skipForm) {
                 type: 'input',
                 name: 'productionDomain',
                 message: form.label('Production bot domain', 'assets will be stored here', true),
-                default: form.data.infrastructure === EXPRESS_AZURE ? `${urlProjectName}.azurewebsites.net` : undefined
+                default: form.data.infrastructure === UNIVERSAL_AZURE ? `${urlProjectName}.azurewebsites.net` : undefined
             }
         ]);
 
@@ -346,7 +340,7 @@ async function processGenerator (args, skipForm) {
                     type: 'input',
                     name: 'stagingDomain',
                     message: form.label('Staging chatbot domain', 'will set chatbot url in configuration files', true),
-                    default: form.data.infrastructure === EXPRESS_AZURE ? `${urlProjectName}-staging.azurewebsites.net` : undefined
+                    default: form.data.infrastructure === UNIVERSAL_AZURE ? `${urlProjectName}-staging.azurewebsites.net` : undefined
                 }
             ]);
 
@@ -368,7 +362,7 @@ async function processGenerator (args, skipForm) {
                     type: 'input',
                     name: 'devDomain',
                     message: form.label('Dev chatbot domain', 'will set chatbot url in configuration files', true),
-                    default: form.data.infrastructure === EXPRESS_AZURE ? `${urlProjectName}-dev.azurewebsites.net` : undefined
+                    default: form.data.infrastructure === UNIVERSAL_AZURE ? `${urlProjectName}-dev.azurewebsites.net` : undefined
                 }
             ]);
 
@@ -390,7 +384,7 @@ async function processGenerator (args, skipForm) {
                     type: 'input',
                     name: 'testDomain',
                     message: form.label('Test chatbot domain', 'will set chatbot url in configuration files', true),
-                    default: form.data.infrastructure === EXPRESS_AZURE ? `${urlProjectName}-test.azurewebsites.net` : undefined
+                    default: form.data.infrastructure === UNIVERSAL_AZURE ? `${urlProjectName}-test.azurewebsites.net` : undefined
                 }
             ]);
 
@@ -1338,34 +1332,33 @@ async function processGenerator (args, skipForm) {
                     }
                 ]);
                 break;
-            case SERVERLESS_AZURE:
-            case EXPRESS_AZURE:
-                await form.ask([
-                    {
-                        type: 'input',
-                        message: form.group(
-                            'Azure deployment settings',
-                            'We will prepare an ARM template where you will be able to edit this information later',
-                            form.label('Resource Group name')
-                        ),
-                        name: 'azureRgName',
-                        default: `${form.data.bsBotName || form.data.projectName}-rg`
-                    },
-                    {
-                        type: 'input',
-                        message: form.label('Azure region'),
-                        name: 'azureRegion',
-                        default: 'northeurope'
-                    },
-                    {
-                        type: 'input',
-                        message: form.label('App Service name'),
-                        name: 'azureAppName',
-                        default: form.data.bsBotName
-                    }
-                ]);
+            case UNIVERSAL_AZURE:
+                // await form.ask([
+                //     {
+                //         type: 'input',
+                //         message: form.group(
+                //             'Azure deployment settings',
+                //             'We will prepare an ARM template where you will be able to edit
+                // this information later',
+                //             form.label('Resource Group name')
+                //         ),
+                //         name: 'azureRgName',
+                //         default: `${form.data.bsBotName || form.data.projectName}-rg`
+                //     },
+                //     {
+                //         type: 'input',
+                //         message: form.label('Azure region'),
+                //         name: 'azureRegion',
+                //         default: 'northeurope'
+                //     },
+                //     {
+                //         type: 'input',
+                //         message: form.label('App Service name'),
+                //         name: 'azureAppName',
+                //         default: form.data.bsBotName
+                //     }
+                // ]);
                 break;
-            case EXPRESS:
             default:
                 break;
         }

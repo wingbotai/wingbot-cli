@@ -149,15 +149,15 @@ functions:
   bot:
     handler: routes/bot.handler{{#if wingbotOrchestrator}}
     timeout: 30
-    memorySize: 192{{else}}
-    memorySize: 128{{/if}}
+    memorySize: 512{{else}}
+    memorySize: 192{{/if}}
     events:
       - http: GET /bot
       - http: POST /bot
 
   wingbotApi:
     handler: routes/api.handler
-    memorySize: 1024
+    memorySize: 2048
     timeout: 30
     role: DeployRole
     events:
