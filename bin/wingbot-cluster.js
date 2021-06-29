@@ -27,16 +27,19 @@ try {
     Query = null;
 }
 
+const DEFAULT_CLUSTERS = 100;
+const DEFAULT_MINCOUNT = 2;
+
 commander
     .option('-c, --csv [output]', 'save results to csv file')
     .option('-a, --all', 'include also recognized examples')
     .option('-min [num]', 'minimal number of examples in set (default: 1)')
     .option('--dim <dimensions>', 'vector size (default: 150, lower is faster)')
     .option('--ngrams <ngrams>', 'n-gram size (default: 2)')
-    .option('--mincount <mincount>', 'minimal word count (default: 2)')
-    .option('-p, --pretrained', 'training file is a pretrained model');
+    .option('--mincount <mincount>', `minimal word count in utterance (default: ${DEFAULT_MINCOUNT})`)
+    .option('-p, --pretrained', '[intentsExport.json] is a pre-trained fasttext model');
 
-commander.command('kmeans <events.csv> [training.json] [clusters=40]')
+commander.command(`kmeans <analyticsEvents.csv> [intentsExport.json] [clusters=${DEFAULT_CLUSTERS}]`)
     // @ts-ignore
     .description(chalk.blue('Runs clusteing with kmeans alg'))
     .action((ev, tr, k) => {
@@ -50,7 +53,7 @@ commander.command('kmeans <events.csv> [training.json] [clusters=40]')
         }
     });
 
-commander.command('dbscan <events.csv> [training.json] [distance=14]')
+commander.command('dbscan <analyticsEvents.csv> [intentsExport.json] [distance=14]')
     // @ts-ignore
     .description(chalk.blue('Runs clusteing with dbscan alg'))
     .action((ev, tr, k) => {
@@ -117,8 +120,6 @@ const data = fs.readFileSync(sourceFileName, 'utf8');
 
 // eslint-disable-next-line no-console
 console.log('cleaning the data...');
-// eslint-disable-next-line no-console
-console.log(` [${commander.all ? 'will process even recognized intents' : 'will skip recognized intents, use -a to include all'}]`);
 
 const uniques = new Set();
 
@@ -143,16 +144,17 @@ data.split('\n')
         training.push(s);
 
         // find the score 112,76,0,0.00
-        let [eventCount = '1', score = '0.01'] = l.match(/([0-9]+),[^,]+,[^,0-9]*([0-9.]+)$/) || [];
+        // Total Events,Unique Events,Event Value,Avg. Value
+        let [, eventCount = '1', score = '0.01'] = l.match(/([0-9]+),[^,]+,[^,0-9]*([0-9.]+)$/) || [];
         // @ts-ignore
         score = parseFloat(score);
         // @ts-ignore
         eventCount = parseInt(eventCount, 10) || 1;
 
         // @ts-ignore
-        if (score <= 0.01 && !commander.all) {
-            return;
-        }
+        // if (score <= 0.01 && !commander.all) {
+        //     return;
+        // }
 
         if (algorithm === ALG_KM && uniques.has(s)) {
             return;
@@ -162,7 +164,7 @@ data.split('\n')
             uniques.add(s);
         }
 
-        const text = { t: s, c: eventCount };
+        const text = { t: s, s: score, c: eventCount };
 
         // @ts-ignore
         if (eventCount > 2 && algorithm !== ALG_KM) {
@@ -187,7 +189,7 @@ const q = new Query(input);
 
 const dim = (commander.dim && parseInt(commander.dim, 10)) || 150;
 const wordNgrams = (commander.ngrams && parseInt(commander.ngrams, 10)) || 2;
-const minCount = (commander.mincount && parseInt(commander.mincount, 10)) || 2;
+const minCount = (commander.mincount && parseInt(commander.mincount, 10)) || DEFAULT_MINCOUNT;
 const minExamples = (commander.min && parseInt(commander.min, 10)) || 1;
 
 (async function () {
@@ -263,7 +265,7 @@ const minExamples = (commander.min && parseInt(commander.min, 10)) || 1;
         // const c = new OPTICS(); // 0.005, 2
         res = c.run(ds, eps, 2);
     } else {
-        const clstrs = userDefinedK || 40;
+        const clstrs = userDefinedK || DEFAULT_CLUSTERS;
         stats = ` [clusters: ${clstrs}]`;
         // eslint-disable-next-line no-console
         console.log(stats);
@@ -291,34 +293,47 @@ const minExamples = (commander.min && parseInt(commander.min, 10)) || 1;
     console.log('sorting...');
     /** @type {{t:string,c:number}[][]} */
     const mapped = res.map((items) => Object.assign(items.map((i) => texts[i]), {
-        sum: items.reduce((sum, i) => texts[i].c + sum, 0)
+        sum: items.reduce((sum, i) => (texts[i].c * texts[i].s) + sum, 0),
+        cnt: items.reduce((sum, i) => texts[i].c + sum, 0)
     }));
 
     // @ts-ignore
     mapped.sort((a, b) => b.sum - a.sum);
 
     if (!commander.csv) {
-        mapped.forEach((items) => {
+        mapped.forEach((raw) => {
+            const items = raw
+                .filter((r) => commander.all || r.s >= 0.5);
+
             // @ts-ignore
-            if (items.sum < minExamples) {
+            if (items.length < minExamples) {
+                console.log(` - skip ${raw.cnt} (${raw.sum.toFixed(0)}):`); //  eslint-disable-line no-console
                 return;
             }
             // @ts-ignore
-            console.log(`--------- ${items.sum}:`); //  eslint-disable-line no-console
+            console.log(`--------- ${raw.cnt} (${((raw.sum / raw.cnt) * 100).toFixed(0)}%):`); //  eslint-disable-line no-console
             // eslint-disable-next-line no-console
             console.log(items
+                .sort((a, z) => z.s - a.s)
                 .map((r) => {
-                    const { t } = r;
-                    if (t.length > 200) {
-                        return `${t.substring(0, 200).trim()}...`;
+                    const lenLim = r.s < 0.5 ? 100 : 200;
+                    let { t } = r;
+
+                    if (t.length > lenLim) {
+                        t = `${r.s < 0.75 ? '*' : ''}${t.substring(0, lenLim).trim()}...`;
+                    } else {
+                        t = t.trim();
                     }
-                    return t.trim();
+                    return `${r.s < 0.75 ? '*' : ''}${t}`;
                 })
                 .join(', '));
         });
 
         // eslint-disable-next-line no-console
-        console.log('============');
+        console.log('========================================================\n *) Avg. Event Value < 0.75 - probably recognized utterance\n');
+
+        // eslint-disable-next-line no-console
+        console.log(` [${commander.all ? 'all utterances shown, omit -a to hide the recognized texts' : 'skipped recognized utterances, use -a to show all'}]`);
         // eslint-disable-next-line no-console
         console.log(stats);
         return;
@@ -326,7 +341,7 @@ const minExamples = (commander.min && parseInt(commander.min, 10)) || 1;
 
     const csv = mapped
         // @ts-ignore
-        .filter((items) => items.sum >= minExamples)
+        .filter((items) => items.cnt >= minExamples)
         .map((items) => items
             .map((r) => r.t.replace(/[,\s]+/g, ' '))
             .join(','))
