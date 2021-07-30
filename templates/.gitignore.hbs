@@ -8,17 +8,18 @@
 .serverless
 /npm-debug.log
 node_modules
-/config/config.development.js
 /coverage
 .nyc_output
 /html-report
 
 # Wingbot configuration log
 # .wingbot
-{{#if isAzure}}
 
-# Deployment
+# Dist
 
-/{{projectName}}.zip
-{{/if}}
+dist/*.html
+dist/*.js
+dist/**/*.html
+dist/styles/**/*
+dist/fonts/**/*
 {{/unless}}

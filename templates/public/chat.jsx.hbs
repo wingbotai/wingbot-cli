@@ -1,0 +1,19 @@
+/**
+ * @author wingbot.ai
+ */
+{{#if wingbotOrchestrator}}
+import 'regenerator-runtime/runtime';
+import { createWingbotChat, attachChatToWindow, injectOptionsEnhancer } from 'wingbot-chat-ui';
+import chatConfiguration from './chatConfiguration';
+
+const wingbotChat = createWingbotChat([
+    injectOptionsEnhancer(chatConfiguration)
+]);
+
+attachChatToWindow(wingbotChat);
+
+export default wingbotChat;
+{{else}}
+
+// PUT YOUR FRONTEND CODE HERE
+{{/if}}

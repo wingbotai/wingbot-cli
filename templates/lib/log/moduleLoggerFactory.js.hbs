@@ -1,0 +1,134 @@
+/*
+ * @author Wingbot.ai
+ */
+'use strict';
+
+/**
+ * @typedef {object} LogObject
+ * @prop {string} level
+ * @prop {string} message
+ * @prop {object} data
+ * @prop {Error} [exception]
+ */
+
+/**
+ * This callback is displayed as part of the Requester class.
+ *
+ * @callback LoggerCallback
+ * @param {LogObject} logObject
+ */
+
+/**
+ * This callback is displayed as part of the Requester class.
+ *
+ * @callback ModuleLoggerFactory
+ * @param {string} prefix
+ * @returns {ModuleLogger}
+ */
+
+/**
+ * @typedef {object} ModuleLogger
+ * @prop {Function} debug
+ * @prop {Function} info
+ * @prop {Function} log
+ * @prop {Function} warn
+ * @prop {Function} error
+ */
+
+/**
+ * @typedef {object} ModuleLoggerWithClose
+ * @prop {Function} debug
+ * @prop {Function} info
+ * @prop {Function} log
+ * @prop {Function} warn
+ * @prop {Function} error
+ * @prop {Function} sendAndClose
+ * @prop {ModuleLoggerFactory} module
+ */
+
+const VERBOSE_LOGS = ['debug', 'info'];
+const ALL_LOGS = ['debug', 'info', 'log', 'warn', 'error'];
+
+/**
+ * @param {string} [verbosePattern]
+ * @param {LoggerCallback} [callback]
+ * @param {Function} [sendAndClose] - resolve the promise, when logs are sent (lambda waits for it)
+ * @returns {ModuleLoggerWithClose}
+ */
+function moduleLoggerFactory (verbosePattern = null, callback = null, sendAndClose = () => {}) {
+
+    function processLog (level, prefix, text, ...args) {
+        if (!verbosePattern && VERBOSE_LOGS.includes(level)) {
+            return;
+        }
+        // @todo recognize the pattern
+
+        const [firstArg] = args;
+        let data = [...args];
+        let message = text;
+        let exception = null;
+        const date = new Date().toISOString();
+
+        if (message instanceof Error) {
+            exception = message;
+            message = message.message;
+        } else if (firstArg instanceof Error) {
+            exception = firstArg;
+            data.shift();
+        }
+
+        if (typeof message !== 'string') {
+            data.unshift(message);
+            message = level;
+        }
+
+        if (data.length <= 1) {
+            // @ts-ignore
+            [data = {}] = data;
+        }
+
+        if (typeof data !== 'object') {
+            data = { data };
+        }
+
+        if (prefix) {
+            message = `${prefix}: ${message}`;
+        }
+
+        const entry = {
+            level,
+            message,
+            data,
+            exception
+        };
+
+        console[level](`${date} [${level}] ${message}`, ...args); // eslint-disable-line no-console
+        if (callback) {
+            try {
+                callback(entry);
+            } catch (e) {
+                console.error('FAILED TO STORE LOG', e); // eslint-disable-line no-console
+            }
+        }
+    }
+
+    /**
+     *
+     * @param {string} prefix
+     * @returns {ModuleLogger}
+     */
+    function module (prefix = null) {
+        // @ts-ignore
+        return ALL_LOGS.reduce((obj, level) => Object.assign(obj, {
+            [level]: (...args) => processLog(level, prefix, ...args)
+        }), {});
+    }
+
+    return {
+        ...module(),
+        module,
+        sendAndClose: () => Promise.resolve(sendAndClose())
+    };
+}
+
+module.exports = moduleLoggerFactory;

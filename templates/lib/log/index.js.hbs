@@ -2,26 +2,29 @@
  * @author wingbot.ai
  */
 'use strict';
-{{#if isLogzioTokenOrSentryorAppIngsights}}
 {{#if sentry}}const Sentry = require('@sentry/node');{{/if}}
 const config = require('../../config');
-const loggerOveridderFactory = require('./loggerOveridderFactory');
+const moduleLoggerFactory = require('./moduleLoggerFactory');
 
-let logger = console;
+/** @typedef {import('./moduleLoggerFactory').ModuleLoggerWithClose} ModuleLoggerWithClose */
 
+/** @type {ModuleLoggerWithClose} */
+{{#if isSentryOrAppInsights}}
+let logger;
+{{else}}
+const logger = moduleLoggerFactory(config.verboseLog);
+{{/if}}
 {{#if appInsights}}
+
 if (config.appInsights) {
     // @ts-ignore
     const appInsights = module.require('applicationinsights');
 
     appInsights.setup(config.appInsights).start();
 
-    // @ts-ignore
-    logger = loggerOveridderFactory((obj, exception) => {
-        const {
-            level, message, stack, args
-        } = obj;
-
+    logger = moduleLoggerFactory(config.verboseLog, ({
+        level, message, exception, data
+    }) => {
         if (exception) {
             appInsights.defaultClient.trackException({
                 exception
@@ -32,22 +35,33 @@ if (config.appInsights) {
             name: `${level}: ${message}`,
             properties: {
                 level,
-                stack,
-                args: typeof args === 'object'
-                    ? JSON.stringify(args, null, 2)
-                    : args
+                message,
+                error: exception ? exception.message : null,
+                stack: exception ? exception.stack : null,
+                ...Object.keys(data)
+                    .reduce((o, k) => {
+                        let value = data[k];
+                        const isObject = value && typeof value === 'object';
+                        try {
+                            if (isObject) {
+                                value = JSON.stringify(data[k], null, 2);
+                            }
+                        } catch (e) {
+                            value = `{${isObject ? Object.keys(value) : typeof value}`;
+                        }
+                        return Object.assign(o, {
+                            [k]: value
+                        });
+                    }, {})
             }
         });
-
     });
-
-    // @ts-ignore
-    logger.sendAndClose = () => {};
 } else {
-    logger.sendAndClose = () => {};
+    logger = moduleLoggerFactory(config.verboseLog);
 }
 {{/if}}
 {{#if sentry}}
+
 if (config.sentryDsn) {
 
     Sentry.init({
@@ -57,48 +71,17 @@ if (config.sentryDsn) {
         normalizeDepth: 5
     });
 
-    logger = loggerOveridderFactory((obj) => {
-        const { level, message, stack } = obj;
-
+    logger = moduleLoggerFactory(config.verboseLog, ({
+        level, message, exception
+    }) => {
         if (level === 'error') {
-            const err = new Error(message);
-
-            if (stack) {
-                err.stack = stack;
-            }
-
+            const err = exception || new Error(message);
             Sentry.captureException(err);
         }
-    });
-
-    logger.sendAndClose = () => Sentry.flush(2000);
+    }, () => Sentry.flush(1000));
 } else {
-    logger.sendAndClose = () => {};
-}
-{{/if}}
-{{#if logzioToken}}
-if (config.logzioToken) {
-
-    const logzio = module.require('logzio-nodejs').createLogger({
-        token: config.logzioToken,
-        type: config.prefix,
-        protocol: 'https',
-        debug: !config.isProduction
-    });
-
-    logger = loggerOveridderFactory((obj) => logzio.log(obj));
-
-    logger.sendAndClose = () => logzio.sendAndClose();
-} else {
-    logger.sendAndClose = () => {};
+    logger = moduleLoggerFactory(config.verboseLog);
 }
 {{/if}}
 
-// overide logger here
 module.exports = logger;
-{{else}}
-
-// override log model with console-like object to be able to use your own log service
-
-module.exports = console;
-{{/if}}

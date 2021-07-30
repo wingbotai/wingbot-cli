@@ -17,11 +17,9 @@ const { log } = console;
 const SERVERLESS_AWS = 'awsServerless';
 const EXPRESS = 'express';
 const EXPRESS_AZURE = 'azureExpress';
-const SERVERLESS_AZURE = 'azureServerless';
 
 const MESSENGER = 'messenger';
 const BOT_SERVICE = 'botService';
-const WEBCHAT = 'webchat';
 const WINGBOT_ORCHESTRATOR = 'wingbotOrchestrator';
 
 const AWS_DYNAMO_DB = 'dynamodbStorage';
@@ -29,12 +27,8 @@ const MONGODB = 'mongodbStorage';
 const AZURE_COSMOS_DB = 'cosmosdbStorage';
 const MSSQL = 'mssqlStorage';
 
-const DB_TOKEN_STORAGE = 'dbTokenStorage';
-const JWT_TOKEN_STORAGE = 'jwtTokenStorage';
-
 const UNIVERSAL_ANALYTICS = 'googleAnalytics';
 
-const LOGZIO_TOKEN = 'logzioToken';
 const SENTRY = 'sentry';
 const APP_INSIGHTS = 'appInsights';
 
@@ -44,14 +38,12 @@ const options = {
     infrastructure: {
         'Express application': EXPRESS,
         'Serverless AWS': SERVERLESS_AWS,
-        'Azure Functions': SERVERLESS_AZURE,
         'Azure Web Apps': EXPRESS_AZURE
     },
     platform: {
-        'Facebook Messenger': MESSENGER,
-        'Azure Bot Service': BOT_SERVICE,
         'Wingbot Orchestrator': WINGBOT_ORCHESTRATOR,
-        Webchat: WEBCHAT
+        'Facebook Messenger': MESSENGER,
+        'Azure Bot Service': BOT_SERVICE
     },
     database: {
         MongoDB: MONGODB,
@@ -71,11 +63,6 @@ const options = {
         'Use keyvault for storing password': 1,
         'I\'will store passwd locally.': 0
     },
-    frontendTokenStorage: {
-        'No frontend token storage': null,
-        'JWT token storage': JWT_TOKEN_STORAGE,
-        'Use database as token storage': DB_TOKEN_STORAGE
-    },
     withDesigner: {
         'Use wingbot.ai designer (recommended)': 1,
         'I\'ll create bot programmatically': 0
@@ -88,7 +75,6 @@ const options = {
     },
     monitoring: {
         Sentry: SENTRY,
-        LogzIO: LOGZIO_TOKEN,
         'AppInsights (only for Azure Cloud)': APP_INSIGHTS
     }
 
@@ -108,13 +94,7 @@ function preprocessData (data) {
         languageList,
         hasLanguageList: languageList.length !== 0,
         isMongoOrCosmos: data[MONGODB] || data[AZURE_COSMOS_DB],
-        isAwsOrAzure: data[SERVERLESS_AWS] || data[SERVERLESS_AZURE],
-        isAzure: data[SERVERLESS_AZURE] || data[EXPRESS_AZURE],
-        isLogzioTokenOrSentry: data[LOGZIO_TOKEN] || data[SENTRY],
-        isLogzioTokenOrSentryorAppIngsights: data[LOGZIO_TOKEN]
-            || data[SENTRY] || data[APP_INSIGHTS],
-        expressOrAppService: data[EXPRESS_AZURE] || data[EXPRESS],
-        webchatOrMessenger: data[WEBCHAT] || data[MESSENGER],
+        isSentryOrAppInsights: data[SENTRY] || data[APP_INSIGHTS],
         productionDomain: data.productionDomain
             ? data.productionDomain.trim()
             : data.productionDomain,
@@ -174,16 +154,8 @@ async function finish (formData, destination) {
 
     log(`\n${chalk.green.bold('Your project is ready!')}\n\n${chalk.white('do not forget to run')} ${chalk.magenta('npm install')}`);
     log(`${chalk.white('do not forget to set')} ${chalk.magenta('NODE_ENV = production')} ${chalk.white('on production environment')}`);
-    switch (data.infrastructure) {
-        case SERVERLESS_AWS:
-            log(`${chalk.white('for deployment use')} ${chalk.magenta('npm run deploy:production')}`);
-            break;
-        case EXPRESS_AZURE:
-            log(`${chalk.white('do not forget to set')} ${chalk.magenta('WEBSITE_NODE_DEFAULT_VERSION = 8.11.1')} ${chalk.white('on all environments')}`);
-            break;
-        default:
-            break;
-    }
+    log(`${chalk.white('for AWS deployment use')} ${chalk.magenta('npm run deploy:production')}`);
+
     if (data.gSheetTestingSuit) {
         log(`${chalk.white('do not forget to put')} ${chalk.magenta('google-token.json')} ${chalk.white('to project root to be able to run automated tests')}`);
     }
@@ -248,21 +220,20 @@ async function processGenerator (args, skipForm) {
         ]);
 
         await form.ask([
-            form.list('infrastructure', form.label('Choose a deployment infrastructure'), null, (key) => form.data.platform !== WEBCHAT || key === EXPRESS_AZURE),
+            form.list('infrastructure', form.label('Choose a primary deployment infrastructure')),
             form.list('database', form.label('Choose a database')),
             form.list('analytics', form.label('Choose an analytic tool')),
             form.list('conversationTesting', form.label('Choose a conversation testing tool')),
             form.list('withDesigner', form.label('Connect with wingbot.ai designer', 'for experimental purposes you can make a chatbot on your own'))
         ]);
 
-        if ([EXPRESS_AZURE, SERVERLESS_AZURE].includes(form.data.infrastructure)) {
+        if ([EXPRESS_AZURE].includes(form.data.infrastructure)) {
             await form.ask([
                 form.list('keyvault', form.label('Choose if you want to use keyvault'))
             ]);
         }
 
         /**
-         * publicStorage
          * domain
          * certificateArnStaging
          * certificateArnProduction
@@ -274,11 +245,6 @@ async function processGenerator (args, skipForm) {
             .toLowerCase();
 
         await form.ask([
-            form.yesNo('publicStorage', form.group(
-                'Chatbot application destination',
-                'Make configuration ready for the application deployment',
-                form.label('Chatbot will publish static website or assets', 'usefull for including image assets or having a test page for MS BotService')
-            ), Form.NO_YES),
             form.list('monitoring', form.label('Choose a monitoring'))
         ]);
 
@@ -287,25 +253,13 @@ async function processGenerator (args, skipForm) {
                 await form.ask([
                     {
                         type: 'input',
-                        name: 'sentry',
-                        message: form.label('Sentry url ', 'Insert Sentry url to monitor your application. Keep empty to not set up a logging stack.', true)
+                        name: 'sentryDsn',
+                        message: form.label('Sentry DSN ', 'Insert Sentry DSN to monitor your application. Keep empty to not set up a logging stack.', true)
                     }
                 ]);
 
                 break;
 
-            case LOGZIO_TOKEN: {
-                await form.ask([
-                    {
-                        type: 'input',
-                        name: 'logzioToken',
-                        message: form.label('Logz.io token', 'Insert your token to be able to monitor your application. Keep empty to not set up a logging stack.', true)
-                    }
-
-                ]);
-
-                break;
-            }
             default:
                 break;
         }
@@ -330,6 +284,8 @@ async function processGenerator (args, skipForm) {
             ]);
         }
 
+        const defaultDomain = form.data.productionDomain.replace(/(-prod(uction)?)?\./, '-*ENV*.');
+
         await form.ask([
             form.yesNo('stagingEnvironment', form.label('Deploy staging environment', 'will prepare staging configuration'), Form.NO_YES)
         ]);
@@ -345,8 +301,10 @@ async function processGenerator (args, skipForm) {
                 {
                     type: 'input',
                     name: 'stagingDomain',
-                    message: form.label('Staging chatbot domain', 'will set chatbot url in configuration files', true),
-                    default: form.data.infrastructure === EXPRESS_AZURE ? `${urlProjectName}-staging.azurewebsites.net` : undefined
+                    message: form.label('Staging chatbot hostname', 'will set chatbot url in configuration files', true),
+                    default: form.data.infrastructure === EXPRESS_AZURE
+                        ? `${urlProjectName}-staging.azurewebsites.net`
+                        : defaultDomain.replace('*ENV*', 'staging')
                 }
             ]);
 
@@ -355,7 +313,7 @@ async function processGenerator (args, skipForm) {
                     {
                         type: 'input',
                         name: 'stagingApiDomain',
-                        message: form.label('Staging API domain', 'domain of staging API Gateway endpoint', true),
+                        message: form.label('Staging API hostname', 'domain of staging API Gateway endpoint', true),
                         default: form.data.stagingDomain.replace(/\./, '-api.')
                     }
                 ]);
@@ -367,8 +325,8 @@ async function processGenerator (args, skipForm) {
                 {
                     type: 'input',
                     name: 'devDomain',
-                    message: form.label('Dev chatbot domain', 'will set chatbot url in configuration files', true),
-                    default: form.data.infrastructure === EXPRESS_AZURE ? `${urlProjectName}-dev.azurewebsites.net` : undefined
+                    message: form.label('Dev chatbot hostname', 'will set chatbot url in configuration files', true),
+                    default: form.data.infrastructure === EXPRESS_AZURE ? `${urlProjectName}-dev.azurewebsites.net` : defaultDomain.replace('*ENV*', 'dev')
                 }
             ]);
 
@@ -377,7 +335,7 @@ async function processGenerator (args, skipForm) {
                     {
                         type: 'input',
                         name: 'devApiDomain',
-                        message: form.label('Dev API domain', 'domain of dev API Gateway endpoint', true),
+                        message: form.label('Dev API hostname', 'domain of dev API Gateway endpoint', true),
                         default: form.data.devDomain.replace(/\./, '-api.')
                     }
                 ]);
@@ -389,8 +347,8 @@ async function processGenerator (args, skipForm) {
                 {
                     type: 'input',
                     name: 'testDomain',
-                    message: form.label('Test chatbot domain', 'will set chatbot url in configuration files', true),
-                    default: form.data.infrastructure === EXPRESS_AZURE ? `${urlProjectName}-test.azurewebsites.net` : undefined
+                    message: form.label('Test chatbot hostname', 'will set chatbot url in configuration files', true),
+                    default: form.data.infrastructure === EXPRESS_AZURE ? `${urlProjectName}-test.azurewebsites.net` : defaultDomain.replace('*ENV*', 'test')
                 }
             ]);
 
@@ -399,14 +357,14 @@ async function processGenerator (args, skipForm) {
                     {
                         type: 'input',
                         name: 'testApiDomain',
-                        message: form.label('Test API domain', 'domain of test API Gateway endpoint', true),
+                        message: form.label('Test API hostname', 'domain of test API Gateway endpoint', true),
                         default: form.data.testDomain.replace(/\./, '-api.')
                     }
                 ]);
             }
         }
 
-        if (form.data.infrastructure === SERVERLESS_AWS && form.data.publicStorage) {
+        if (form.data.infrastructure === SERVERLESS_AWS) {
             await form.ask([
                 {
                     type: 'input',
@@ -451,7 +409,7 @@ async function processGenerator (args, skipForm) {
 
         if (form.data.withDesigner) {
             if ([MONGODB, AZURE_COSMOS_DB, MSSQL].includes(form.data.database)
-                && form.data.messenger) {
+                && [WINGBOT_ORCHESTRATOR, MESSENGER].includes(form.data.platform)) {
 
                 await form.ask([
                     form.yesNo('notifications', form.label('Deploy Ads subsystem for Notifications'), Form.YES_NO)
@@ -584,8 +542,7 @@ async function processGenerator (args, skipForm) {
 
                 await form.ask([
                     form.yesNo('storeConversationHistory', form.label('Store conversation history in DB', 'not necessary for running a chatbot', true), Form.NO_YES),
-                    form.yesNo('anonymizeConversationLogs', form.label('Anonymize conversation logs', 'by passing anonymizer together with conversation logger to Sender', true), Form.YES_NO),
-                    form.list('frontendTokenStorage', form.label('Choose a frontend token storage', 'usefull for authorizing webviews', true))
+                    form.yesNo('anonymizeConversationLogs', form.label('Anonymize conversation logs', 'by passing anonymizer together with conversation logger to Sender', true), Form.YES_NO)
                 ]);
 
                 break;
@@ -992,101 +949,6 @@ async function processGenerator (args, skipForm) {
                     ]);
                 }
                 break;
-            case WEBCHAT:
-                await form.ask([
-                    {
-                        type: 'input',
-                        message: form.group(
-                            'Webchat settings - production',
-                            'Information about webchat configuration\nYou will be able to edit these data later in config directory.',
-                            form.label('Webchat App ID', '', true)
-                        ),
-                        name: 'fbAppId'
-                    },
-                    {
-                        type: 'input',
-                        message: form.label('Webchat Channel ID', '', true),
-                        name: 'wchChannelId'
-                    },
-                    {
-                        type: 'input',
-                        message: form.label('Webchat APP URL', '', true),
-                        name: 'wchApiUrl'
-                    }
-                ]);
-
-                if (form.data.stagingEnvironment) {
-                    await form.ask([
-                        {
-                            type: 'input',
-                            message: form.group(
-                                'Webchat settings - Stage',
-                                'Information about webchat configuration\nYou will be able to edit these data later in config directory.',
-                                form.label('Webchat App ID', '', true)
-                            ),
-                            name: 'fbAppIdStaging'
-                        },
-                        {
-                            type: 'input',
-                            message: form.label('Webchat Channel ID', '', true),
-                            name: 'wchChannelIdStaging'
-                        },
-                        {
-                            type: 'input',
-                            message: form.label('Webchat APP URL', '', true),
-                            name: 'wchApiUrlStaging'
-                        }
-                    ]);
-                }
-
-                if (form.data.devEnvironment) {
-                    await form.ask([
-                        {
-                            type: 'input',
-                            message: form.group(
-                                'Webchat settings - Dev',
-                                'Information about webchat configuration\nYou will be able to edit these data later in config directory.',
-                                form.label('Webchat App ID', '', true)
-                            ),
-                            name: 'fbAppIdDev'
-                        },
-                        {
-                            type: 'input',
-                            message: form.label('Webchat Channel ID', '', true),
-                            name: 'wchChannelIdDev'
-                        },
-                        {
-                            type: 'input',
-                            message: form.label('Webchat APP URL', '', true),
-                            name: 'wchApiUrlDev'
-                        }
-                    ]);
-                }
-
-                if (form.data.testEnvironment) {
-                    await form.ask([
-                        {
-                            type: 'input',
-                            message: form.group(
-                                'Webchat settings - Test',
-                                'Information about webchat configuration\nYou will be able to edit these data later in config directory.',
-                                form.label('Webchat App ID', '', true)
-                            ),
-                            name: 'fbAppIdTest'
-                        },
-                        {
-                            type: 'input',
-                            message: form.label('Webchat Channel ID', '', true),
-                            name: 'wchChannelIdTest'
-                        },
-                        {
-                            type: 'input',
-                            message: form.label('Webchat APP URL', '', true),
-                            name: 'wchApiUrlTest'
-                        }
-                    ]);
-                }
-                break;
             case BOT_SERVICE:
                 await form.ask([
                     {
@@ -1213,10 +1075,22 @@ async function processGenerator (args, skipForm) {
                         message: form.group(
                             'Wingbot orchestrator settings - production',
                             'Put orchestrator configuration here.',
-                            form.label('Orchestrator API Url', 'Target orchestration url (keep empty, when using cloud orchestrator)', true)
+                            form.label('Orchestrator production hostname', 'Target orchestration url (keep empty, when using cloud orchestrator)', true)
                         ),
-                        name: 'orchestratorApiUrl',
+                        name: 'orchestratorProductionHostname',
                         default: null
+                    },
+                    {
+                        type: 'input',
+                        message: form.label('Production Orchestrator Page ID', 'Will be used as at bot\'s homepage for to show a chat. You can set it later.', true),
+                        name: 'wingbotOrchestratorProductionPageId',
+                        default: 'web'
+                    },
+                    {
+                        type: 'input',
+                        message: form.label('Production Orchestrator App ID', 'Will be used for communication with orchestrator', true),
+                        name: 'wingbotOrchestratorProductionAppId',
+                        default: 'bot0'
                     }
                 ]);
 
@@ -1230,14 +1104,6 @@ async function processGenerator (args, skipForm) {
                     ]);
                 }
 
-                await form.ask([
-                    {
-                        type: 'input',
-                        message: form.label('Testing orchestrator page ID', 'Will be used as a tesing at bot\'s homepage for to show a chat. You can set it later in dist/index.html.', true),
-                        name: 'wingbotOrchestratorTestingPageId'
-                    }
-                ]);
-
                 if (form.data.stagingEnvironment) {
                     await form.ask([
                         {
@@ -1245,10 +1111,22 @@ async function processGenerator (args, skipForm) {
                             message: form.group(
                                 'Wingbot orchestrator settings - staging',
                                 'Put orchestrator configuration here.',
-                                form.label('Orchestrator API Url', 'Target orchestration url (keep empty, when using cloud orchestrator)', true)
+                                form.label('Orchestrator staging hostname', 'Target orchestration url (keep empty, when using cloud orchestrator)', true)
                             ),
-                            name: 'orchestratorStagingApiUrl',
-                            default: form.data.orchestratorApiUrl
+                            name: 'orchestratorStagingHostname',
+                            default: null
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Production Orchestrator Page ID', 'Will be used as at bot\'s homepage for to show a chat. You can set it later.', true),
+                            name: 'wingbotOrchestratorStagingPageId',
+                            default: 'web'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Production Orchestrator App ID', 'Will be used for communication with orchestrator', true),
+                            name: 'wingbotOrchestratorStagingAppId',
+                            default: 'bot0'
                         }
                     ]);
 
@@ -1270,10 +1148,22 @@ async function processGenerator (args, skipForm) {
                             message: form.group(
                                 'Wingbot orchestrator settings - dev',
                                 'Put orchestrator configuration here.',
-                                form.label('Orchestrator API Url', 'Target orchestration url (keep empty, when using cloud orchestrator)', true)
+                                form.label('Orchestrator dev hostname', 'Target orchestration url (keep empty, when using cloud orchestrator)', true)
                             ),
-                            name: 'orchestratorDevApiUrl',
-                            default: form.data.orchestratorApiUrl
+                            name: 'orchestratorDevHostname',
+                            default: null
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Production Orchestrator Page ID', 'Will be used as at bot\'s homepage for to show a chat. You can set it later.', true),
+                            name: 'wingbotOrchestratorDevPageId',
+                            default: 'web'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Production Orchestrator App ID', 'Will be used for communication with orchestrator', true),
+                            name: 'wingbotOrchestratorDevAppId',
+                            default: 'bot0'
                         }
                     ]);
 
@@ -1295,10 +1185,22 @@ async function processGenerator (args, skipForm) {
                             message: form.group(
                                 'Wingbot orchestrator settings - test',
                                 'Put orchestrator configuration here.',
-                                form.label('Orchestrator API Url', 'Target orchestration url (keep empty, when using cloud orchestrator)', true)
+                                form.label('Orchestrator test hostname', 'Target orchestration url (keep empty, when using cloud orchestrator)', true)
                             ),
-                            name: 'orchestratorTestApiUrl',
-                            default: form.data.orchestratorApiUrl
+                            name: 'orchestratorTestHostname',
+                            default: null
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Production Orchestrator Page ID', 'Will be used as at bot\'s homepage for to show a chat. You can set it later.', true),
+                            name: 'wingbotOrchestratorTestPageId',
+                            default: 'web'
+                        },
+                        {
+                            type: 'input',
+                            message: form.label('Production Orchestrator App ID', 'Will be used for communication with orchestrator', true),
+                            name: 'wingbotOrchestratorTestAppId',
+                            default: 'bot0'
                         }
                     ]);
 
@@ -1338,33 +1240,7 @@ async function processGenerator (args, skipForm) {
                     }
                 ]);
                 break;
-            case SERVERLESS_AZURE:
             case EXPRESS_AZURE:
-                await form.ask([
-                    {
-                        type: 'input',
-                        message: form.group(
-                            'Azure deployment settings',
-                            'We will prepare an ARM template where you will be able to edit this information later',
-                            form.label('Resource Group name')
-                        ),
-                        name: 'azureRgName',
-                        default: `${form.data.bsBotName || form.data.projectName}-rg`
-                    },
-                    {
-                        type: 'input',
-                        message: form.label('Azure region'),
-                        name: 'azureRegion',
-                        default: 'northeurope'
-                    },
-                    {
-                        type: 'input',
-                        message: form.label('App Service name'),
-                        name: 'azureAppName',
-                        default: form.data.bsBotName
-                    }
-                ]);
-                break;
             case EXPRESS:
             default:
                 break;

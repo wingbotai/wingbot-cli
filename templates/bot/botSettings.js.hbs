@@ -2,7 +2,7 @@
  * @author wingbot.ai
  */
 'use strict';
-{{#if webchatOrMessenger}}
+{{#if messenger}}
 const { Settings } = require('wingbot-facebook');
 const { START_ACTION } = require('./actions');{{/if}}
 const config = require('../config');
@@ -10,7 +10,7 @@ const config = require('../config');
 async function botSettings () {
     if (config.isProduction) {
         // runs, when bot is updated
-{{#if webchatOrMessenger}}
+{{#if messenger}}
         const settings = new Settings(config.facebook.pageToken);
 
         await settings.getStartedButton(START_ACTION);

@@ -1,0 +1,16 @@
+FROM mhart/alpine-node:12
+
+# Create app directory
+WORKDIR /app
+
+# Bundle app source
+COPY . .
+
+RUN npm i
+
+RUN npm run build
+
+RUN npm prune --production
+
+EXPOSE 8080 80
+CMD [ "node", "bin/www.js" ]

@@ -1,42 +1,23 @@
-{{#unless wingbot}}
 /*
  * @author wingbot.ai
  */
 'use strict';
 
-{{#if webchat}}
-const { promisify } = require('util');
-const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
-
-const verify = promisify(jwt.verify);
-{{/if}}
 {{#if awsServerless}}
 {{#unless wingbotOrchestrator}}
 const AWS = require('aws-sdk');
 const config = require('../config');
 {{/unless}}
 {{/if}}
-{{#if expressOrAppService}}
-const express = require('express');{{#unless wingbotOrchestrator}}
-const log = require('../lib/log');{{/unless}}{{#unless webchatOrMessenger}}
-const config = require('../config');{{/unless}}
-{{/if}}
-{{#if webchatOrMessenger}}
+{{#if messenger}}
 {{#unless awsServerless}}
 const config = require('../config');
 {{/unless}}
 {{/if}}
-{{#unless azureServerless}}
 const wrapRoute = require('../lib/wrapRoute');
-{{/unless}}
-const { {{#if wingbotOrchestrator}}app{{else}}channel{{#if webchat}}, processor{{/if}}{{/if}} } = require('../bot');
-{{#if frontendTokenStorage}}
-{{#unless wingbotOrchestrator}}
-const botTokenStorage = require('../lib/botTokenStorage');
-{{/unless}}
-{{/if}}
+const { channel } = require('../bot');
 
+{{#unless wingbotOrchestrator}}
 {{#if awsServerless}}
 {{#unless wingbotOrchestrator}}
 const SEND_MESSAGE_LAMBDA_NAME = `${config.prefix}-send`;
@@ -46,11 +27,13 @@ const lambda = new AWS.Lambda({
 });
 
 {{/unless}}
+{{/if}}
+{{/unless}}
 module.exports.handler = wrapRoute(async (event) => {
 
     if (event.httpMethod === 'GET') {
         const { queryStringParameters } = event;
-        {{#if webchatOrMessenger}}
+        {{#if messenger}}
         if (queryStringParameters.ref) {
             const location = `https://m.me/${config.facebook.pageId}?ref=${encodeURIComponent(queryStringParameters.ref)}`;
             return {
@@ -82,46 +65,21 @@ module.exports.handler = wrapRoute(async (event) => {
         {{/if}}
     }
     {{#if wingbotOrchestrator}}
-    return app.request(event.body, event.headers);
+    return channel.request(event.body, event.headers);
     {{else}}
     const parsedBody = JSON.parse(event.body);
-    {{#if frontendTokenStorage}}
-    const { botToken = null, senderId = null } = event.queryStringParameters || {};
 
-    let invokeEvent;
-    if (botToken && senderId) {
-        const tokenObj = await botTokenStorage.findByToken(botToken);
-
-        if (tokenObj.senderId !== parsedBody.sender.id) {
-            return {
-                statusCode: 401,
-                body: 'Unauthorized'
-            };
-        }
-
-        invokeEvent = { message: parsedBody, senderId: tokenObj.senderId, pageId: tokenObj.pageId };
-    } else {
-        await channel.verifyRequest(event.body, event.headers);
-        invokeEvent = { parsedBody };
-    }
-    {{else}}
     await channel.verifyRequest(event.body, event.headers);
-    const invokeEvent = { parsedBody };
-    {{/if}}
-    {{#if webchat}}
-        await channel.processEvent({
-        FunctionName: SEND_MESSAGE_LAMBDA_NAME,
-        Payload: JSON.stringify(invokeEvent),
-        LogType: 'Tail',
-        InvocationType: 'Event'
-    }).promise();
-    {{else}}
+
+    {{#if awsServerless}}
     await lambda.invoke({
         FunctionName: SEND_MESSAGE_LAMBDA_NAME,
-        Payload: JSON.stringify(invokeEvent),
+        Payload: JSON.stringify({ parsedBody }),
         LogType: 'Tail',
         InvocationType: 'Event'
     }).promise();
+    {{else}}
+    await channel.processEvent(parsedBody);
     {{/if}}
     return {
         statusCode: 200,
@@ -132,220 +90,3 @@ module.exports.handler = wrapRoute(async (event) => {
     };
     {{/if}}
 });
-{{/if}}
-{{#if azureServerless}}
-module.exports = async function (context, req) {
-    if (req.method === 'GET') {
-        {{#if webchatOrMessenger}}
-        if (req.query.ref) {
-            const location = `https://m.me/${config.facebook.pageId}?ref=${encodeURIComponent(req.query.ref)}`;
-            return {
-                status: 301,
-                headers: { location }
-            };
-        }
-        const body = await channel.verifyWebhook(req.query);
-
-        return {
-            status: 200,
-            headers: { 'content-type': 'text/plain' },
-            body
-        };
-        {{else}}
-        if (req.query.ref) {
-            const location = `/?ref=${encodeURIComponent(req.query.ref)}`;
-            return {
-                status: 301,
-                headers: { location }
-            };
-        }
-        return {
-            status: 200,
-            headers: { 'content-type': 'text/plain' },
-            body: '{"message":"RUNNING"}'
-        };
-        {{/if}}
-    }
-
-    {{#if wingbotOrchestrator}}
-    const { statusCode, body, headers } = await app.request(req.rawBody, req.headers);
-    return {
-        status: statusCode,
-        body,
-        headers
-    };
-    {{else}}
-    {{#if frontendTokenStorage}}
-    const { botToken = null, senderId = null } = req.query || {};
-
-    if (botToken && senderId) {
-        const tokenObj = await botTokenStorage.findByToken(botToken);
-
-        if (tokenObj.senderId !== req.body.sender.id) {
-            return {
-                status: 401,
-                headers: { 'content-type': 'text/plain' },
-                body: 'Unauthorized'
-            };
-        }
-
-        await channel.processMessage(req.body, tokenObj.senderId, tokenObj.pageId);
-    } else {
-        await channel.verifyRequest(req.rawBody, req.headers);
-        await channel.processEvent(req.body);
-    }
-    {{else}}
-    await channel.verifyRequest(req.rawBody, req.headers);
-    await channel.processEvent(req.body);
-    {{/if}}
-
-    return {
-        status: 200,
-        body: '{"message":"OK"}'
-    };
-    {{/if}}
-};
-{{/if}}
-{{#if expressOrAppService}}
-module.exports = [
-    express.json({
-        verify: (req, res, buf) => {
-            // @ts-ignore
-            req.rawBody = buf;
-        },
-        limit: config.expressBodyLimit
-    }),
-    wrapRoute(async (req, res) => {
-        if (req.method === 'GET') {
-{{#if webchatOrMessenger}}
-{{#if messenger}}
-            if (req.query.ref) {
-                res.redirect(`https://m.me/${config.facebook.pageId}?ref=${encodeURIComponent(req.query.ref)}`);
-                return;
-            }
-            const body = await channel.verifyWebhook(req.query);
-            res.send(body);
-{{else}}{{! else if webchat }}
-            if (req.query.text) {
-                const aiActions = await processor.aiActionsForText(req.query.text);
-
-                const actions = aiActions
-                    .map(({
-                        action, meta, winner, title
-                    }) => {
-                        const useTitle = typeof title === 'function'
-                            ? title({})
-                            : title;
-
-                        if (meta.targetAppId) {
-                            return {
-                                appId: meta.targetAppId,
-                                action: meta.targetAction,
-                                title: useTitle,
-                                winner
-                            };
-                        }
-
-                        return {
-                            appId: config.facebook.appId,
-                            action,
-                            title: useTitle,
-                            winner
-                        };
-                    });
-
-                res.send({ actions });
-                return;
-            }
-
-            if (req.query.ref) {
-                res.redirect(`${config.facebook.apiUrl.replace('/api/send', '/')}?ref=${encodeURIComponent(req.query.ref)}`);
-                return;
-            }
-            const body = await channel.verifyWebhook(req.query);
-            res.send(body);
-{{/if}}
-{{else}}
-            if (req.query.ref) {
-                res.redirect(`/?ref=${encodeURIComponent(req.query.ref)}`);
-                return;
-            }
-            res.send('RUNNING');
-{{/if}}
-            return;
-        }
-{{#if wingbotOrchestrator}}
-        const {
-            statusCode,
-            body,
-            headers
-        } = await app.request(req.rawBody, req.headers);
-
-        res.set(headers)
-            .status(statusCode)
-            .send(body);
-{{else}}
-{{#if webchat}}
-
-        const secret = await Promise.resolve(config.webchat.secret);
-
-        const hash = crypto.createHmac('sha1', secret);
-
-        const sha1 = hash.update(req.rawBody)
-            .digest('hex');
-
-        const authHeader = req.get('Authorization');
-
-        const token = await verify(authHeader, secret);
-
-        if (!token || token.sha1 !== sha1) {
-            res.status(403)
-                .send();
-            return;
-        }
-
-        const invokeEvent = {
-            ...req.body,
-            object: 'page'
-        };
-
-        log.log('received event', invokeEvent);
-
-        await channel.processEvent(invokeEvent);
-        res.send('OK');
-{{/if}}
-{{#unless webchat}}
-        {{#if frontendTokenStorage}}
-        const { botToken = null, senderId = null } = req.query;
-
-        if (botToken && senderId) {
-            const tokenObj = await botTokenStorage.findByToken(botToken);
-
-            if (tokenObj.senderId !== req.body.sender.id) {
-                res.status(401).send('Unauthorized');
-                return;
-            }
-
-            await channel.processMessage(req.body, tokenObj.senderId, tokenObj.pageId);
-        } else {
-
-            await channel.verifyRequest(req.rawBody, req.headers);
-            channel.processEvent(req.body)
-                .catch((e) => {
-                    log.error('Request failed', e);
-                });
-        }
-        {{else}}
-        await channel.verifyRequest(req.rawBody, req.headers);
-        channel.processEvent(req.body)
-            .catch((e) => {
-                log.error('Request failed', e);
-            });
-        {{/if}}
-        res.send('OK');
-{{/unless}}
-{{/if}}
-    })
-];
-{{/if}}
-{{/unless}}

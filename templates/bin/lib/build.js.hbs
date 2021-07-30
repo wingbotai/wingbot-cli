@@ -1,0 +1,46 @@
+/**
+ * @author wingbot.ai
+ */
+'use strict';
+/* eslint no-console: 0 */
+
+const path = require('path');
+const fs = require('fs');
+const webpack = require('webpack');
+const webpackConfig = require('../../webpack.config');
+const { renderTemplates } = require('./renderTemplates');
+const fileListSync = require('./fileListSync');
+const config = require('../../config');
+
+function webpackRun () {
+    return new Promise((res, rej) => {
+        // @ts-ignore
+        webpack(webpackConfig)
+            .run((e, r) => (e ? rej(e) : res(r)));
+    });
+}
+
+async function build (distPath, viewsPath) {
+    console.log('Cleaning up scripts');
+
+    const distFiles = fileListSync(distPath, /\.(js|js\.gz|css\.gz|css|css\.map)$/);
+
+    for (const file of distFiles) {
+        console.log(` * removing '${file}'`); // eslint-disable-line no-console
+        fs.unlinkSync(path.join(distPath, file));
+    }
+
+    console.log('Building scripts');
+
+    const webpackResult = await webpackRun();
+
+    // @ts-ignore
+    console.log('Build is done:', webpackResult.hasErrors()
+        ? webpackResult.compilation.errors
+        : 'without errors');
+
+    await renderTemplates(config, viewsPath, distPath);
+    console.log('Templates are rendered.');
+}
+
+module.exports = build;

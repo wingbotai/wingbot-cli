@@ -59,7 +59,10 @@ module.exports = {
 {{/if}}
 {{#if wingbotOrchestrator}}
     orchestrator: {
-        {{#unless orchestratorApiUrl}}// {{/unless}}apiUrl: '{{orchestratorApiUrl}}',{{#unless keyvault}}
+        {{#unless orchestratorProductionHostname}}// {{/unless}}apiUrl: 'https://{{orchestratorProductionHostname}}/api',
+        {{#unless orchestratorProductionHostname}}// {{/unless}}wsUrl: 'wss://{{orchestratorProductionHostname}}/ws',
+        appId: '{{wingbotOrchestratorProductionAppId}}',
+        pageId: '{{wingbotOrchestratorProductionAppId}}'{{#unless keyvault}},
         secret: '{{wingbotOrchestratorProductionSecret}}'{{/unless}}
     },
 
@@ -103,7 +106,7 @@ module.exports = {
 
 {{/if}}
 {{#if sentry}}
-    sentryDsn: '{{sentry}}',
+    sentryDsn: '{{sentryDsn}}',
 
 {{/if}}
     gaCode: '{{gaCode}}'

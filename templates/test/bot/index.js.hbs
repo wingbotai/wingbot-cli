@@ -8,10 +8,12 @@ const { Tester } = require('wingbot');
 const { botFactory } = require('../../bot');
 {{#if isMongoOrCosmos}}
 const mongodb = require('../../lib/mongodb');
+const { db: { mongod, url } } = require('../../config');
 
 after(async () => {
-    const db = await mongodb(true);
-    await db.close(true);
+    await Promise.resolve(url);
+    await mongodb(true);
+    await mongod.stop();
 });
 {{/if}}
 {{#if mssqlStorage}}

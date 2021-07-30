@@ -1,0 +1,71 @@
+{{#> layout }}
+    <section class="hero is-fullheight">
+        <!-- Hero head: will stick at the top -->
+        <div class="hero-head has-cs-bg">
+            <nav class="navbar">
+                <div class="container">
+                    <div class="navbar-brand">
+                        <a class="navbar-item">
+                            <!-- put logo here -->
+                        </a>
+                        <div class="navbar-item">
+                           <a href="https://wingbot.ai">
+                                <img class="logo" src="/media/WINGBOT_logo_BLACK-COLOR.png" />
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Hero content: will be in the middle -->
+        <div class="hero-body">
+            <div class="columns has-iframe">
+                <div class="column has-gray-bg">
+                    <div class="top-frame">
+                        <div class="bg"></div>
+                        <div class="content">
+                            <h1>
+                                Wingbot.ai assistant demo
+                            </h1>
+                        </div>
+                    </div>
+
+                    <div class="text-frame">
+                        <div class="content">
+                            <h2>
+                                We build a multi-domain conversational artificial intelligence.
+                            </h2>
+                            <ul>
+                                <li>sign it to chatbot designer here
+                                    <a href="https://designer.wingbot.ai">designer.wingbot.ai</a></li>
+                                <li>find out, how to use wingbot.ai at our <a href="http://docs.wingbot.ai">tutorial page</a></li>
+                                <li>or check out our <a href="https://github.com/wingbotai">github</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="column has-chat">
+                    <!-- BOTSERVICE WEBCHAT -->
+						<div id="webchat" class="chat"></div>
+                        {{#if orchestrator}}
+						<link href="{{config.appUrl}}/styles/chat.css" rel='stylesheet' type='text/css'>
+
+						<div id="chat"></div>
+						<script>
+							window.wingbotChatCmds=window.wingbotChatCmds||[];window.wingbotChat=window.wingbotChat||function(){wingbotChatCmds.push(arguments)}
+
+							wingbotChat('init', {
+								{{#if orchestrator.apiUrl}}api: '{{{orchestrator.apiUrl}}}',{{/if}}
+								{{#if orchestrator.wsUrl}}websocket: '{{{orchestrator.wsUrl}}}',{{/if}}
+								pageId: '{{orchestrator.pageId}}'
+							}, document.getElementById('chat'));
+
+						</script>
+                        {{/if}}
+						<script async src="{{config.appUrl}}/chat.js"></script>
+					</div>
+            </div>
+        </div>
+    </section>
+{{/layout}}

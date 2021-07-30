@@ -1,13 +1,9 @@
-{{#unless azureServerless}}
 {{#if withDesigner}}
 /*
  * @author wingbot.ai
  */
 'use strict';
 
-{{#if expressOrAppService}}
-const express = require('express');
-{{/if}}
 const {
     GraphApi, validateBotApi, postBackApi, conversationsApi{{#if gSheetTestingSuit}}, conversationTestApi{{/if}}
 } = require('wingbot');
@@ -16,9 +12,6 @@ const config = require('../config');
 const wrapRoute = require('../lib/wrapRoute');
 {{#if notifications}}
 const notifications = require('../lib/notifications');
-{{#if expressOrAppService}}
-const log = require('../lib/log');
-{{/if}}
 {{/if}}
 {{#if awsServerless}}{{#unless wingbot}}
 const updateBot = require('../lib/updateBot');
@@ -46,20 +39,20 @@ const api = new GraphApi([
 {{/if}}
     postBackApi(channel, POSTBACK_GROUPS),
     conversationsApi(stateStorage, {{#if storeConversationHistory}}chatLogStorage{{else}}null{{/if}}, {{#if notifications}}notifications{{else}}null{{/if}}, BOT_UPDATE_GROUPS),
-    validateBotApi(botFactory, 'start', 'foobar', BOT_UPDATE_GROUPS),
+    validateBotApi(botFactory, 'start', 'foobar', BOT_UPDATE_GROUPS){{#if gSheetTestingSuit}},
+    conversationTestApi(testsSource, botFactory, {}, BOT_UPDATE_GROUPS){{/if}},
 {{#if awsServerless}}
-    updateBot(() => botSettings(), BOT_UPDATE_GROUPS){{#if gSheetTestingSuit}},
-    conversationTestApi(testsSource, botFactory, {}, BOT_UPDATE_GROUPS){{/if}}
+    updateBot(() => botSettings(), BOT_UPDATE_GROUPS)
 {{else}}
-    botConfigStorage.api(() => botSettings(), BOT_UPDATE_GROUPS){{#if gSheetTestingSuit}},
-    conversationTestApi(testsSource, botFactory, {}, BOT_UPDATE_GROUPS){{/if}}
+    botConfigStorage.api(() => botSettings(), BOT_UPDATE_GROUPS)
 {{/if}}
 ], {
     token: config.wingbot.token,
-    appToken: config.appToken,
+    // remove comment to access API with a token
+    // appToken: config.appToken,
     groups: DEFAULT_ACCESS_GROUPS
 });
-{{#if awsServerless}}
+
 module.exports.handler = wrapRoute(async (event) => {
     const body = JSON.parse(event.body);
     const response = await api.request(body, event.headers);
@@ -75,26 +68,4 @@ module.exports.worker = wrapRoute(async () => {
     await notifications.processQueue(channel, 90000);
 });
 {{/if}}
-{{/if}}{{#if expressOrAppService}}
-module.exports = [
-    express.json({ limit: config.expressBodyLimit }),
-    wrapRoute(async (req, res) => {
-        const { body } = req;
-        const response = await api.request(body, req.headers);
-
-        res.set({
-            'Content-Type': 'application/json'
-        })
-            .send(response);
-    })
-];
-{{#if notifications}}
-
-setInterval(() => {
-    notifications.processQueue(channel)
-        .catch(e => log.error(e));
-}, 60000);
 {{/if}}
-{{/if}}
-{{/if}}
-{{/unless}}

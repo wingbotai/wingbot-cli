@@ -220,15 +220,23 @@ class TemplateRenderer {
     }
 
     _copyFile (fileName) {
-        const [, file, condition, ext] = fileName.match(/^(.+)\.([a-z0-9]+)\.([a-z0-9]+)$/i);
+        const conditionFileName = fileName.match(/^(.+)\.([a-z0-9]+)\.([a-z0-9]+)$/i);
+
+        let destFileName;
+        if (conditionFileName) {
+            const [, file, condition, ext] = conditionFileName;
+
+            if (!this.data[condition]) {
+                return Promise.resolve();
+            }
+
+            destFileName = `${file}.${ext}`;
+        } else {
+            destFileName = fileName;
+        }
 
         const sourceFile = path.join(this.templateRoot, fileName);
-        const destFileName = `${file}.${ext}`;
         const destFile = path.join(this.destination, destFileName);
-
-        if (!this.data[condition]) {
-            return Promise.resolve();
-        }
 
         return this._readBufferFile(sourceFile)
             .then((contents) => this._ensureDirExists(destFile)
@@ -242,6 +250,10 @@ class TemplateRenderer {
 
         return this._readFile(sourceFile)
             .then((template) => {
+                if (fileName.match(/\.hbs\.hbs$/)) {
+                    return this._ensureDirExists(destFile)
+                        .then(() => this._writeFileIfNotChanged(destFile, destFileName, template));
+                }
                 const renderer = handlebars.compile(template);
                 let contents;
                 try {
@@ -299,7 +311,7 @@ class TemplateRenderer {
     render () {
         return Promise.all([
             this._readFiles('**/@(*.hbs.*|*.hbs)'),
-            this._readFiles('**/@(*.*.png|*.*.jpg|*.*.jpeg|*.*.svg)'),
+            this._readFiles('**/@(*.*.png|*.*.jpg|*.*.jpeg|*.svg|*.png|*.jpg|*.jpeg|*.svg)'),
             this._loadHashFile()
         ])
             .then(([files, otherFiles]) => Promise.all([

@@ -10,20 +10,17 @@
     "test": "npm run test:lint && npm run test:bot",{{#if mssqlStorage}}
     "sql:start": "(docker rm sqlwingbottest || true) && docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=NeotravujPotvoro1' -p 1433:1433 --name sqlwingbottest -d mcr.microsoft.com/mssql/server:2017-latest && sleep 12 && docker exec -it sqlwingbottest /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P 'NeotravujPotvoro1' -Q 'CREATE DATABASE {{mssqlName}}'",
     "sql:stop": "docker kill sqlwingbottest && docker rm sqlwingbottest",{{/if}}
-    "start": {{#if isAwsOrAzure}}"echo \"Error: start command not available\" && exit 1",{{/if}}{{#if expressOrAppService}}
-    "node ./bin/www.js",{{/if}}
+    "start": "node ./bin/www.js",
     "test:coverage": "nyc --reporter=html mocha ./test && nyc report",
     "test:coverage:threshold": "nyc check-coverage --lines 80 --functions 80 --branches 75",
     "test:bot": "mocha ./test",
-    "test:lint": "eslint --ext .js lib config test routes bot{{#if expressOrAppService}} bin *.js{{/if}}",{{#if stagingEnvironment}}
-    "build:staging": ":"{{#if awsServerless}},
-    "deploy:staging": "npm i && npm run build:staging && sls deploy -s staging"{{/if}},{{/if}}{{#if devEnvironment}}
-    "build:dev": ":"{{#if awsServerless}},
-    "deploy:dev": "npm i && npm run build:dev && sls deploy -s dev"{{/if}},{{/if}}{{#if testEnvironment}}
-    "build:test": ":"{{#if awsServerless}},
-    "deploy:test": "npm i && npm run build:test && sls deploy -s test"{{/if}},{{/if}}
+    "build": "node ./bin/build.js",
+    "test:lint": "eslint --ext .js --ext .jsx lib config test routes bot bin public",{{#if stagingEnvironment}}{{#if awsServerless}}
+    "deploy:staging": "npm i && node ./bin/build.js -s staging && sls deploy -s staging",{{/if}}{{/if}}{{#if devEnvironment}}{{#if awsServerless}}
+    "deploy:dev": "npm i && node ./bin/build.js -s dev && sls deploy -s dev",{{/if}}{{/if}}{{#if testEnvironment}}{{#if awsServerless}}
+    "deploy:test": "npm i && node ./bin/build.js -s test && sls deploy -s test",{{/if}}{{/if}}
     "build:production": ":"{{#if awsServerless}},
-    "deploy:production": "npm i && npm run build:production && sls deploy -s production"{{/if}}{{#if isAzure}},
+    "deploy:production": "npm i && npm run build && sls deploy -s production"{{/if}}{{#if isAzure}},
     "deploy:production": "./bin/universaldeploy.cmd",
     "pack": "npm-pack-zip"{{/if}}
   },
@@ -32,41 +29,67 @@
     "chatbot"
   ],
   "author": "Wingbot.ai",
-  "devDependencies": { {{#if awsServerless}}
-    "aws-sdk": "^2.101.0",{{else}}{{#if dynamodbStorage}}"aws-sdk": "^2.101.0",{{/if}}{{/if}}
+  "devDependencies": {
+    "@babel/core": "^7.14.8",
+    "@babel/plugin-syntax-dynamic-import": "^7.8.3",
+    "@babel/plugin-transform-runtime": "^7.14.5",
+    "@babel/preset-env": "^7.14.8",
+    "@babel/preset-react": "^7.14.5",
+    "@babel/register": "^7.14.5",
+    "@babel/runtime": "^7.14.8",
+    "@babel/eslint-parser": "^7.14.7",
+    "babel-loader": "^8.2.2",
+    "bulma": "^0.9.3",
+    "core-js": "^3.15.2",
+    "css-loader": "^6.2.0",{{#if awsServerless}}
+    "cookie-parser": "^1.4.5",
+    "express": "^4.17.1",
+    "aws-sdk": "^2.951.0",{{else}}{{#if dynamodbStorage}}"aws-sdk": "^2.101.0",{{/if}}{{/if}}
     "env-test": "^1.0.0",{{#if eslint}}
     "eslint": "^7.14.0",
     "eslint-config-airbnb": "^18.2.1",
     "eslint-mocha": "^0.7.3",{{#unless testrun}}
-    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-import": "^2.23.4",
     "eslint-plugin-jsx-a11y": "^6.4.1",
     "eslint-plugin-mocha": "^8.0.0",
-    "eslint-plugin-react": "^7.21.5",{{/unless}}{{/if}}
-    "mocha": "^8.2.1",
-    "nyc": "^15.1.0"{{#if isAzure}},
-    "npm-pack-zip": "^1.2.6"{{/if}}{{#if publicStorage}},
-    "serverless-s3-sync": "^1.7.1"{{/if}}
+    "eslint-plugin-react": "^7.24.0",
+    "eslint-plugin-react-hooks": "^4.2.0",{{/unless}}{{/if}}
+    "mini-css-extract-plugin": "^2.1.0",{{#if isMongoOrCosmos}}
+    "mongodb-memory-server": "^7.3.1",{{/if}}
+    "mocha": "^9.0.2",
+    "nyc": "^15.1.0",{{#if awsServerless}}
+    "parse-duration": "^1.0.0",{{/if}}
+    "path-browserify": "^1.0.1",
+    "prop-types": "^15.7.2",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "regenerator-runtime": "^0.13.7",
+    "sass": "^1.35.2",
+    "sass-loader": "^12.1.0",{{#if awsServerless}}
+    "serverless-s3-sync": "^1.17.1",{{/if}}
+    "webpack": "^5.46.0",
+    "webpack-dev-middleware": "^5.0.0"{{#if wingbotOrchestrator}},
+    "wingbot-chat-ui": "^1.9.0"{{/if}}
   },
-  "dependencies": { {{#if expressOrAppService}}
+  "dependencies": { {{#unless awsServerless}}
     "cookie-parser": "^1.4.5",
-    "express": "^4.17.1",
-    "http-errors": "^1.8.0",
-    "morgan": "^1.10.0",{{/if}}{{#if logzioToken}}
+    "express": "^4.17.1",{{/unless}}{{#if keyvault}}
+    "@azure/identity": "^1.5.0",
+    "@azure/keyvault-secrets": "^4.2.0",{{/if}}{{#if logzioToken}}
     "logzio-nodejs": "^2.0.2",{{/if}}{{#if sentry}}
     "@sentry/node": "^5.27.2",{{/if}}{{#if appInsights}}
     "applicationinsights": "^1.6.0",{{/if}}{{#if isMongoOrCosmos}}
     "mongodb": "^3.6.2",
     "mongodb-core": "3.2.7",{{/if}}
     "handlebars": "^4.7.6",
-    "wingbot": "^3.7.7"{{#if dynamodbStorage}},
+    "wingbot": "^3.16.3"{{#if dynamodbStorage}},
     "wingbot-dynamodb": "^2.5.0"{{/if}}{{#if mssqlStorage}},
-    "wingbot-mssql": "^1.2.5"{{/if}}{{#if keyvault}},
-    "azure-keyvault": "^3.0.5",
-    "ms-rest": "^2.5.4"{{/if}}{{#if jwtTokenStorage}},
-    "wingbot-jwt": "^1.1.0"{{/if}}{{#if webchatOrMessenger}},
+    "wingbot-mssql": "^1.2.5"{{/if}}{{#unless awsServerless}},
+    "parse-duration": "^1.0.0"{{/unless}}{{#if jwtTokenStorage}},
+    "wingbot-jwt": "^1.1.0"{{/if}}{{#if messenger}},
     "wingbot-facebook": "^3.1.0"{{/if}}{{#if botService}},
     "wingbot-botservice": "^3.7.0"{{/if}}{{#if isMongoOrCosmos}},
-    "wingbot-mongodb": "^2.15.3"{{/if}}{{#if googleAnalytics}},
+    "wingbot-mongodb": "^2.16.1"{{/if}}{{#if googleAnalytics}},
     "universal-analytics": "^0.4.23"{{/if}}{{#if analytics}},
     "webalize": "^0.1.0"{{/if}}{{#if gSheetTestingSuit}},
     "wingbot-tests-gsheets": "^1.2.3"{{/if}}

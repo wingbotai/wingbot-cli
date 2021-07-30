@@ -10,9 +10,6 @@ const log = require('../lib/log');
 {{#if notifications}}
 const notifications = require('../lib/notifications');
 {{/if}}
-{{#if frontendTokenStorage}}
-const tokenStorage = require('../lib/botTokenStorage');
-{{/if}}
 const stateStorage = require('../lib/stateStorage');
 const botFactory = require('./bot');
 const { onAction, onEvent } = require('./onAction');
@@ -23,8 +20,7 @@ bot.on('action', onAction);
 
 const processor = new Processor(bot, {
     appUrl: config.appUrl,
-    stateStorage,{{#if frontendTokenStorage}}
-    tokenStorage,{{/if}}
+    stateStorage,
     log,
     autoTyping: true,
     autoSeen: {{#if webchat}}false{{else}}true{{/if}}

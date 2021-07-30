@@ -1,14 +1,9 @@
-{{#unless azureServerless}}
-{{#unless wingbot}}
 {{#if analytics}}
 /*
  * @author wingbot.ai
  */
 'use strict';
 
-{{#if expressOrAppService}}
-const createError = require('http-errors');
-{{/if}}
 const analytics = require('universal-analytics');
 const { replaceDiacritics } = require('webalize');
 const wrapRoute = require('../lib/wrapRoute');
@@ -23,7 +18,7 @@ function trackEvent (sender, text, url) {
 
     return new Promise((r) => tracker.send(r));
 }
-{{#if awsServerless}}
+
 module.exports.handler = wrapRoute(async (event) => {
     const { url = null, text = null, sender = null } = event.queryStringParameters || {};
 
@@ -42,21 +37,4 @@ module.exports.handler = wrapRoute(async (event) => {
         }
     };
 });
-{{/if}}{{#if expressOrAppService}}
-module.exports = [
-    wrapRoute(async (req, res) => {
-        const { url = null, text = null, sender = null } = req.query || {};
-
-        if (!url || !text || !sender) {
-            throw createError(404);
-        }
-
-        await trackEvent(sender, text, url);
-
-        res.redirect(301, url);
-    })
-];
 {{/if}}
-{{/if}}
-{{/unless}}
-{{/unless}}

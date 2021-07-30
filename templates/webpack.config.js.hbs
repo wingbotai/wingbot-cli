@@ -1,0 +1,125 @@
+'use strict';
+/* eslint import/no-extraneous-dependencies: 0 */
+
+const path = require('path');
+const sass = require('sass');
+const webpack = require('webpack');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+
+const isDev = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
+
+module.exports = {
+    mode: isDev ? 'development' : 'production',
+    entry: {
+        chat: [
+            './public/chat.jsx'{{#if wingbotOrchestrator}},
+            './public/scss/chat.scss'
+{{/if}}
+        ],
+
+        main: './public/scss/main.scss'
+    },
+    output: {
+        path: path.join(__dirname, 'dist'),
+        filename: '[name].js',
+        environment: {
+            // The environment supports arrow functions ('() => { ... }').
+            arrowFunction: false,
+            // The environment supports BigInt as literal (123n).
+            bigIntLiteral: false,
+            // The environment supports const and let for variable declarations.
+            const: false,
+            // The environment supports destructuring ('{ a, b } = obj').
+            destructuring: false,
+            // The environment supports an async import() function to import EcmaScript modules.
+            dynamicImport: false,
+            // The environment supports 'for of' iteration ('for (const x of array) { ... }').
+            forOf: false,
+
+            module: false
+        }
+    },
+    resolve: {
+        extensions: ['.js', '.mjs', '.jsx', '.scss'],
+        fallback: {
+            path: require.resolve('path-browserify')
+        }
+    },
+    module: {
+        rules: [
+            {
+                test: /\.s[ca]ss$/,
+                use: [
+                    {
+                        loader: MiniCssExtractPlugin.loader
+                    },
+                    {
+                        loader: 'css-loader'
+                    },
+                    {
+                        loader: 'sass-loader',
+                        options: {
+                            implementation: sass,
+                            ...(isDev ? {} : { sassOptions: { outputStyle: 'compressed' } })
+                        }
+                    }
+                ]
+            },
+            {
+                test: /\.m?jsx?$/,
+                exclude: /node_modules/i,
+                loader: 'babel-loader',
+                options: {
+                    presets: [
+                        '@babel/preset-react',
+                        [
+                            '@babel/preset-env',
+                            {
+                                useBuiltIns: 'usage',
+                                corejs: '3.13',
+                                targets: '> 0.25% or last 5 versions or ie >= 10'
+                            }
+                        ],
+                        {
+                            plugins: [
+                                '@babel/plugin-transform-runtime'
+                            ]
+                        }
+                    ],
+                    // plugins: ['@babel/plugin-syntax-dynamic-import'],
+                    cacheDirectory: true
+                }
+            },
+            {
+                test: /\.(png|gif|jpe?g)$/,
+                type: 'asset/resource',
+                generator: {
+                    emit: false,
+                    filename: ({ filename }) => filename.replace(/^(public|dist)\//, '')
+                }
+            },
+            {
+                test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
+                type: 'asset/resource',
+                generator: {
+                    filename: 'fonts/[name].[ext]'
+                }
+            }
+        ]
+    },
+    // @ts-ignore
+    plugins: [
+        new MiniCssExtractPlugin({
+            filename: 'styles/[name].css'
+        }),
+        ...(!isDev
+            ? [
+                new webpack.DefinePlugin({
+                    'process.env': {
+                        NODE_ENV: JSON.stringify('production')
+                    }
+                })
+            ]
+            : [])
+    ]
+};

@@ -1,0 +1,11 @@
+# Export fáze 1 - Sběr dat od zaměstnanců
+- Export se spouští ručně pomocí příkazu `npm run export:prostredi` viz. package.json.
+- !!! POZOR !!! Data v exportu jsou důvěrná, nesmějí se přeposílat dodatečně nezabezpečenými kanály. Pokud budete posílat emailem, pak je musíte zašifrovat !!! POZOR !!! 
+- Implementačně je rozdělený na 3 kroky:
+  - Krok 1: state -> Result
+    - slouží pro trasformaci dat ze statu do výsledku
+    - v další fázi vývoje se bude po dokončení konverzace ukládat do kolekce
+  - Krok 2: Result -> Export
+    - spuští nad Resul objekty business logiku, které dopočítá a připravý data pro export
+  - Krok 3: Export -> XLSX
+    - v třetím krouku se přetransformují hodnoty z Resultů do formátu pro uložení v XLSX

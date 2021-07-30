@@ -1,6 +1,0 @@
-
-TODO chyba v  https://chytry-honza-bot-staging-api.flyto.cloud/bot  : Cannot read property 'ref' of null, 
-
-     at /var/task/routes/bot.js:24:35
-
-Zjistit a dopsat do popisku v konfigurátoru kde se vezme Webchat App ID a Webchat Channel ID

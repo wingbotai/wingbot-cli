@@ -1,0 +1,29 @@
+{{#if isMongoOrCosmos}}
+/**
+ * @author wingbot.ai
+ */
+'use strict';
+
+const { MongoMemoryServer } = require('mongodb-memory-server');
+
+const dbName = `bot${Date.now()}`;
+
+const mongod = new MongoMemoryServer({
+    instance: {
+        dbName
+    }
+});
+
+module.exports = {
+    db: {
+        url: (async () => {
+            await mongod.start();
+            return mongod.getUri();
+        })(),
+        db: dbName,
+        mongod
+    }
+
+    // verboseLog: '*'
+};
+{{/if}}

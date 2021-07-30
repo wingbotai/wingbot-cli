@@ -10,7 +10,7 @@ const { botServiceQuickReplyPatch } = require('wingbot-botservice');
 {{#if fbLoadProfile}}
 const { userLoader } = require('wingbot-facebook');
 {{/if}}
-{{#if webchatOrMessenger}}
+{{#if messenger}}
 const { PASS_THREAD_ACTION, TAKE_THEAD_ACTION, REQUEST_THREAD_ACTION } = require('./actions');
 {{/if}}
 const config = require('../config'); // eslint-disable-line no-unused-vars
@@ -71,7 +71,7 @@ function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
     bot.use(userLoader(config.facebook.pageToken));
 
 {{/if}}
-{{#if webchatOrMessenger}}
+{{#if messenger}}
     // implements primary receivers process thread action
     bot.use(REQUEST_THREAD_ACTION, (req, res) => {
         const { requested_owner_app_id: toAppId } = req.action(true);
@@ -131,6 +131,20 @@ function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
         }
 
         return Router.CONTINUE;
+    });
+
+{{/if}}
+{{#if wingbotOrchestrator}}
+    bot.use((req, res) => {
+        if (!req.isSetContext()) {
+            return Router.CONTINUE;
+        }
+
+        res.setState(req.expectedContext(false, true));
+        res.trackAs(false);
+
+        // block unwanted context changes
+        return Router.END;
     });
 
 {{/if}}
