@@ -80,7 +80,7 @@ const channel = new BotApp(bot, {
 bot.on('action', onAction);
 channel.processor.on('event', onEvent);
 {{#if notifications}}
-app.processor.plugin(notifications);
+channel.processor.plugin(notifications);
 {{/if}}
 {{/if}}
 
