@@ -10,6 +10,8 @@ const { exec } = require('child_process');
 const { TemplateRenderer } = require('../src/templateRenderer');
 const { options, preprocessData } = require('../src/init');
 
+const isWin = process.platform === 'win32';
+
 const defaultData = {
     mssqlName: 'clitest',
     wingbotBotName: 'wingbot-cli-test',
@@ -66,7 +68,7 @@ let prevousCwd;
 
 function rmdir (dir) {
     return new Promise((resolve) => {
-        exec(`rm -rf ${dir}`, (err, stdout) => {
+        exec(`${isWin ? 'rd /s /q' : 'rm -rf'} ${dir}`, (err, stdout) => {
             resolve(stdout);
         });
     });
@@ -78,7 +80,7 @@ function reuseNodeModules (cwd) {
     }
 
     return new Promise((resolve, reject) => {
-        exec(`mv ${prevousCwd}/node_modules ${cwd}/`, (err, stdout, stderr) => {
+        exec(`${isWin ? 'move' : 'mv'} ${prevousCwd}/node_modules ${cwd}/`, (err, stdout, stderr) => {
 
             if (err) {
                 // node couldn't execute the command

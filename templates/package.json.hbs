@@ -15,7 +15,7 @@
     "test:coverage:threshold": "nyc check-coverage --lines 80 --functions 80 --branches 75",
     "test:bot": "mocha ./test",
     "build": "node ./bin/build.js",
-    "test:lint": "eslint --ext .js --ext .jsx lib config test routes bot bin public",{{#if stagingEnvironment}}{{#if awsServerless}}
+    "test:lint": "eslint --ext .js --ext .jsx lib config test routes bot bin public --fix",{{#if stagingEnvironment}}{{#if awsServerless}}
     "deploy:staging": "npm i && node ./bin/build.js -s staging && sls deploy -s staging",{{/if}}{{/if}}{{#if devEnvironment}}{{#if awsServerless}}
     "deploy:dev": "npm i && node ./bin/build.js -s dev && sls deploy -s dev",{{/if}}{{/if}}{{#if testEnvironment}}{{#if awsServerless}}
     "deploy:test": "npm i && node ./bin/build.js -s test && sls deploy -s test",{{/if}}{{/if}}
@@ -92,6 +92,7 @@
     "wingbot-mongodb": "^2.16.1"{{/if}}{{#if googleAnalytics}},
     "universal-analytics": "^0.4.23"{{/if}}{{#if analytics}},
     "webalize": "^0.1.0"{{/if}}{{#if gSheetTestingSuit}},
-    "wingbot-tests-gsheets": "^1.2.3"{{/if}}
+    "wingbot-tests-gsheets": "^1.2.3"{{/if}}{{#if tableStorage}},
+    "wingbot-azure-tablestorage":"^1.0.1"{{/if}}
   }
 }

@@ -28,6 +28,7 @@ const AZURE_COSMOS_DB = 'cosmosdbStorage';
 const MSSQL = 'mssqlStorage';
 
 const UNIVERSAL_ANALYTICS = 'googleAnalytics';
+const TABLE_STORAGE = 'tableStorage';
 
 const SENTRY = 'sentry';
 const APP_INSIGHTS = 'appInsights';
@@ -53,7 +54,8 @@ const options = {
     },
     analytics: {
         None: null,
-        'Universal Analytics': UNIVERSAL_ANALYTICS
+        'Universal Analytics': UNIVERSAL_ANALYTICS,
+        'Table Storage': TABLE_STORAGE
     },
     conversationTesting: {
         None: null,
@@ -95,6 +97,8 @@ function preprocessData (data) {
         hasLanguageList: languageList.length !== 0,
         isMongoOrCosmos: data[MONGODB] || data[AZURE_COSMOS_DB],
         isSentryOrAppInsights: data[SENTRY] || data[APP_INSIGHTS],
+        tableStorage: data.analytics === TABLE_STORAGE,
+        universalAnalytics: data.analytics === UNIVERSAL_ANALYTICS,
         productionDomain: data.productionDomain
             ? data.productionDomain.trim()
             : data.productionDomain,
@@ -222,15 +226,39 @@ async function processGenerator (args, skipForm) {
         await form.ask([
             form.list('infrastructure', form.label('Choose a primary deployment infrastructure')),
             form.list('database', form.label('Choose a database')),
-            form.list('analytics', form.label('Choose an analytic tool')),
             form.list('conversationTesting', form.label('Choose a conversation testing tool')),
             form.list('withDesigner', form.label('Connect with wingbot.ai designer', 'for experimental purposes you can make a chatbot on your own'))
         ]);
 
         if ([EXPRESS_AZURE].includes(form.data.infrastructure)) {
             await form.ask([
+                form.list('analytics', form.label('Choose an analytic tool')),
                 form.list('keyvault', form.label('Choose if you want to use keyvault'))
             ]);
+        } else {
+            delete form.options.analytics['Table Storage'];
+            await form.ask([
+                form.list('analytics', form.label('Choose an analytic tool'))
+            ]);
+        }
+
+        if (form.data.analytics === TABLE_STORAGE) {
+            await form.ask([
+                {
+                    type: 'input',
+                    name: 'tableStorageName',
+                    message: form.label('Table Storage Name ', 'Enter Azure Table Storage Name', true)
+                }
+            ]);
+            if (form.data.keyvault !== 1) {
+                await form.ask([
+                    {
+                        type: 'input',
+                        name: 'tableStorageSecret',
+                        message: form.label('Table Storage Secret ', 'Enter Azure Table Storage Secret', true)
+                    }
+                ]);
+            }
         }
 
         /**
