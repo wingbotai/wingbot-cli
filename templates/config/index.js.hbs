@@ -109,7 +109,8 @@ const config = {
         port: parseInt(process.env.SQL_PORT || '1433', 10),
         database: process.env.SQL_DB || '{{mssqlName}}',
         options: {
-            encrypt: false
+            encrypt: false,
+            enableArithAbort: true
         }
     },
 {{/if}}
