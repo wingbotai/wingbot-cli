@@ -1,6 +1,6 @@
 {
   "name": "wingbot-cli",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Wingbot.ai CLI tool",
   "main": "main.js",
   "bin": {
@@ -14,7 +14,7 @@
     "test:coverage": "nyc --reporter=html mocha ./test && nyc report",
     "test:coverage:threshold": "nyc check-coverage --lines 80 --functions 80 --branches 74",
     "test:unit": "mocha ./test",
-    "test:lint": "eslint --ext .js bin src test *.js",
+    "test:lint": "eslint --ext .js bin src test *.js --fix",
     "build": "node ./bin/build.js"
   },
   "repository": {

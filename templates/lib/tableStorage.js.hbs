@@ -1,0 +1,24 @@
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+{{#if tableStorage}}
+const { AnalyticsStorage, createOnInteractionHandler } = require('wingbot-azure-tablestorage');
+const { tableStorage } = require('../config'); 
+const logger = require('./log');
+
+const analyticsStorage = new AnalyticsStorage(
+    tableStorage.storageAccount, 
+    tableStorage.storageAccessKey
+);
+const onInteraction = createOnInteractionHandler ({ 
+    enabled: true, 
+    throwException: false, 
+    // @ts-ignore
+    log: logger, 
+    anonymize: (text) => text 
+}, analyticsStorage);
+
+module.exports.onInteraction = onInteraction;
+module.exports.analyticsStorage = analyticsStorage;
+{{/if}}

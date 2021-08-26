@@ -16,6 +16,9 @@ const { PASS_THREAD_ACTION, TAKE_THEAD_ACTION, REQUEST_THREAD_ACTION } = require
 {{#if wingbotOrchestrator}}
 const { BotApp } = require('wingbot');
 const log = require('../lib/log');
+{{#if tableStorage}}
+const { onInteraction } = require('../lib/tableStorage');
+{{/if}}
 {{#if notifications}}
 const notifications = require('../lib/notifications');
 {{/if}}
@@ -70,6 +73,7 @@ const channel = new BotApp(bot, {
     // set to null when using an initAction option in the Wingbot Browser Lib
     stateStorage,{{#if storeConversationHistory}}
     chatLogStorage,{{/if}}
+    // @ts-ignore
     log,
     autoTyping: true,
     autoSeen: false,{{#if anonymizeConversationLogs}}
@@ -79,6 +83,10 @@ const channel = new BotApp(bot, {
 
 bot.on('action', onAction);
 channel.processor.on('event', onEvent);
+{{#if tableStorage}}
+channel.processor.on('interaction', onInteraction);
+
+{{/if}}
 {{#if notifications}}
 channel.processor.plugin(notifications);
 {{/if}}

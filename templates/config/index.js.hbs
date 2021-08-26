@@ -58,6 +58,13 @@ const config = {
     },
 
 {{/if}}
+{{#if tableStorage}}
+    tableStorage: {
+        storageAccount: process.env.AZURE_STORAGE_ACCOUNT || {{#if tableStorageName}}'{{tableStorageName}}' ||{{/if}} 'donotdropusedintest',
+        storageAccessKey: {{#if keyvault}}getKeyvaultSecret('storageaccesskey', process.env.AZURE_STORAGE_ACCESS_KEY){{else}}'{{tableStorageSecret}}'{{/if}}
+    },
+
+{{/if}}
 {{#if botService}}
     botService: {
         appId: process.env.BOT_APP_ID || '{{#if bsAppIdStaging}}{{bsAppIdStaging}}{{else}}{{bsAppId}}{{/if}}',

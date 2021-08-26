@@ -1,4 +1,4 @@
-{{#if analytics}}
+{{#if universalAnalytics}}
 /*
  * @author wingbot.ai
  */
@@ -37,4 +37,62 @@ module.exports.handler = wrapRoute(async (event) => {
         }
     };
 });
+{{/if}}
+{{#if tableStorage}}
+/*
+ * @author wingbot.ai
+ */
+'use strict';
+
+const createError = require('http-errors');
+const { replaceDiacritics } = require('webalize');
+const wrapRoute = require('../lib/wrapRoute');
+const { analyticsStorage } = require('../lib/tableStorage');
+const log = require('../lib/log');
+const config = require('../config');
+
+async function trackEvent (sender, text, url) {
+
+    const pageId = config.orchestrator
+        ? config.orchestrator.pageId
+        : 'msteams';
+
+    const {
+        sessionId,
+        conversationId
+    } = await analyticsStorage
+        .getOrCreateUserSession(pageId, sender);
+
+    const word = replaceDiacritics(text).replace(/\s+/g, ' ').toLowerCase().trim();
+
+    await analyticsStorage.storeEvent({
+        type: 'conversation',
+        pageId,
+        senderId: sender,
+        conversationId,
+        sessionId,
+        category: 'User: Button - url',
+        action: url,
+        label: word,
+        value: 1
+    });
+}
+
+module.exports = [
+    wrapRoute(async (req, res) => {
+        const { url = null, text = null, sender = null } = req.query || {};
+
+        if (!url || !text || !sender) {
+            throw createError(404);
+        }
+
+        try {
+            await trackEvent(sender, text, url);
+        } catch (e) {
+            log.error('Failed to track event', e);
+        }
+
+        res.redirect(301, url);
+    })
+];
 {{/if}}

@@ -13,6 +13,9 @@ const notifications = require('../lib/notifications');
 const stateStorage = require('../lib/stateStorage');
 const botFactory = require('./bot');
 const { onAction, onEvent } = require('./onAction');
+{{#if tableStorage}}
+const { onInteraction } = require('../lib/tableStorage');
+{{/if}}
 
 const bot = botFactory();
 
@@ -29,6 +32,10 @@ const processor = new Processor(bot, {
 processor.on('event', onEvent);
 {{#if notifications}}
 processor.plugin(notifications);
+
+{{/if}}
+{{#if tableStorage}}
+processor.on('interaction',onInteraction);
 
 {{/if}}
 module.exports = processor;
