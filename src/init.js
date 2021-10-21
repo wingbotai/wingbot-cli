@@ -49,8 +49,8 @@ const options = {
     database: {
         MongoDB: MONGODB,
         'AWS DynamoDB': AWS_DYNAMO_DB,
-        'Azure Cosmos DB (MongoDB protocol)': AZURE_COSMOS_DB,
-        'Microsoft SQL Server': MSSQL
+        'Azure Cosmos DB (MongoDB protocol)': AZURE_COSMOS_DB
+        // 'Microsoft SQL Server': MSSQL
     },
     analytics: {
         None: null,
@@ -767,13 +767,13 @@ async function processGenerator (args, skipForm) {
                         message: form.group(
                             'Cosmos DB connection',
                             'you can fill this information later into config files, but it\'s recommended to keep connection string in ENV variable (COSMOSDB_CONNECTION_STRING)',
-                            form.label('Production database name', true)
+                            form.label('Production database name', null, true)
                         ),
                         name: 'cosmosdbName'
                     },
                     {
                         type: 'input',
-                        message: form.label('Production connection string', true),
+                        message: form.label('Production connection string', null, true),
                         name: 'cosmosdbConnectionString'
                     }
                 ]);
@@ -782,13 +782,13 @@ async function processGenerator (args, skipForm) {
                     await form.ask([
                         {
                             type: 'input',
-                            message: form.label('Staging database name', true),
+                            message: form.label('Staging database name', null, true),
                             name: 'stagingCosmosdbName',
                             default: form.data.cosmosdbName
                         },
                         {
                             type: 'input',
-                            message: form.label('Staging connection string', true),
+                            message: form.label('Staging connection string', null, true),
                             name: 'stagingCosmosdbConnectionString',
                             default: form.data.cosmosdbConnectionString
                         }
@@ -799,13 +799,13 @@ async function processGenerator (args, skipForm) {
                     await form.ask([
                         {
                             type: 'input',
-                            message: form.label('Dev database name', true),
+                            message: form.label('Dev database name', null, true),
                             name: 'devCosmosdbName',
                             default: form.data.cosmosdbName
                         },
                         {
                             type: 'input',
-                            message: form.label('Dev connection string', true),
+                            message: form.label('Dev connection string', null, true),
                             name: 'devCosmosdbConnectionString',
                             default: form.data.cosmosdbConnectionString
                         }
@@ -816,13 +816,13 @@ async function processGenerator (args, skipForm) {
                     await form.ask([
                         {
                             type: 'input',
-                            message: form.label('Test database name', true),
+                            message: form.label('Test database name', null, true),
                             name: 'testCosmosdbName',
                             default: form.data.cosmosdbName
                         },
                         {
                             type: 'input',
-                            message: form.label('Test connection string', true),
+                            message: form.label('Test connection string', null, true),
                             name: 'testCosmosdbConnectionString',
                             default: form.data.cosmosdbConnectionString
                         }

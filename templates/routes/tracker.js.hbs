@@ -1,9 +1,19 @@
-{{#if universalAnalytics}}
-/*
+/**
  * @author wingbot.ai
  */
 'use strict';
 
+{{#unless universalAnalytics}}
+{{#unless tableStorage}}
+const wrapRoute = require('../lib/wrapRoute');
+
+// eslint-disable-next-line no-unused-vars
+async function trackEvent (sender, text, url) {
+    // put the tracking here
+}
+{{/unless}}
+{{/unless}}
+{{#if universalAnalytics}}
 const analytics = require('universal-analytics');
 const { replaceDiacritics } = require('webalize');
 const wrapRoute = require('../lib/wrapRoute');
@@ -18,37 +28,11 @@ function trackEvent (sender, text, url) {
 
     return new Promise((r) => tracker.send(r));
 }
-
-module.exports.handler = wrapRoute(async (event) => {
-    const { url = null, text = null, sender = null } = event.queryStringParameters || {};
-
-    if (!url || !text || !sender) {
-        return {
-            statusCode: 404
-        };
-    }
-
-    await trackEvent(sender, text, url);
-
-    return {
-        statusCode: 301,
-        headers: {
-            Location: url
-        }
-    };
-});
 {{/if}}
 {{#if tableStorage}}
-/*
- * @author wingbot.ai
- */
-'use strict';
-
-const createError = require('http-errors');
 const { replaceDiacritics } = require('webalize');
 const wrapRoute = require('../lib/wrapRoute');
 const { analyticsStorage } = require('../lib/tableStorage');
-const log = require('../lib/log');
 const config = require('../config');
 
 async function trackEvent (sender, text, url) {
@@ -77,22 +61,23 @@ async function trackEvent (sender, text, url) {
         value: 1
     });
 }
-
-module.exports = [
-    wrapRoute(async (req, res) => {
-        const { url = null, text = null, sender = null } = req.query || {};
-
-        if (!url || !text || !sender) {
-            throw createError(404);
-        }
-
-        try {
-            await trackEvent(sender, text, url);
-        } catch (e) {
-            log.error('Failed to track event', e);
-        }
-
-        res.redirect(301, url);
-    })
-];
 {{/if}}
+
+module.exports.handler = wrapRoute(async (event) => {
+    const { url = null, text = null, sender = null } = event.queryStringParameters || {};
+
+    if (!url || !text || !sender) {
+        return {
+            statusCode: 404
+        };
+    }
+
+    await trackEvent(sender, text, url);
+
+    return {
+        statusCode: 301,
+        headers: {
+            Location: url
+        }
+    };
+});

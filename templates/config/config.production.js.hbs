@@ -21,7 +21,7 @@ module.exports = {
 {{#if withDesigner}}
     wingbot: {
         snapshot: 'production',{{#if wingbotBotNameDevTest}}
-        bot: '{{wingbotBotName}}',{{/if}}{{#if wingbotBotIdDevTest}}
+        bot: '{{wingbotBotName}}',
         botId: '{{wingbotBotId}}',{{/if}}
         token: '{{wingbotProductionToken}}',
         ai: '{{wingbotBotName}}-production'
@@ -60,17 +60,17 @@ module.exports = {
 {{#if wingbotOrchestrator}}
     orchestrator: {
         {{#unless orchestratorProductionHostname}}// {{/unless}}apiUrl: 'https://{{orchestratorProductionHostname}}/api',
-        {{#unless orchestratorProductionHostname}}// {{/unless}}wsUrl: 'wss://{{orchestratorProductionHostname}}/ws',
+        {{#unless orchestratorProductionHostname}}// {{/unless}}wsUrl: 'wss://{{orchestratorProductionHostname}}',
         appId: '{{wingbotOrchestratorProductionAppId}}',
-        pageId: '{{wingbotOrchestratorProductionAppId}}'{{#unless keyvault}},
+        pageId: '{{wingbotOrchestratorProductionPageId}}'{{#unless keyvault}},
         secret: '{{wingbotOrchestratorProductionSecret}}'{{/unless}}
     },
 
 {{/if}}
 {{#if tableStorage}}
     tableStorage: {
-        storageAccount: process.env.AZURE_STORAGE_ACCOUNT || {{#if tableStorageName}}'{{tableStorageName}}' ||{{/if}} 'donotdropusedintest',
-        storageAccessKey: {{#if keyvault}}getKeyvaultSecret('storageaccesskey', process.env.AZURE_STORAGE_ACCESS_KEY){{else}}'{{tableStorageSecret}}'{{/if}}
+        storageAccount: process.env.AZURE_STORAGE_ACCOUNT || {{#if tableStorageName}}'{{tableStorageName}}'{{else}}''{{/if}}{{#unless keyvault}},
+        storageAccessKey: '{{tableStorageSecret}}'{{/unless}}
     },
 
 {{/if}}
@@ -83,8 +83,8 @@ module.exports = {
 {{/if}}
 {{#if mongodbStorage}}
     db: {
-        db: '{{mongodbName}}',
-        url: '{{{mongodbConnectionString}}}'
+        db: '{{mongodbName}}'{{#unless keyvault}},
+        url: '{{{mongodbConnectionString}}}'{{/unless}}
     },
 
 {{/if}}
@@ -103,8 +103,8 @@ module.exports = {
 {{/if}}
 {{#if cosmosdbStorage}}
     db: {
-        db: '{{cosmosdbName}}',
-        url: process.env.COSMOSDB_CONNECTION_STRING || '{{{cosmosdbConnectionString}}}'
+        db: '{{cosmosdbName}}'{{#unless keyvault}},
+        url: process.env.COSMOSDB_CONNECTION_STRING || '{{{cosmosdbConnectionString}}}'{{/unless}}
     },
 
 {{/if}}

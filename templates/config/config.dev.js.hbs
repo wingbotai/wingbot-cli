@@ -21,7 +21,7 @@ module.exports = {
 {{#if withDesigner}}
     wingbot: {
         snapshot: 'dev',{{#if wingbotBotNameDevTest}}
-        bot: '{{wingbotBotNameDevTest}}',{{/if}}{{#if wingbotBotIdDevTest}}
+        bot: '{{wingbotBotNameDevTest}}',
         botId: '{{wingbotBotIdDevTest}}',{{/if}}
         token: '{{wingbotDevToken}}',
         ai: '{{#if wingbotBotNameDevTest}}{{wingbotBotNameDevTest}}{{else}}{{wingbotBotName}}{{/if}}-dev'
@@ -66,8 +66,8 @@ module.exports = {
 {{/if}}
 {{#if tableStorage}}
     tableStorage: {
-        storageAccount: process.env.AZURE_STORAGE_ACCOUNT || {{#if tableStorageName}}'{{tableStorageName}}' ||{{/if}} 'donotdropusedintest',
-        storageAccessKey: {{#if keyvault}}getKeyvaultSecret('storageaccesskey', process.env.AZURE_STORAGE_ACCESS_KEY){{else}}'{{tableStorageSecret}}'{{/if}}
+        storageAccount: process.env.AZURE_STORAGE_ACCOUNT || {{#if tableStorageName}}'{{tableStorageName}}'{{else}}''{{/if}}{{#unless keyvault}},
+        storageAccessKey: '{{tableStorageSecret}}'{{/unless}}
     },
 
 {{/if}}
@@ -80,8 +80,8 @@ module.exports = {
 {{/if}}
 {{#if mongodbStorage}}
     db: {
-        db: '{{devMongodbName}}',
-        url: '{{{devMongodbConnectionString}}}'
+        db: '{{devMongodbName}}'{{#unless keyvault}},
+        url: '{{{devMongodbConnectionString}}}'{{/unless}}
     },
 
 {{/if}}
@@ -100,8 +100,8 @@ module.exports = {
 {{/if}}
 {{#if cosmosdbStorage}}
     db: {
-        db: '{{devCosmosdbName}}',
-        url: process.env.COSMOSDB_CONNECTION_STRING || '{{{devCosmosdbConnectionString}}}'
+        db: '{{devCosmosdbName}}'{{#unless keyvault}},
+        url: process.env.COSMOSDB_CONNECTION_STRING || '{{{devCosmosdbConnectionString}}}'{{/unless}}
     },
 
 {{/if}}

@@ -21,7 +21,7 @@ module.exports = {
 {{#if withDesigner}}
     wingbot: {
         snapshot: 'test',{{#if wingbotBotNameDevTest}}
-        bot: '{{wingbotBotNameDevTest}}',{{/if}}{{#if wingbotBotIdDevTest}}
+        bot: '{{wingbotBotNameDevTest}}',
         botId: '{{wingbotBotIdDevTest}}',{{/if}}
         token: '{{wingbotTestToken}}',
         ai: '{{#if wingbotBotNameDevTest}}{{wingbotBotNameDevTest}}{{else}}{{wingbotBotName}}{{/if}}-test'
@@ -60,17 +60,17 @@ module.exports = {
 {{#if wingbotOrchestrator}}
     orchestrator: {
         {{#unless orchestratorTestHostname}}// {{/unless}}apiUrl: 'https://{{orchestratorTestHostname}}/api',
-        {{#unless orchestratorTestHostname}}// {{/unless}}wsUrl: 'wss://{{orchestratorTestHostname}}/ws',
+        {{#unless orchestratorTestHostname}}// {{/unless}}wsUrl: 'wss://{{orchestratorTestHostname}}',
         appId: '{{wingbotOrchestratorTestAppId}}',
-        pageId: '{{wingbotOrchestratorTestAppId}}'{{#unless keyvault}},
+        pageId: '{{wingbotOrchestratorTestPageId}}'{{#unless keyvault}},
         secret: '{{wingbotOrchestratorTestSecret}}'{{/unless}}
     },
 
 {{/if}}
 {{#if tableStorage}}
     tableStorage: {
-        storageAccount: process.env.AZURE_STORAGE_ACCOUNT || {{#if tableStorageName}}'{{tableStorageName}}' ||{{/if}} 'donotdropusedintest',
-        storageAccessKey: {{#if keyvault}}getKeyvaultSecret('storageaccesskey', process.env.AZURE_STORAGE_ACCESS_KEY){{else}}'{{tableStorageSecret}}'{{/if}}
+        storageAccount: process.env.AZURE_STORAGE_ACCOUNT || {{#if tableStorageName}}'{{tableStorageName}}'{{else}}''{{/if}}{{#unless keyvault}},
+        storageAccessKey: '{{tableStorageSecret}}'{{/unless}}
     },
 
 {{/if}}
@@ -83,8 +83,8 @@ module.exports = {
 {{/if}}
 {{#if mongodbStorage}}
     db: {
-        db: '{{testMongodbName}}',
-        url: '{{{testMongodbConnectionString}}}'
+        db: '{{testMongodbName}}'{{#unless keyvault}},
+        url: '{{{testMongodbConnectionString}}}'{{/unless}}
     },
 
 {{/if}}
@@ -103,8 +103,8 @@ module.exports = {
 {{/if}}
 {{#if cosmosdbStorage}}
     db: {
-        db: '{{testCosmosdbName}}',
-        url: process.env.COSMOSDB_CONNECTION_STRING || '{{{testCosmosdbConnectionString}}}'
+        db: '{{testCosmosdbName}}'{{#unless keyvault}},
+        url: process.env.COSMOSDB_CONNECTION_STRING || '{{{testCosmosdbConnectionString}}}'{{/unless}}
     },
 
 {{/if}}

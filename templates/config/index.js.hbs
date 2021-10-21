@@ -5,6 +5,7 @@
 
 {{#if keyvault}}
 const getKeyvaultSecret = require('./getKeyvaultSecret');
+
 {{/if}}
 {{#if gSheetTestingSuit}}
 let googleToken = {};
@@ -51,16 +52,16 @@ const config = {
 {{#if wingbotOrchestrator}}
     orchestrator: {
         {{#unless orchestratorDevHostname}}// {{/unless}}apiUrl: 'https://{{orchestratorDevHostname}}/api',
-        {{#unless orchestratorDevHostname}}// {{/unless}}wsUrl: 'wss://{{orchestratorDevHostname}}/ws',
+        {{#unless orchestratorDevHostname}}// {{/unless}}wsUrl: 'wss://{{orchestratorDevHostname}}',
         appId: '{{wingbotOrchestratorDevAppId}}',
-        pageId: '{{wingbotOrchestratorDevAppId}}',
+        pageId: '{{wingbotOrchestratorDevPageId}}',
         secret: {{#if keyvault}}getKeyvaultSecret('orchestratorsecret', '-'){{else}}'-'{{/if}}
     },
 
 {{/if}}
 {{#if tableStorage}}
     tableStorage: {
-        storageAccount: process.env.AZURE_STORAGE_ACCOUNT || {{#if tableStorageName}}'{{tableStorageName}}' ||{{/if}} 'donotdropusedintest',
+        storageAccount: process.env.AZURE_STORAGE_ACCOUNT || {{#if tableStorageName}}'{{tableStorageName}}'{{else}}''{{/if}},
         storageAccessKey: {{#if keyvault}}getKeyvaultSecret('storageaccesskey', process.env.AZURE_STORAGE_ACCESS_KEY){{else}}'{{tableStorageSecret}}'{{/if}}
     },
 
@@ -85,7 +86,7 @@ const config = {
 {{#if isMongoOrCosmos}}
     db: {
 {{#if mongodbStorage}}        url: {{#if keyvault}}getKeyvaultSecret('dbconnectionstring', 'mongodb://127.0.0.1:27017/{{projectName}}'){{else}}process.env.MONGODB_CONNECTION_STRING || 'mongodb://127.0.0.1:27017/{{projectName}}'{{/if}},
-{{else}}{{#if cosmosdbStorage}}        url: {{#if keyvault}}getKeyvaultSecret('dbconnectionstring', 'mongodb://localhost:C2y6yDjf5%2FR%2Bob0N8A7Cgv30VRDJIWEHLM%2B4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw%2FJw%3D%3D@localhost:10255/admin?ssl=true', urlEncodeCosmoPassword){{else}}process.env.COSMOSDB_CONNECTION_STRING || 'mongodb://localhost:C2y6yDjf5%2FR%2Bob0N8A7Cgv30VRDJIWEHLM%2B4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw%2FJw%3D%3D@localhost:10255/admin?ssl=true'{{/if}},{{/if}}{{/if}}
+{{else}}{{#if cosmosdbStorage}}        url: {{#if keyvault}}getKeyvaultSecret('dbconnectionstring', 'mongodb://127.0.0.1:27017/{{projectName}}', urlEncodeCosmoPassword){{else}}process.env.COSMOSDB_CONNECTION_STRING || 'mongodb://127.0.0.1:27017/{{projectName}}'{{/if}},{{/if}}{{/if}}
 {{#if mongodbStorage}}        db: '{{projectName}}',
 {{else}}{{#if cosmosdbStorage}}        db: '{{projectName}}',
 {{/if}}{{/if}}

@@ -14,15 +14,12 @@
     "test:coverage": "nyc --reporter=html mocha ./test && nyc report",
     "test:coverage:threshold": "nyc check-coverage --lines 80 --functions 80 --branches 75",
     "test:bot": "mocha ./test",
-    "build": "node ./bin/build.js",
     "test:lint": "eslint --ext .js --ext .jsx lib config test routes bot bin public --fix",{{#if stagingEnvironment}}{{#if awsServerless}}
     "deploy:staging": "npm i && node ./bin/build.js -s staging && sls deploy -s staging",{{/if}}{{/if}}{{#if devEnvironment}}{{#if awsServerless}}
     "deploy:dev": "npm i && node ./bin/build.js -s dev && sls deploy -s dev",{{/if}}{{/if}}{{#if testEnvironment}}{{#if awsServerless}}
-    "deploy:test": "npm i && node ./bin/build.js -s test && sls deploy -s test",{{/if}}{{/if}}
-    "build:production": ":"{{#if awsServerless}},
-    "deploy:production": "npm i && npm run build && sls deploy -s production"{{/if}}{{#if isAzure}},
-    "deploy:production": "./bin/universaldeploy.cmd",
-    "pack": "npm-pack-zip"{{/if}}
+    "deploy:test": "npm i && node ./bin/build.js -s test && sls deploy -s test"{{/if}}{{/if}}
+    "build": "node ./bin/build.js"{{#if awsServerless}},
+    "deploy:production": "npm i && npm run build && sls deploy -s production"{{/if}}
   },
   "keywords": [
     "wingbot",
@@ -46,14 +43,14 @@
     "express": "^4.17.1",
     "aws-sdk": "^2.951.0",{{else}}{{#if dynamodbStorage}}"aws-sdk": "^2.101.0",{{/if}}{{/if}}
     "env-test": "^1.0.0",{{#if eslint}}
-    "eslint": "^7.14.0",
-    "eslint-config-airbnb": "^18.2.1",
-    "eslint-mocha": "^0.7.3",{{#unless testrun}}
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb": "^18.2.1",{{#unless testrun}}
     "eslint-plugin-import": "^2.23.4",
     "eslint-plugin-jsx-a11y": "^6.4.1",
-    "eslint-plugin-mocha": "^8.0.0",
+    "eslint-plugin-mocha": "^9.0.0",
     "eslint-plugin-react": "^7.24.0",
-    "eslint-plugin-react-hooks": "^4.2.0",{{/unless}}{{/if}}
+    "eslint-plugin-react-hooks": "^4.2.0",{{/unless}}{{/if}}{{#if awsServerless}}
+    "js-yaml": "^4.1.0",{{/if}}
     "mini-css-extract-plugin": "^2.1.0",{{#if isMongoOrCosmos}}
     "mongodb-memory-server": "^7.3.1",{{/if}}
     "mocha": "^9.0.2",
@@ -61,15 +58,15 @@
     "parse-duration": "^1.0.0",{{/if}}
     "path-browserify": "^1.0.1",
     "prop-types": "^15.7.2",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
     "regenerator-runtime": "^0.13.7",
     "sass": "^1.35.2",
     "sass-loader": "^12.1.0",{{#if awsServerless}}
     "serverless-s3-sync": "^1.17.1",{{/if}}
     "webpack": "^5.46.0",
     "webpack-dev-middleware": "^5.0.0"{{#if wingbotOrchestrator}},
-    "wingbot-chat-ui": "^1.9.0"{{/if}}
+    "wingbot-chat-ui": "^1.11.1"{{/if}}
   },
   "dependencies": { {{#unless awsServerless}}
     "cookie-parser": "^1.4.5",
@@ -78,18 +75,19 @@
     "@azure/keyvault-secrets": "^4.2.0",{{/if}}{{#if logzioToken}}
     "logzio-nodejs": "^2.0.2",{{/if}}{{#if sentry}}
     "@sentry/node": "^5.27.2",{{/if}}{{#if appInsights}}
-    "applicationinsights": "^1.6.0",{{/if}}{{#if isMongoOrCosmos}}
+    "applicationinsights": "^1.6.0",{{/if}}{{#unless awsServerless}}
+    "js-yaml": "^4.1.0",{{/unless}}{{#if isMongoOrCosmos}}
     "mongodb": "^3.6.2",
     "mongodb-core": "3.2.7",{{/if}}
     "handlebars": "^4.7.6",
-    "wingbot": "^3.16.3"{{#if dynamodbStorage}},
+    "wingbot": "^3.19.1"{{#if dynamodbStorage}},
     "wingbot-dynamodb": "^2.5.0"{{/if}}{{#if mssqlStorage}},
     "wingbot-mssql": "^1.2.5"{{/if}}{{#unless awsServerless}},
     "parse-duration": "^1.0.0"{{/unless}}{{#if jwtTokenStorage}},
     "wingbot-jwt": "^1.1.0"{{/if}}{{#if messenger}},
     "wingbot-facebook": "^3.1.0"{{/if}}{{#if botService}},
     "wingbot-botservice": "^3.7.0"{{/if}}{{#if isMongoOrCosmos}},
-    "wingbot-mongodb": "^2.16.1"{{/if}}{{#if googleAnalytics}},
+    "wingbot-mongodb": "^2.16.3"{{/if}}{{#if googleAnalytics}},
     "universal-analytics": "^0.4.23"{{/if}}{{#if analytics}},
     "webalize": "^0.1.0"{{/if}}{{#if gSheetTestingSuit}},
     "wingbot-tests-gsheets": "^1.2.3"{{/if}}{{#if tableStorage}},

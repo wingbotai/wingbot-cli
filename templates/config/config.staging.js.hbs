@@ -20,7 +20,9 @@ module.exports = {
 
 {{#if withDesigner}}
     wingbot: {
-        snapshot: 'staging',
+        snapshot: 'staging',{{#if wingbotBotNameDevTest}}
+        bot: '{{wingbotBotName}}',
+        botId: '{{wingbotBotId}}',{{/if}}
         token: '{{wingbotStagingToken}}',
         ai: '{{wingbotBotName}}-staging'
     },
@@ -58,17 +60,17 @@ module.exports = {
 {{#if wingbotOrchestrator}}
     orchestrator: {
         {{#unless orchestratorStagingHostname}}// {{/unless}}apiUrl: 'https://{{orchestratorStagingHostname}}/api',
-        {{#unless orchestratorStagingHostname}}// {{/unless}}wsUrl: 'wss://{{orchestratorStagingHostname}}/ws',
+        {{#unless orchestratorStagingHostname}}// {{/unless}}wsUrl: 'wss://{{orchestratorStagingHostname}}',
         appId: '{{wingbotOrchestratorStagingAppId}}',
-        pageId: '{{wingbotOrchestratorStagingAppId}}'{{#unless keyvault}},
+        pageId: '{{wingbotOrchestratorStagingPageId}}'{{#unless keyvault}},
         secret: '{{wingbotOrchestratorStagingSecret}}'{{/unless}}
     },
 
 {{/if}}
 {{#if tableStorage}}
     tableStorage: {
-        storageAccount: process.env.AZURE_STORAGE_ACCOUNT || {{#if tableStorageName}}'{{tableStorageName}}' ||{{/if}} 'donotdropusedintest',
-        storageAccessKey: {{#if keyvault}}getKeyvaultSecret('storageaccesskey', process.env.AZURE_STORAGE_ACCESS_KEY){{else}}'{{tableStorageSecret}}'{{/if}}
+        storageAccount: process.env.AZURE_STORAGE_ACCOUNT || {{#if tableStorageName}}'{{tableStorageName}}'{{else}}''{{/if}}{{#unless keyvault}},
+        storageAccessKey: '{{tableStorageSecret}}'{{/unless}}
     },
 
 {{/if}}
@@ -81,8 +83,8 @@ module.exports = {
 {{/if}}
 {{#if mongodbStorage}}
     db: {
-        db: '{{stagingMongodbName}}',
-        url: '{{{stagingMongodbConnectionString}}}'
+        db: '{{stagingMongodbName}}'{{#unless keyvault}},
+        url: '{{{stagingMongodbConnectionString}}}'{{/unless}}
     },
 
 {{/if}}
@@ -101,8 +103,8 @@ module.exports = {
 {{/if}}
 {{#if cosmosdbStorage}}
     db: {
-        db: '{{stagingCosmosdbName}}',
-        url: process.env.COSMOSDB_CONNECTION_STRING || '{{{stagingCosmosdbConnectionString}}}'
+        db: '{{stagingCosmosdbName}}'{{#unless keyvault}},
+        url: process.env.COSMOSDB_CONNECTION_STRING || '{{{stagingCosmosdbConnectionString}}}'{{/unless}}
     },
 
 {{/if}}

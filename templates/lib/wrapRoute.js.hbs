@@ -11,9 +11,36 @@ function wrapRoute (fn) {
         // eslint-disable-next-line no-param-reassign
         context.callbackWaitsForEmptyEventLoop = false;
 {{/if}}
+        const { origin, Origin } = event.headers || {};
+        const useOrigin = origin || Origin || '*';
+        if (event.method === 'OPTIONS') {
+            return {
+                statusCode: 200,
+                headers: {
+                    'Access-Control-Allow-Credentials': useOrigin === '*' ? 'false' : 'true',
+                    'Access-Control-Allow-Origin': useOrigin,
+                    'Access-Control-Allow-Headers': 'Content-Type, X-Amz-Date, Authorization, X-Api-Key, X-Amz-Security-Token, X-Amz-User-Agent, X-Wingbot-Version',
+                    'Access-Control-Max-Age': '86400',
+                    'Cache-Control': 'max-age=86400'
+                }
+            };
+        }
         try {
-            const res = await Promise.resolve(fn(event, context));
+            let res = await Promise.resolve(fn(event, context));
+            if (!res) res = { statusCode: 200 };
             await log.sendAndClose();
+            if (!res.headers) Object.assign(res, { headers: {} });
+            Object.assign(res.headers, {
+                'Access-Control-Allow-Credentials': useOrigin === '*' ? 'false' : 'true',
+                'Access-Control-Allow-Origin': useOrigin
+            });
+            if (typeof res.body === 'object' && res.body !== null && !Buffer.isBuffer(res.body)) {
+                if (typeof res.headers !== 'object') {
+                    res.headers = {};
+                }
+                res.headers['Content-type'] = 'application/json; charset=utf-8';
+                res.body = JSON.stringify(res.body);
+            }
             return res;
         } catch (e) {
             log.error(e, event);

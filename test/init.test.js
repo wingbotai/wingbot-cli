@@ -100,7 +100,7 @@ function reuseNodeModules (cwd) {
 
 function npmI (cwd) {
     return new Promise((resolve) => {
-        exec('npm i', {
+        exec('npm i --omit peer', {
             cwd
         }, (err, stdout) => {
             prevousCwd = cwd;

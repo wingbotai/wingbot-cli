@@ -10,7 +10,8 @@ const { botFactory } = require('../../bot');
 const mongodb = require('../../lib/mongodb');
 const { db: { mongod, url } } = require('../../config');
 
-after(async () => {
+after(async function () {
+    this.timeout(10000);
     await Promise.resolve(url);
     await mongodb(true);
     await mongod.stop();

@@ -70,7 +70,7 @@ const channel = new BotService(processor, {
 const bot = botFactory();
 
 const channel = new BotApp(bot, {
-    // set to null when using an initAction option in the Wingbot Browser Lib
+    appUrl: config.appUrl,
     stateStorage,{{#if storeConversationHistory}}
     chatLogStorage,{{/if}}
     // @ts-ignore
