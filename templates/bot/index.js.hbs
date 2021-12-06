@@ -41,6 +41,9 @@ const processor = require('./processor');
 {{/unless}}
 const botFactory = require('./bot');
 const botSettings = require('./botSettings');
+{{#if auditLog}}
+const auditLog = require('../lib/auditLog');
+{{/if}}
 
 {{#if messenger}}
 const channel = new Facebook(
@@ -72,7 +75,9 @@ const bot = botFactory();
 const channel = new BotApp(bot, {
     appUrl: config.appUrl,
     stateStorage,{{#if storeConversationHistory}}
-    chatLogStorage,{{/if}}
+    chatLogStorage,{{/if}}{{#if auditLog}}
+    // @ts-ignore
+    auditLog,{{/if}}
     // @ts-ignore
     log,
     autoTyping: true,

@@ -24,13 +24,17 @@ const chatLogStorage = require('../lib/chatLogStorage');
 {{/if}}
 const { botFactory, channel, botSettings } = require('../bot');
 {{#if gSheetTestingSuit}}
+{{#if auditLog}}
+const auditLog = require('../lib/auditLog');
+{{/if}}
 
 const key = config.gsheet;
 const testsSource = new TestsGsheet(config.testCasesGoogleSheetId, key);
 {{/if}}
 
 const DEFAULT_ACCESS_GROUPS = ['botEditor', 'botAdmin', 'adsAndAudienceUser', 'appToken'];
-const BOT_UPDATE_GROUPS = ['botEditor', 'botAdmin', 'botUser'];
+const BOT_VIEW_GROUPS = ['botEditor', 'botAdmin', 'adsAndAudienceUser'];
+const BOT_UPDATE_GROUPS = ['botEditor', 'botAdmin'];
 const POSTBACK_GROUPS = ['appToken'];
 
 const api = new GraphApi([
@@ -38,7 +42,7 @@ const api = new GraphApi([
     notifications.api(),
 {{/if}}
     postBackApi(channel, POSTBACK_GROUPS),
-    conversationsApi(stateStorage, {{#if storeConversationHistory}}chatLogStorage{{else}}null{{/if}}, {{#if notifications}}notifications{{else}}null{{/if}}, BOT_UPDATE_GROUPS),
+    conversationsApi(stateStorage, {{#if storeConversationHistory}}chatLogStorage{{else}}null{{/if}}, {{#if notifications}}notifications{{else}}null{{/if}}, BOT_VIEW_GROUPS),
     validateBotApi(botFactory, 'start', 'foobar', BOT_UPDATE_GROUPS){{#if gSheetTestingSuit}},
     conversationTestApi(testsSource, botFactory, {}, BOT_UPDATE_GROUPS){{/if}},
 {{#if awsServerless}}
@@ -47,8 +51,10 @@ const api = new GraphApi([
     botConfigStorage.api(() => botSettings(), BOT_UPDATE_GROUPS)
 {{/if}}
 ], {
-    token: config.wingbot.token,
-    // remove comment to access API with a token
+    token: config.wingbot.token,{{#if auditLog}}
+    // @ts-ignore
+    auditLog,{{/if}}
+    // remove comment to access API with a token (and add it to groups above)
     // appToken: config.appToken,
     groups: DEFAULT_ACCESS_GROUPS
 });

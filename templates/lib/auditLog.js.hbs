@@ -1,0 +1,15 @@
+{{#if auditLog}}
+{{#if isMongoOrCosmos}}
+/**
+ * @author wingbot.ai
+ */
+'use strict';
+
+const { AuditLogStorage } = require('wingbot-mongodb');
+const mongodb = require('./mongodb');
+const log = require('./log');
+const config = require('../config');
+
+module.exports = new AuditLogStorage(mongodb, 'auditlog', log, {{#if cosmosdbStorage}}true{{else}}false{{/if}}, config.appToken);
+{{/if}}
+{{/if}}

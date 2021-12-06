@@ -17,13 +17,16 @@ const mongodb = require('./mongodb');
 const { ChatLogStorage } = require('wingbot-mssql');
 const mssql = require('./mssql');
 {{/if}}
+{{#if auditLog}}{{#if isMongoOrCosmos}}
+const config = require('../config');
+{{/if}}{{/if}}
 const log = require('./log');
 
 {{#if dynamodbStorage}}
 module.exports = new ChatLogStorage(`${config.prefix}-chatlog`, dynamodb, log);
 {{/if}}
 {{#if isMongoOrCosmos}}
-module.exports = new ChatLogStorage(mongodb, 'chatlogs', log{{#if cosmosdbStorage}}, true{{/if}});
+module.exports = new ChatLogStorage(mongodb, 'chatlogs', log{{#if cosmosdbStorage}}, true{{#if auditLog}}, config.appToken{{/if}}{{/if}});
 {{/if}}
 {{#if mssqlStorage}}
 module.exports = new ChatLogStorage(mssql.connection(), log);

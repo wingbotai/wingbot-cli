@@ -79,15 +79,15 @@
     "js-yaml": "^4.1.0",{{/unless}}{{#if isMongoOrCosmos}}
     "mongodb": "^3.6.2",
     "mongodb-core": "3.2.7",{{/if}}
-    "handlebars": "^4.7.6",
-    "wingbot": "^3.19.1"{{#if dynamodbStorage}},
+    "handlebars": "^4.7.7",
+    "wingbot": "^3.25.1"{{#if dynamodbStorage}},
     "wingbot-dynamodb": "^2.5.0"{{/if}}{{#if mssqlStorage}},
     "wingbot-mssql": "^1.2.5"{{/if}}{{#unless awsServerless}},
     "parse-duration": "^1.0.0"{{/unless}}{{#if jwtTokenStorage}},
     "wingbot-jwt": "^1.1.0"{{/if}}{{#if messenger}},
     "wingbot-facebook": "^3.1.0"{{/if}}{{#if botService}},
     "wingbot-botservice": "^3.7.0"{{/if}}{{#if isMongoOrCosmos}},
-    "wingbot-mongodb": "^2.16.3"{{/if}}{{#if googleAnalytics}},
+    "wingbot-mongodb": "^2.19.1"{{/if}}{{#if googleAnalytics}},
     "universal-analytics": "^0.4.23"{{/if}}{{#if analytics}},
     "webalize": "^0.1.0"{{/if}}{{#if gSheetTestingSuit}},
     "wingbot-tests-gsheets": "^1.2.3"{{/if}}{{#if tableStorage}},
