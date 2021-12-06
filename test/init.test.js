@@ -100,11 +100,12 @@ function reuseNodeModules (cwd) {
 
 function npmI (cwd) {
     return new Promise((resolve) => {
-        exec('npm i --omit peer', {
+        exec('npm i', {
             cwd
         }, (err, stdout) => {
             prevousCwd = cwd;
-
+            // console.log('-----', stdout); // eslint-disable-line
+            // console.log('-----', stderr); // eslint-disable-line
             resolve(stdout);
         });
     });

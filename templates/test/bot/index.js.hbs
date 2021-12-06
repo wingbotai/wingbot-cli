@@ -12,9 +12,15 @@ const { db: { mongod, url } } = require('../../config');
 
 after(async function () {
     this.timeout(10000);
-    await Promise.resolve(url);
-    await mongodb(true);
-    await mongod.stop();
+
+    await Promise.race([
+        (async () => {
+            await Promise.resolve(url);
+            await mongodb(true);
+            await mongod.stop();
+        })(),
+        new Promise((r) => setTimeout(r, 9900))
+    ]);
 });
 {{/if}}
 {{#if mssqlStorage}}

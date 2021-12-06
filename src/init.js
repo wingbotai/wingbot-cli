@@ -230,6 +230,14 @@ async function processGenerator (args, skipForm) {
             form.list('withDesigner', form.label('Connect with wingbot.ai designer', 'for experimental purposes you can make a chatbot on your own'))
         ]);
 
+        if (form.data.platform === WINGBOT_ORCHESTRATOR
+            && [MONGODB, AZURE_COSMOS_DB].includes(form.data.database)) {
+
+            await form.ask([
+                form.yesNo('auditLog', form.label('Enable Audit Log', 'enables hashing of conversation logs and logging important API actions'), Form.NO_YES)
+            ]);
+        }
+
         if ([EXPRESS_AZURE].includes(form.data.infrastructure)) {
             await form.ask([
                 form.list('analytics', form.label('Choose an analytic tool')),

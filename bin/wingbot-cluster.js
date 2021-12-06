@@ -48,7 +48,7 @@ commander.command(`kmeans <analyticsEvents.csv> [intentsExport.json] [clusters=$
         source = ev;
         trainingJson = tr;
         userDefinedK = k && parseFloat(k);
-        if (!k && parseFloat(tr) !== Number.NaN) {
+        if (!k && !Number.isNaN(parseFloat(tr))) {
             userDefinedK = parseFloat(tr);
         }
     });
@@ -62,7 +62,7 @@ commander.command('dbscan <analyticsEvents.csv> [intentsExport.json] [distance=1
         source = ev;
         trainingJson = tr;
         userDefinedK = k && parseFloat(k);
-        if (!k && parseFloat(tr) !== Number.NaN) {
+        if (!k && !Number.isNaN(parseFloat(tr))) {
             userDefinedK = parseFloat(tr);
         }
     });
