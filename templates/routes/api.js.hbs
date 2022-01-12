@@ -23,10 +23,10 @@ const stateStorage = require('../lib/stateStorage');
 const chatLogStorage = require('../lib/chatLogStorage');
 {{/if}}
 const { botFactory, channel, botSettings } = require('../bot');
-{{#if gSheetTestingSuit}}
 {{#if auditLog}}
 const auditLog = require('../lib/auditLog');
 {{/if}}
+{{#if gSheetTestingSuit}}
 
 const key = config.gsheet;
 const testsSource = new TestsGsheet(config.testCasesGoogleSheetId, key);

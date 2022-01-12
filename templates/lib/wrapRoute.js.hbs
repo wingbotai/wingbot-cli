@@ -4,6 +4,7 @@
 'use strict';
 
 const log = require('./log');
+const config = require('../config');
 
 function wrapRoute (fn) {
     return async (event, context) => {
@@ -12,7 +13,11 @@ function wrapRoute (fn) {
         context.callbackWaitsForEmptyEventLoop = false;
 {{/if}}
         const { origin, Origin } = event.headers || {};
-        const useOrigin = origin || Origin || '*';
+        const allowCorsOrigin = config.allowCorsOrigin || config.appUrl;
+        const useOrigin = allowCorsOrigin === '*'
+            ? (origin || Origin)
+            : allowCorsOrigin.replace(/\/$/, '');
+
         if (event.method === 'OPTIONS') {
             return {
                 statusCode: 200,

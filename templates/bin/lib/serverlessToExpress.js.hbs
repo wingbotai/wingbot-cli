@@ -10,6 +10,15 @@ const path = require('path');
 const { URL } = require('url');
 const parseDuration = require('parse-duration').default;
 
+let nodeForge;
+try {
+    // @ts-ignore
+    nodeForge = module.require('node-forge');
+} catch (e) {
+    // eslint-disable-next-line no-console
+    console.log('To use mutual TLS, install "node-forge"');
+}
+
 function createContext (functionName = null) {
     return {
         functionName,
@@ -22,6 +31,11 @@ function createContext (functionName = null) {
         logStreamName: null,
         clientContext: {}
     };
+}
+
+function certAttrs (attrs) {
+    return attrs.map(({ shortName, value }) => `${shortName}=${value}`)
+        .join(',');
 }
 
 // eslint-disable-next-line
@@ -39,22 +53,70 @@ function createEvent (req, body = null, connectionId = null) {
         usePath = pathname;
     }
 
+    const method = `${req.method}`.toUpperCase();
+
     const ret = {
-        body: body || req.body,
-        method: req.method,
+        body: body || (req.method === 'GET' ? null : req.body),
+        httpMethod: method,
         stage: process.env.NODE_ENV || 'development',
         headers: req.headers,
         queryStringParameters: query,
         path: usePath,
         identity: null,
         stageVariables: {},
-        pathParameters: req.params
+        pathParameters: req.params,
+        requestContext: {
+            http: {
+                method,
+                path: usePath
+            }
+        }
     };
 
     if (connectionId) {
-        Object.assign(ret, {
-            requestContext: { connectionId }
+        Object.assign(ret.requestContext, {
+            connectionId
         });
+    }
+
+    let rawCert;
+
+    if (typeof req.socket.getPeerCertificate === 'function') {
+        const pc = req.socket.getPeerCertificate(true);
+        if (pc && pc.raw) {
+            rawCert = pc.raw.toString('base64');
+        }
+    } else if (typeof req.get === 'function') {
+        rawCert = req.get('X-ARR-ClientCert');
+    }
+
+    if (rawCert) {
+        try {
+            const clientCertPem = `-----BEGIN CERTIFICATE-----${rawCert}-----END CERTIFICATE-----`;
+            const incomingCert = nodeForge.pki.certificateFromPem(clientCertPem);
+
+            const { issuer, subject, serialNumber } = incomingCert;
+
+            const notAfter = incomingCert.validity.notAfter.toUTCString();
+            const notBefore = incomingCert.validity.notBefore.toUTCString();
+            const issuerDN = certAttrs(issuer.attributes);
+            const subjectDN = certAttrs(subject.attributes);
+
+            const clientCert = {
+                clientCertPem,
+                issuerDN,
+                serialNumber,
+                subjectDN,
+                validity: { notAfter, notBefore }
+            };
+
+            Object.assign(ret.requestContext, {
+                authentication: { clientCert }
+            });
+        } catch (e) {
+            // eslint-disable-next-line no-console
+            console.error('Failed to read client CERT', e);
+        }
     }
 
     return ret;
@@ -159,6 +221,7 @@ function serverlessToExpress (configFile) {
                             const start = Date.now();
                             const context = createContext(functionName);
                             fn(event, context)
+                                // eslint-disable-next-line no-console
                                 .then(() => console.error(`+ Schedule interval '${functionName}' finished after ${(Date.now() - start) / 1000}s`))
                                 // eslint-disable-next-line no-console
                                 .catch((e) => console.error(`+ Schedule interval '${functionName}' failed`, e));
@@ -171,7 +234,7 @@ function serverlessToExpress (configFile) {
                         return;
                     }
 
-                    let { http } = event;
+                    let { http = event.httpApi } = event;
 
                     if (typeof http === 'string') {
                         const [method, httpPath] = http.split(' ');

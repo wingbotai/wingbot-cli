@@ -39,6 +39,8 @@ const config = {
     // enable verbose log
     verboseLog: process.env.VERBOSE_LOG_PATTERN || null,
 
+    allowCorsOrigin: process.env.ALLOW_CORS_ORIGIN || null,
+
 {{#if messenger}}
     facebook: {
         appId: '-',

@@ -1,5 +1,6 @@
 {
     "extends": "airbnb",
+    "parser": "babel-eslint",
     "parserOptions": {
         "ecmaFeatures": {
             "defaultParams": false,
@@ -7,7 +8,8 @@
             "forOf": true,
             "generators": true,
             "modules": false,
-            "restParams": true
+            "restParams": true,
+            "classPrivateMethods": true
         },
         "sourceType": "script"
     },
@@ -26,6 +28,7 @@
         "no-plusplus": 0,
         "import/no-extraneous-dependencies": 0,
         "require-yield": 0,
+        "no-await-in-loop": 0,
         "class-methods-use-this": 0,
         "jsdoc/check-param-names": 2,
         "jsdoc/check-types": 2,
@@ -43,5 +46,13 @@
             "LabeledStatement",
             "WithStatement"
         ]
+    },
+    "settings": {
+        "jsdoc": {
+            "mode": "jsdoc",
+            "tagNamePreference": {
+                "property": "prop"
+            }
+        }
     }
 }

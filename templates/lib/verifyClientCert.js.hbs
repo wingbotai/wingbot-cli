@@ -1,0 +1,159 @@
+/**
+ * @author wingbot.ai
+ */
+'use strict';
+
+let nodeForge = null;
+try {
+    // @ts-ignore
+    nodeForge = module.require('node-forge');
+} catch (e) {
+    // eslint-disable-next-line no-console
+    console.log('To use mutual TLS, install "node-forge"');
+}
+
+function err (message, status = 403) {
+    return Object.assign(new Error(`Mutual TLS: ${message}`), {
+        status
+    });
+}
+
+const LAST_ALLOWED_CHARS = [',', undefined];
+
+function validateParam (certString, param, values) {
+    if (!values) {
+        return;
+    }
+    const valueList = Array.isArray(values) ? values : [values];
+    const str = `${certString}`;
+    const valid = valueList.some((value) => {
+        const val = `${param}=${value}`;
+        const index = str
+            .indexOf(val);
+
+        return index !== -1 && LAST_ALLOWED_CHARS.includes(str[index + val.length + 1]);
+    });
+
+    if (!valid) {
+        throw err(`Invalid ${param}`);
+    }
+}
+
+/**
+ * @typedef {object} ClientCert
+ * @prop {string} [clientCertPem] - ---BEGIN...
+ * @prop {string} [issuerDN] - C=CZ,O=Company, a.s.,CN=CA Partner 2 Company
+ * @prop {string} [subjectDN] - O=YourComp a.s.,CN=foo.com
+ * @prop {string} [serialNumber]
+ * @prop {object} [validity]
+ * @prop {string} [validity.notAfter] - Thu, 11 May 2023 10:49:15 GMT
+ * @prop {string} [validity.notBefore]  - Thu, 11 May 2023 10:49:15 GMT
+ */
+
+/**
+ * @typedef {object} ServerlessEvent
+ * @prop {object} [requestContext]
+ * @prop {object} [requestContext.authentication]
+ * @prop {ClientCert} [requestContext.authentication.clientCert]
+ */
+
+/**
+ * @typedef {object} Verification
+ * @prop {string|Promise<string>} [ca]
+ * @prop {string|string[]} [fingerPrint]
+ * @prop {string|string[]} [subjectCN]
+ * @prop {string|string[]} [subjectO]
+ * @prop {string|string[]} [issuerCN]
+ * @prop {string|string[]} [issuerO]
+ */
+
+/**
+ *
+ * @param {ServerlessEvent} event
+ * @param {Verification} clientCertVerification
+ * @param {Date} [now]
+ * @throws {Error}
+ */
+async function verifyClientCert (event, clientCertVerification, now = new Date()) {
+    if (!clientCertVerification) {
+        return;
+    }
+
+    const { requestContext = {} } = event;
+
+    if (!requestContext
+        || !requestContext.authentication
+        || !requestContext.authentication.clientCert) {
+
+        throw err('Missing Client Certificate Authentication');
+    }
+
+    const {
+        issuerDN,
+        subjectDN,
+        validity,
+        clientCertPem
+    } = requestContext.authentication.clientCert;
+
+    if (now < new Date(validity.notBefore) || now > new Date(validity.notAfter)) {
+        throw err('Invalid Certificate Timestamps');
+    }
+
+    validateParam(issuerDN, 'CN', clientCertVerification.issuerCN);
+    validateParam(issuerDN, 'O', clientCertVerification.issuerO);
+    validateParam(subjectDN, 'CN', clientCertVerification.subjectCN);
+    validateParam(subjectDN, 'O', clientCertVerification.subjectO);
+
+    if (!clientCertVerification.ca && !clientCertVerification.fingerPrint) {
+        return;
+    }
+
+    if (!nodeForge) {
+        throw new Error('cannot verify client, missing "node-forge" lib');
+    }
+
+    try {
+        const cert = nodeForge.pki.certificateFromPem(clientCertPem);
+
+        if (clientCertVerification.ca) {
+            const ca = await Promise.resolve(clientCertVerification.ca);
+
+            const caStore = nodeForge.pki.createCaStore();
+            caStore.addCertificate(nodeForge.pki.certificateFromPem(ca));
+
+            const valid = nodeForge.pki.verifyCertificateChain(caStore, [cert], {
+                validityCheckDate: now
+            });
+            if (!valid) {
+                throw new Error('Certificate chain not valid');
+            }
+        }
+
+        if (clientCertVerification.fingerPrint) {
+            const hashData = nodeForge.asn1.toDer(
+                nodeForge.pki.certificateToAsn1(cert)
+            ).getBytes();
+            const fingerPrint = nodeForge.md.sha1.create()
+                .update(hashData)
+                .digest()
+                .toHex()
+                .toLowerCase();
+
+            const fingerPrints = Array.isArray(clientCertVerification.fingerPrint)
+                ? clientCertVerification.fingerPrint
+                : [clientCertVerification.fingerPrint];
+
+            const valid = fingerPrints
+                .map((fp) => fp.toLowerCase().replace(/[^a-z0-9]+/g, ''))
+                .some((fp) => fp === fingerPrint);
+
+            if (!valid) {
+                throw new Error('Certificate fingerprint does not match');
+            }
+        }
+    } catch (e) {
+        throw err(e.message);
+    }
+}
+
+module.exports = verifyClientCert;

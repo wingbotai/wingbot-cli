@@ -15,6 +15,8 @@ const viewsPath = path.join(__dirname, '..', 'views');
 
 const app = express();
 
+app.disable('x-powered-by');
+
 if (!config.isProduction) {
     const webpackDevMiddleware = module.require('webpack-dev-middleware');
     const webpack = module.require('webpack');
