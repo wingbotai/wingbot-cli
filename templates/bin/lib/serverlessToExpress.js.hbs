@@ -171,6 +171,7 @@ function serverlessToExpress (configFile) {
     const data = jsYaml.load(contents);
 
     const app = express();
+    app.disable('x-powered-by');
 
     app.locals.websocket = {};
     app.locals.iot = {};

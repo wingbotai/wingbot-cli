@@ -58,7 +58,9 @@
 							wingbotChat('init', {
 								{{#if orchestrator.apiUrl}}api: '{{{orchestrator.apiUrl}}}',{{/if}}
 								{{#if orchestrator.wsUrl}}websocket: '{{{orchestrator.wsUrl}}}',{{/if}}
-								pageId: '{{orchestrator.pageId}}'
+								pageId: '{{orchestrator.pageId}}',
+                                contextUserAgentProp: 'ua',
+                                contextScreenResolutionProp: 'sr'
 							}, document.getElementById('chat'));
 
 						</script>

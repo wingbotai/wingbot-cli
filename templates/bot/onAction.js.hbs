@@ -59,6 +59,9 @@ function onEvent (senderId, action, text, req, prevAction, doNotTrack, skill) { 
 
     const tracker = getEventTracker(useSenderId, skill);
 
+    if (req && req.state['§ua']) tracker.set('ua', req.state['§ua']);
+    if (req && req.state['§sr']) tracker.set('sr', req.state['§sr']);
+
     const { cn, cs, cm } = req.action(true);
 
     if (cs) {
@@ -178,6 +181,9 @@ function onAction (senderId, action, text, req, lastAction, doNotTrack, skill) {
         const useSenderId = req.state._mergedFromSenderId || senderId;
 
         const tracker = getEventTracker(useSenderId, skill);
+
+        if (req && req.state['§ua']) tracker.set('ua', req.state['§ua']);
+        if (req && req.state['§sr']) tracker.set('sr', req.state['§sr']);
 
         tracker.set('qt', 400);
 

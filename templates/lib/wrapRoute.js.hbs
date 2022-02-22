@@ -6,6 +6,15 @@
 const log = require('./log');
 const config = require('../config');
 
+const SECURITY_HEADERS = {
+    'X-Frame-Options': 'DENY',
+    'Cache-Control': 'no-cache',
+    Pragma: 'no-cache',
+    ...(config.isProduction
+        ? { 'Strict-Transport-Security': 'max-age=2592000' }
+        : {})
+};
+
 function wrapRoute (fn) {
     return async (event, context) => {
 {{#if mongodbStorage}}
@@ -22,6 +31,7 @@ function wrapRoute (fn) {
             return {
                 statusCode: 200,
                 headers: {
+                    ...SECURITY_HEADERS,
                     'Access-Control-Allow-Credentials': useOrigin === '*' ? 'false' : 'true',
                     'Access-Control-Allow-Origin': useOrigin,
                     'Access-Control-Allow-Headers': 'Content-Type, X-Amz-Date, Authorization, X-Api-Key, X-Amz-Security-Token, X-Amz-User-Agent, X-Wingbot-Version',
@@ -34,15 +44,13 @@ function wrapRoute (fn) {
             let res = await Promise.resolve(fn(event, context));
             if (!res) res = { statusCode: 200 };
             await log.sendAndClose();
-            if (!res.headers) Object.assign(res, { headers: {} });
-            Object.assign(res.headers, {
+            res.headers = {
+                ...SECURITY_HEADERS,
                 'Access-Control-Allow-Credentials': useOrigin === '*' ? 'false' : 'true',
-                'Access-Control-Allow-Origin': useOrigin
-            });
+                'Access-Control-Allow-Origin': useOrigin,
+                ...res.headers
+            };
             if (typeof res.body === 'object' && res.body !== null && !Buffer.isBuffer(res.body)) {
-                if (typeof res.headers !== 'object') {
-                    res.headers = {};
-                }
                 res.headers['Content-type'] = 'application/json; charset=utf-8';
                 res.body = JSON.stringify(res.body);
             }
@@ -53,9 +61,10 @@ function wrapRoute (fn) {
             return {
                 statusCode: e.status || 500,
                 headers: {
+                    ...SECURITY_HEADERS,
                     'Content-Type': 'text/plain'
                 },
-                body: e.message
+                body: config.hideVerboseErrors ? 'Internal error' : e.message
             };
         }
     };

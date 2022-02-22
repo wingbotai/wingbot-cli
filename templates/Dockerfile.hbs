@@ -13,4 +13,4 @@ RUN npm run build
 RUN npm prune --production
 
 EXPOSE 8080 80
-CMD [ "node", "bin/www.js" ]
+CMD [ "node", "bin/www.js", "--max-http-header-size", "80000" ]

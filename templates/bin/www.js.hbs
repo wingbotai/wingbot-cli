@@ -39,15 +39,22 @@ const api = serverlessToExpress(cfgFile);
 app.use(express.text({ type: () => true, limit: '10mb' }), api);
 
 app.use((req, res, next) => {
+    res.header('X-Frame-Options', 'DENY');
     res.header('Access-Control-Allow-Origin', req.get('Origin') || '*');
     res.header('Access-Control-Allow-Credentials', 'true');
     res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
     res.header('Access-Control-Expose-Headers', 'Content-Length');
     res.header('Access-Control-Allow-Headers', 'Accept, Authorization, Content-Type, X-Requested-With, Range');
+    if (config.isProduction) {
+        res.header('Strict-Transport-Security', 'max-age=2592000');
+    }
     if (req.method === 'OPTIONS') {
+        res.header('Access-Control-Max-Age', '86400');
+        res.header('Cache-Control', 'max-age=86400');
         return res.send(200);
     }
-
+    res.header('Cache-Control', 'no-cache');
+    res.header('Pragma', 'no-cache');
     return next();
 });
 

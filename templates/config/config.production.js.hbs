@@ -17,6 +17,7 @@ module.exports = {
 {{else}}
     {{#unless productionDomain}}// {{/unless}}apiUrl: '{{#if productionDomain}}https://{{productionDomain}}{{else}}putUrlHereAfterDeploy{{/if}}',
 {{/if}}
+    hideVerboseErrors: true,
 
 {{#if withDesigner}}
     wingbot: {
