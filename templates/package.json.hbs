@@ -68,7 +68,8 @@
     "webpack-dev-middleware": "^5.3.1"{{#if wingbotOrchestrator}},
     "wingbot-chat-ui": "^1.18.0"{{/if}}
   },
-  "dependencies": { {{#unless awsServerless}}
+  "dependencies": {
+    "@fidm/x509": "^1.2.1",{{#unless awsServerless}}
     "cookie-parser": "^1.4.5",
     "express": "^4.17.3",{{/unless}}{{#if keyvault}}
     "@azure/identity": "^2.0.4",

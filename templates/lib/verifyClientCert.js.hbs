@@ -3,18 +3,15 @@
  */
 'use strict';
 
-let nodeForge = null;
-try {
-    // @ts-ignore
-    nodeForge = module.require('node-forge');
-} catch (e) {
-    // eslint-disable-next-line no-console
-    console.log('To use mutual TLS, install "node-forge"');
-}
+const tls = require('tls');
+const crypto = require('crypto');
+const fetch = require('node-fetch').default;
+const { Certificate } = require('@fidm/x509');
 
 function err (message, status = 403) {
     return Object.assign(new Error(`Mutual TLS: ${message}`), {
-        status
+        status,
+        code: status
     });
 }
 
@@ -37,6 +34,119 @@ function validateParam (certString, param, values) {
     if (!valid) {
         throw err(`Invalid ${param}`);
     }
+}
+
+const CERT_START = '-----BEGIN';
+
+/**
+ *
+ * @param {string|Buffer|Certificate} cert
+ * @returns {Certificate}
+ */
+function toCertificate (cert) {
+    if (typeof cert === 'object' && 'isIssuer' in cert) {
+        return cert;
+    }
+    let c;
+
+    if (Buffer.isBuffer(cert)) {
+        c = cert.indexOf(Buffer.from(CERT_START)) === -1
+            ? cert.toString('base64')
+            : cert.toString('ascii');
+    } else {
+        c = cert;
+    }
+
+    const startIndex = c.indexOf(CERT_START);
+    if (startIndex === -1) {
+        c = `-----BEGIN CERTIFICATE-----\n${c}\n-----END CERTIFICATE-----`;
+    } else if (startIndex > 0) {
+        c = c.substring(startIndex);
+    }
+
+    return Certificate.fromPEM(Buffer.from(c));
+}
+
+/** @type {Map<string,Promise<Certificate>>} */
+const certCache = new Map();
+
+/**
+ *
+ * @param {string} certUrl
+ * @returns {Promise<Certificate>}
+ */
+async function fetchCert (certUrl) {
+    const res = await fetch(certUrl);
+    if (res.status >= 300) {
+        throw new Error(`Can't fetch issuing cert. Received ${res.status} from '${certUrl}'`);
+    }
+    const gotCert = await res.buffer();
+    return toCertificate(gotCert);
+}
+
+/**
+ *
+ * @param {Date} now
+ * @param {string} certUrl
+ * @returns {Promise<Certificate>}
+ */
+async function fetchCertWithCache (now, certUrl) {
+    /** @type {Certificate} */
+    let crt;
+    if (certCache.has(certUrl)) {
+        crt = await certCache.get(certUrl)
+            .catch(() => null);
+        if (crt && crt.validTo <= now) {
+            crt = null;
+        }
+        if (!crt) {
+            crt = await fetchCertWithCache(now, certUrl);
+        }
+    } else {
+        const crtPromise = fetchCert(certUrl);
+        certCache.set(certUrl, crtPromise);
+        try {
+            crt = await crtPromise;
+        } catch (e) {
+            certCache.delete(certUrl);
+            throw e;
+        }
+    }
+    return crt;
+}
+
+/**
+ *
+ * @param {Date} now
+ * @param {Certificate} cert
+ * @param {Certificate} ca
+ * @returns {Promise<void>}
+ */
+async function verifyChain (now, cert, ca) {
+    if (ca && cert.isIssuer(ca)) {
+        return;
+    }
+    if (!cert.ocspServer && !cert.issuingCertificateURL) {
+        if (ca) {
+            throw new Error('Client cert does not match given issuer');
+        }
+        const matchesRoot = tls.rootCertificates
+            .some((c) => cert.isIssuer(Certificate.fromPEM(Buffer.from(c))));
+
+        if (!matchesRoot) {
+            throw new Error('Client cert does not match any ROOT certificate');
+        }
+        return;
+    }
+    let certUrl = `${cert.ocspServer}`.match(/\.crt$/) || !cert.issuingCertificateURL
+        ? cert.ocspServer
+        : cert.issuingCertificateURL;
+
+    // correct protocol for malformed certificates
+    certUrl = certUrl.replace(/^(https?):\/\/?/, '$1://');
+    const crt = await fetchCertWithCache(now, certUrl);
+
+    await verifyChain(now, crt, ca);
 }
 
 /**
@@ -73,6 +183,7 @@ function validateParam (certString, param, values) {
  * @param {Verification} clientCertVerification
  * @param {Date} [now]
  * @throws {Error}
+ * @returns {Promise<void>}
  */
 async function verifyClientCert (event, clientCertVerification, now = new Date()) {
     if (!clientCertVerification) {
@@ -104,40 +215,19 @@ async function verifyClientCert (event, clientCertVerification, now = new Date()
     validateParam(subjectDN, 'CN', clientCertVerification.subjectCN);
     validateParam(subjectDN, 'O', clientCertVerification.subjectO);
 
-    if (!clientCertVerification.ca && !clientCertVerification.fingerPrint) {
-        return;
-    }
-
-    if (!nodeForge) {
-        throw new Error('cannot verify client, missing "node-forge" lib');
-    }
-
     try {
-        const cert = nodeForge.pki.certificateFromPem(clientCertPem);
+        const cert = toCertificate(clientCertPem);
+        let caCert = null;
 
         if (clientCertVerification.ca) {
             const ca = await Promise.resolve(clientCertVerification.ca);
-
-            const caStore = nodeForge.pki.createCaStore();
-            caStore.addCertificate(nodeForge.pki.certificateFromPem(ca));
-
-            const valid = nodeForge.pki.verifyCertificateChain(caStore, [cert], {
-                validityCheckDate: now
-            });
-            if (!valid) {
-                throw new Error('Certificate chain not valid');
-            }
+            caCert = toCertificate(ca);
         }
 
+        await verifyChain(now, cert, caCert);
+
         if (clientCertVerification.fingerPrint) {
-            const hashData = nodeForge.asn1.toDer(
-                nodeForge.pki.certificateToAsn1(cert)
-            ).getBytes();
-            const fingerPrint = nodeForge.md.sha1.create()
-                .update(hashData)
-                .digest()
-                .toHex()
-                .toLowerCase();
+            const fingerPrint = crypto.createHash('sha1').update(cert.raw).digest('hex');
 
             const fingerPrints = Array.isArray(clientCertVerification.fingerPrint)
                 ? clientCertVerification.fingerPrint

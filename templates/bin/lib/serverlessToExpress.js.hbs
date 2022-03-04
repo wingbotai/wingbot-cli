@@ -9,15 +9,7 @@ const express = require('express');
 const path = require('path');
 const { URL } = require('url');
 const parseDuration = require('parse-duration').default;
-
-let nodeForge;
-try {
-    // @ts-ignore
-    nodeForge = module.require('node-forge');
-} catch (e) {
-    // eslint-disable-next-line no-console
-    console.log('To use mutual TLS, install "node-forge"');
-}
+const { Certificate } = require('@fidm/x509');
 
 function createContext (functionName = null) {
     return {
@@ -92,13 +84,10 @@ function createEvent (req, body = null, connectionId = null) {
 
     if (rawCert) {
         try {
-            const clientCertPem = `-----BEGIN CERTIFICATE-----${rawCert}-----END CERTIFICATE-----`;
-            const incomingCert = nodeForge.pki.certificateFromPem(clientCertPem);
+            const clientCertPem = `-----BEGIN CERTIFICATE-----\n${rawCert}\n-----END CERTIFICATE-----`;
+            const incomingCert = Certificate.fromPEM(Buffer.from(clientCertPem));
 
             const { issuer, subject, serialNumber } = incomingCert;
-
-            const notAfter = incomingCert.validity.notAfter.toUTCString();
-            const notBefore = incomingCert.validity.notBefore.toUTCString();
             const issuerDN = certAttrs(issuer.attributes);
             const subjectDN = certAttrs(subject.attributes);
 
@@ -107,7 +96,10 @@ function createEvent (req, body = null, connectionId = null) {
                 issuerDN,
                 serialNumber,
                 subjectDN,
-                validity: { notAfter, notBefore }
+                validity: {
+                    notAfter: incomingCert.validTo.toUTCString(),
+                    notBefore: incomingCert.validFrom.toUTCString()
+                }
             };
 
             Object.assign(ret.requestContext, {
