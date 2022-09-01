@@ -1,9 +1,4 @@
 {{#if wingbotOrchestrator}}
-
-$background: #CECECE;
-$light: #EEEEEE;
-$green: #1fffb4;
-$black: #454545;
 $ff: BlinkMacSystemFont,-apple-system,"Segoe UI",Rubik,Helvetica, Arial, sans-serif;
 
 // @use 'fontRubik';
@@ -11,31 +6,7 @@ $ff: BlinkMacSystemFont,-apple-system,"Segoe UI",Rubik,Helvetica, Arial, sans-se
     $wb-font-path: '~wingbot-chat-ui/scss/fonts'
 );
 @use '~wingbot-chat-ui/scss/general' with (
-    $chat-btn-list-btn-color: $black,
-    $background: $background,
-    $msg-in-background: $light,
-    $msg-out-background: $background,
-
     $chat-font-family: $ff,
-
-    $chat-square-btn: true,
-    // $chat-btn-background: $green,
-
-    $chat-qr-background: #fff,
-
-    $chat-background: #fff,
-    $chat-composer-background: $light,
-    $chat-box-shadow: 0px 0px 10px 5px rgba(0, 0, 0, 0.1),
-    $chat-composer-border-radius: 15px,
-
-    $chat-send-btn-color: $background,
-
-    $event-margin: 5px,
-
-    $send-btn-border-radius: 50px,
+    $chat-square-btn: true
 );
-
-// .wb .wb-header-logo svg path {
-//     fill: $green;
-// }
 {{/if}}

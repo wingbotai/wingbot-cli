@@ -39,9 +39,14 @@ const api = serverlessToExpress(cfgFile);
 app.use(express.text({ type: () => true, limit: '10mb' }), api);
 
 app.use((req, res, next) => {
+    const allowCorsOrigin = config.allowCorsOrigin || config.appUrl;
+    const useOrigin = allowCorsOrigin === '*'
+        ? req.get('Origin')
+        : allowCorsOrigin.replace(/\/$/, '');
+
     res.header('X-Frame-Options', 'DENY');
-    res.header('Access-Control-Allow-Origin', req.get('Origin') || '*');
-    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Origin', useOrigin);
+    res.header('Access-Control-Allow-Credentials', useOrigin === '*' ? 'false' : 'true');
     res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
     res.header('Access-Control-Expose-Headers', 'Content-Length');
     res.header('Access-Control-Allow-Headers', 'Accept, Authorization, Content-Type, X-Requested-With, Range');

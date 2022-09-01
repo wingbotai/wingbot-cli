@@ -33,11 +33,12 @@ const DEFAULT_MINCOUNT = 2;
 commander
     .option('-c, --csv [output]', 'save results to csv file')
     .option('-a, --all', 'include also recognized examples')
-    .option('-min [num]', 'minimal number of examples in set (default: 1)')
+    .option('--min [num]', 'minimal number of examples in set (default: 1)')
     .option('--dim <dimensions>', 'vector size (default: 150, lower is faster)')
     .option('--ngrams <ngrams>', 'n-gram size (default: 2)')
     .option('--mincount <mincount>', `minimal word count in utterance (default: ${DEFAULT_MINCOUNT})`)
-    .option('-p, --pretrained', '[intentsExport.json] is a pre-trained fasttext model');
+    .option('-p, --pretrained', '[intentsExport.json] is a pre-trained fasttext model')
+    .option('-r, --replace <replace...>', '"phrase to replace" to remove additional texts');
 
 commander.command(`kmeans <analyticsEvents.csv> [intentsExport.json] [clusters=${DEFAULT_CLUSTERS}]`)
     // @ts-ignore
@@ -75,6 +76,10 @@ commander
 
 commander.parse(process.argv);
 
+const options = commander.opts();
+// eslint-disable-next-line no-console
+console.log(options);
+
 if (!source || !algorithm) {
     commander.help();
     process.exit();
@@ -88,7 +93,7 @@ if (!Query) {
 
 const training = [];
 
-if (trainingJson && !commander.pretrained) {
+if (trainingJson && !options.pretrained) {
     // eslint-disable-next-line no-console
     console.log('preparing training data from training set...');
     const jsonFileName = path.resolve(process.cwd(), trainingJson);
@@ -139,7 +144,18 @@ data.split('\n')
 
         s = s
             .replace(/^"(.+)\s*"?$/, '$1')
-            .replace(/[?!.,]+(\s*)/ig, '$1');
+            .replace(/[?!.,]+(\s*)/ig, '$1')
+            .replace(/[^A-Za-z0-9]+/g, ' ')
+            .trim();
+
+        s = (options.replace || [])
+            .reduce((str, replacement) => `${str}`.replace(new RegExp(replacement.toLocaleLowerCase(), 'g'), ''), s)
+            .replace(/\s[\s]+/g, ' ')
+            .trim();
+
+        if (!s) {
+            return;
+        }
 
         training.push(s);
 
@@ -152,7 +168,7 @@ data.split('\n')
         eventCount = parseInt(eventCount, 10) || 1;
 
         // @ts-ignore
-        // if (score <= 0.01 && !commander.all) {
+        // if (score <= 0.01 && !options.all) {
         //     return;
         // }
 
@@ -175,7 +191,7 @@ data.split('\n')
     });
 
 let input;
-if (commander.pretrained) {
+if (options.pretrained) {
     input = path.resolve(process.cwd(), trainingJson);
 } else {
     input = path.resolve(process.cwd(), 'tmp-training.txt');
@@ -187,13 +203,13 @@ const output = path.resolve(process.cwd(), 'tmp-training-out.txt');
 
 const q = new Query(input);
 
-const dim = (commander.dim && parseInt(commander.dim, 10)) || 150;
-const wordNgrams = (commander.ngrams && parseInt(commander.ngrams, 10)) || 2;
-const minCount = (commander.mincount && parseInt(commander.mincount, 10)) || DEFAULT_MINCOUNT;
-const minExamples = (commander.min && parseInt(commander.min, 10)) || 1;
+const dim = (options.dim && parseInt(options.dim, 10)) || 150;
+const wordNgrams = (options.ngrams && parseInt(options.ngrams, 10)) || 2;
+const minCount = (options.mincount && parseInt(options.mincount, 10)) || DEFAULT_MINCOUNT;
+const minExamples = (options.min && parseInt(options.min, 10)) || 1;
 
 (async function () {
-    if (!commander.pretrained) {
+    if (!options.pretrained) {
         // eslint-disable-next-line no-console
         console.log('training...');
         // eslint-disable-next-line no-console
@@ -300,10 +316,10 @@ const minExamples = (commander.min && parseInt(commander.min, 10)) || 1;
     // @ts-ignore
     mapped.sort((a, b) => b.sum - a.sum);
 
-    if (!commander.csv) {
+    if (!options.csv) {
         mapped.forEach((raw) => {
             const items = raw
-                .filter((r) => commander.all || r.s >= 0.5);
+                .filter((r) => options.all || r.s >= 0.5);
 
             // @ts-ignore
             if (items.length < minExamples) {
@@ -333,7 +349,7 @@ const minExamples = (commander.min && parseInt(commander.min, 10)) || 1;
         console.log('========================================================\n *) Avg. Event Value < 0.75 - probably recognized utterance\n');
 
         // eslint-disable-next-line no-console
-        console.log(` [${commander.all ? 'all utterances shown, omit -a to hide the recognized texts' : 'skipped recognized utterances, use -a to show all'}]`);
+        console.log(` [${options.all ? 'all utterances shown, omit -a to hide the recognized texts' : 'skipped recognized utterances, use -a to show all'}]`);
         // eslint-disable-next-line no-console
         console.log(stats);
         return;
@@ -347,13 +363,13 @@ const minExamples = (commander.min && parseInt(commander.min, 10)) || 1;
             .join(','))
         .join('\n');
 
-    if (commander.csv === true) {
+    if (options.csv === true) {
         // eslint-disable-next-line no-console
         console.log(csv);
         return;
     }
 
-    const toFile = path.resolve(process.cwd(), commander.csv);
+    const toFile = path.resolve(process.cwd(), options.csv);
     // eslint-disable-next-line no-console
     console.log(`writing results to ${toFile}`);
     // eslint-disable-next-line no-console
