@@ -3,27 +3,21 @@
  */
 'use strict';
 
-{{#if webchat}}
-const request = require('request-promise-native');
-const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
-{{/if}}
 {{#if messenger}}
 const { Facebook } = require('wingbot-facebook');
 const attachmentCache = require('../lib/attachmentCache');
 const { PASS_THREAD_ACTION, TAKE_THEAD_ACTION, REQUEST_THREAD_ACTION } = require('./actions');
 {{/if}}
 {{#if wingbotOrchestrator}}
-const { BotApp } = require('wingbot');
+const { BotApp{{#if googleAnalytics}}, GA4{{/if}} } = require('wingbot');
 const log = require('../lib/log');
 {{#if tableStorage}}
-const { onInteraction } = require('../lib/tableStorage');
+const { analyticsStorage } = require('../lib/tableStorage');
 {{/if}}
 {{#if notifications}}
 const notifications = require('../lib/notifications');
 {{/if}}
 const stateStorage = require('../lib/stateStorage');
-const { onAction, onEvent } = require('./onAction');
 {{/if}}
 {{#if botService}}
 const { BotService } = require('wingbot-botservice');
@@ -86,17 +80,41 @@ const channel = new BotApp(bot, {
     ...config.orchestrator
 });
 
-bot.on('action', onAction);
-channel.processor.on('event', onEvent);
 {{#if tableStorage}}
-channel.processor.on('interaction', onInteraction);
+channel.registerAnalyticsStorage(analyticsStorage);
+
+{{/if}}
+{{#if googleAnalytics}}
+channel.registerAnalyticsStorage(new GA4({
+    ...config.ga4,
+    debug: true
+}), {
+    enabled: config.isProduction && !!config.ga4
+});
 
 {{/if}}
 {{#if notifications}}
 channel.processor.plugin(notifications);
-{{/if}}
-{{/if}}
 
+const NON_INTERACTIVE_EVENTS = ['sent', 'delivery', 'notSent', 'leaved', 'failed'];
+const SUBSCRIBTION_EVENTS = ['subscribed', 'unsubscribed'];
+
+notifications.on('report', (event, campaignNameOrTag, { senderId, pageId }) => {
+    const category = SUBSCRIBTION_EVENTS.includes(event)
+        ? 'Event: Audience'
+        : 'Event: Notification';
+    const nonInteractive = NON_INTERACTIVE_EVENTS.includes(event);
+    channel.trackEvent(pageId, senderId, {
+        type: 'conversation',
+        category,
+        action: event,
+        label: campaignNameOrTag,
+        value: event === 'positive' ? 1 : 0
+    }, event.timestamp, nonInteractive);
+});
+
+{{/if}}
+{{/if}}
 module.exports = {
     botSettings,
     botFactory,

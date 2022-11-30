@@ -19,7 +19,9 @@ after(async function () {
             await mongodb(true);
             await mongod.stop();
         })(),
-        new Promise((r) => setTimeout(r, 9900))
+        new Promise((r) => {
+            setTimeout(r, 9900);
+        })
     ]);
 });
 {{/if}}

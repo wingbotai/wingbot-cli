@@ -9,6 +9,13 @@ const config = require('../config');
 
 let connection;
 
+/** @typedef {import('mongodb').Db} Db */
+
+/**
+ *
+ * @param {boolean} [disconnect]
+ * @returns {Promise<Db>}
+ */
 async function getDatabase (disconnect = false) {
     if (disconnect && !connection) {
         return null;
@@ -21,8 +28,8 @@ async function getDatabase (disconnect = false) {
     }
 
     if (!connection) {
-        const cs = await Promise.resolve(config.db.url);
-        connection = MongoClient.connect(cs, config.db.options);
+        connection = Promise.resolve(config.db.url)
+            .then((url) => new MongoClient(url, config.db.options).connect());
     }
 
     const c = await connection;

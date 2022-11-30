@@ -27,7 +27,7 @@ const MONGODB = 'mongodbStorage';
 const AZURE_COSMOS_DB = 'cosmosdbStorage';
 const MSSQL = 'mssqlStorage';
 
-const UNIVERSAL_ANALYTICS = 'googleAnalytics';
+const GOOGLE_ANALYTICS = 'googleAnalytics';
 const TABLE_STORAGE = 'tableStorage';
 
 const SENTRY = 'sentry';
@@ -54,7 +54,7 @@ const options = {
     },
     analytics: {
         None: null,
-        'Universal Analytics': UNIVERSAL_ANALYTICS,
+        'Google Analytics 4': GOOGLE_ANALYTICS,
         'Table Storage': TABLE_STORAGE
     },
     conversationTesting: {
@@ -98,7 +98,7 @@ function preprocessData (data) {
         isMongoOrCosmos: data[MONGODB] || data[AZURE_COSMOS_DB],
         isSentryOrAppInsights: data[SENTRY] || data[APP_INSIGHTS],
         tableStorage: data.analytics === TABLE_STORAGE,
-        universalAnalytics: data.analytics === UNIVERSAL_ANALYTICS,
+        googleAnalytics: data.analytics === GOOGLE_ANALYTICS,
         productionDomain: data.productionDomain
             ? data.productionDomain.trim()
             : data.productionDomain,
@@ -170,7 +170,9 @@ async function processGenerator (args, skipForm) {
     // check the latest version
     try {
         const ver = await Promise.race([
-            new Promise((r, e) => setTimeout(e, 2000)),
+            new Promise((r, e) => {
+                setTimeout(e, 2000);
+            }),
             latestVersion('wingbot-cli')
         ]);
 
@@ -1304,9 +1306,14 @@ async function processGenerator (args, skipForm) {
                     message: form.group(
                         'Analytics settings',
                         'we will configure Google Analytics for your production environment',
-                        form.label('Production Universal Analytics tracking ID')
+                        form.label('Production GA4 tracking measurement ID')
                     ),
                     name: 'gaCode'
+                },
+                {
+                    type: 'input',
+                    message: form.label('Production GA4 API secret'),
+                    name: 'gaSecret'
                 }
             ]);
 
@@ -1314,8 +1321,13 @@ async function processGenerator (args, skipForm) {
                 await form.ask([
                     {
                         type: 'input',
-                        message: form.label('Staging Universal Analytics tracking ID'),
+                        message: form.label('Staging GA4 tracking measurement ID'),
                         name: 'gaCodeStaging'
+                    },
+                    {
+                        type: 'input',
+                        message: form.label('Staging GA4 API secret'),
+                        name: 'gaSecretStaging'
                     }
                 ]);
             }
@@ -1324,8 +1336,13 @@ async function processGenerator (args, skipForm) {
                 await form.ask([
                     {
                         type: 'input',
-                        message: form.label('Dev Universal Analytics tracking ID'),
+                        message: form.label('Dev GA4 tracking measurement ID'),
                         name: 'gaCodeDev'
+                    },
+                    {
+                        type: 'input',
+                        message: form.label('Dev GA4 API secret'),
+                        name: 'gaSecretDev'
                     }
                 ]);
             }
@@ -1334,8 +1351,13 @@ async function processGenerator (args, skipForm) {
                 await form.ask([
                     {
                         type: 'input',
-                        message: form.label('Test Universal Analytics tracking ID'),
+                        message: form.label('Test GA4 tracking measurement ID'),
                         name: 'gaCodeTest'
+                    },
+                    {
+                        type: 'input',
+                        message: form.label('Test GA4 API secret'),
+                        name: 'gaSecretTest'
                     }
                 ]);
             }

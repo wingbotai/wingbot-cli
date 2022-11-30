@@ -95,7 +95,6 @@ const config = {
 {{else}}{{#if cosmosdbStorage}}        db: '{{projectName}}',
 {{/if}}{{/if}}
         options: {
-            poolSize: 3,
             useNewUrlParser: true,
             useUnifiedTopology: true,
             keepAlive: true,
@@ -154,7 +153,7 @@ const config = {
 
     testCasesGoogleSheetId: '{{gSheetTestingSuit}}',
 {{/if}}
-    gaCode: ''
+    ga4: null
 };
 
 /**
@@ -171,8 +170,8 @@ function initialize (cfg, env = 'development') {
         // deeper object assign
         Object.keys(configuration)
             .forEach((key) => {
-                if (typeof cfg[key] === 'object'
-                    && typeof configuration[key] === 'object') {
+                if (cfg[key] && typeof cfg[key] === 'object'
+                    && configuration[key] && typeof configuration[key] === 'object') {
 
                     Object.assign(cfg[key], configuration[key]);
                 } else {

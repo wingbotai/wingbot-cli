@@ -117,7 +117,13 @@ module.exports = {
     sentryDsn: '{{sentryDsn}}',
 
 {{/if}}
-    gaCode: '{{gaCode}}'
-
+{{#if googleAnalytics}}
+    ga4: {
+        measurementId: '{{gaCode}}',
+        apiSecret: '{{gaSecret}}'
+    }
+{{else}}
+    ga4: null
+{{/if}}
 };
 {{/unless}}

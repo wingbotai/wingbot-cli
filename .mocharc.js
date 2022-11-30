@@ -10,5 +10,6 @@ module.exports = {
     reporter: 'spec',
     timeout: 2000,
     ui: 'bdd',
-    recursive: true
+    recursive: true,
+    parallel: false
 };

@@ -37,16 +37,21 @@ function botFactory (forTest = false) { // eslint-disable-line no-unused-vars
 {{#if withDesigner}}
     {{#if analytics}}
     const routerOptions = {
-        linksTranslator (senderId, linkText, linkUrl, isExtUrl, state = {}) {
-            if (`${linkUrl}`.startsWith(config.apiUrl)
-                || `${linkUrl}`.startsWith(config.appUrl)) {
-                return linkUrl;
+        linksTranslator (senderId, text, url, isExtUrl, state, pageId) {
+            if (`${url}`.startsWith(config.apiUrl)
+                || `${url}`.startsWith(config.appUrl)) {
+                return url;
             }
 
-            const url = encodeURIComponent(linkUrl);
-            const text = encodeURIComponent(linkText);
-            const sender = encodeURIComponent(state._mergedFromSenderId || senderId);
-            return `${config.apiUrl}/tracker?url=${url}&text=${text}&sender=${sender}`;
+            const query = Object.entries({
+                url,
+                text,
+                senderId: state._mergedFromSenderId || senderId,
+                pageId
+            }).map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
+                .join('&');
+
+            return `${config.apiUrl}/tracker?${query}`;
         }
     };
     {{else}}

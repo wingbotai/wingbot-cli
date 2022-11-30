@@ -99,13 +99,17 @@ function reuseNodeModules (cwd) {
 }
 
 function npmI (cwd) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         exec('npm i', {
             cwd
         }, (err, stdout) => {
+            if (err) {
+                console.log('-----', err); // eslint-disable-line
+                console.log('-----', stdout); // eslint-disable-line
+                console.log('-----', stderr); // eslint-disable-line
+                reject(err);
+            }
             prevousCwd = cwd;
-            // console.log('-----', stdout); // eslint-disable-line
-            // console.log('-----', stderr); // eslint-disable-line
             resolve(stdout);
         });
     });
@@ -218,6 +222,7 @@ describe('$ init', function () {
 
             await tr.render();
             await rmdir(path.join(botDir, 'node_modules'));
+
             await reuseNodeModules(botDir);
             await npmI(botDir);
             await test(botDir);

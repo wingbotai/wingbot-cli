@@ -12,14 +12,8 @@ const notifications = require('../lib/notifications');
 {{/if}}
 const stateStorage = require('../lib/stateStorage');
 const botFactory = require('./bot');
-const { onAction, onEvent } = require('./onAction');
-{{#if tableStorage}}
-const { onInteraction } = require('../lib/tableStorage');
-{{/if}}
 
 const bot = botFactory();
-
-bot.on('action', onAction);
 
 const processor = new Processor(bot, {
     appUrl: config.appUrl,
@@ -29,13 +23,8 @@ const processor = new Processor(bot, {
     autoSeen: {{#if webchat}}false{{else}}true{{/if}}
 });
 
-processor.on('event', onEvent);
 {{#if notifications}}
 processor.plugin(notifications);
-
-{{/if}}
-{{#if tableStorage}}
-processor.on('interaction',onInteraction);
 
 {{/if}}
 module.exports = processor;

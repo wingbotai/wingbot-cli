@@ -9,7 +9,7 @@ const wrapRoute = require('../lib/wrapRoute');
 const { channel } = require('../bot');
 
 function waitFn (ms) {
-    return new Promise((r) => setTimeout(r, ms));
+    return new Promise((r) => { setTimeout(r, ms); });
 }
 
 module.exports.handler = wrapRoute(async (event) => {

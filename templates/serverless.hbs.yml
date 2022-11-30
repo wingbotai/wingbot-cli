@@ -91,28 +91,30 @@ provider:
   stackTags: # Optional CF stack tags
     Company: ${self:custom.company}
 
-  iamRoleStatements: # permissions for all of your functions can be set here
-    - Effect: Allow
-      Action:
-        - "lambda:InvokeFunction"
-      Resource:
-        - "arn:aws:lambda:${self:provider.region}:${self:custom.accountId}:function:${self:custom.prefix}-{{#if wingbotOrchestrator}}bot{{else}}send{{/if}}"
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - "lambda:InvokeFunction"
+          Resource:
+            - "arn:aws:lambda:${self:provider.region}:${self:custom.accountId}:function:${self:custom.prefix}-{{#if wingbotOrchestrator}}bot{{else}}send{{/if}}"
 {{#if dynamodbStorage}}
-    - Effect: Allow
-      Action: # Gives permission to DynamoDB tables in a specific region
-        - dynamodb:DescribeTable
-      Resource: arn:aws:dynamodb:${self:provider.region}:*:*
-    - Effect: Allow
-      Action: # Gives permission to DynamoDB tables in a specific region
-        - dynamodb:DescribeTable
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
-        - dynamodb:BatchWriteItem
-      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.prefix}*
+        - Effect: Allow
+          Action: # Gives permission to DynamoDB tables in a specific region
+            - dynamodb:DescribeTable
+          Resource: arn:aws:dynamodb:${self:provider.region}:*:*
+        - Effect: Allow
+          Action: # Gives permission to DynamoDB tables in a specific region
+            - dynamodb:DescribeTable
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:BatchWriteItem
+          Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.prefix}*
 {{/if}}
 
   environment:
@@ -183,7 +185,7 @@ resources:
   Conditions:
     ProductionResources:
       Fn::Equals:
-        - ${opt:stage}
+        - ${self:custom.stage}
         - production
 
   Resources:
@@ -280,12 +282,12 @@ resources:
         AttributeDefinitions:
           - AttributeName: userId
             AttributeType: S
-          - AttributeName: time
-            AttributeType: S
+          - AttributeName: timestamp
+            AttributeType: N
         KeySchema:
           - AttributeName: userId
             KeyType: HASH
-          - AttributeName: time
+          - AttributeName: timestamp
             KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1

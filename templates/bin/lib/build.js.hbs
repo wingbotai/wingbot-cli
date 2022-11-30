@@ -39,6 +39,10 @@ async function build (distPath, viewsPath) {
         ? webpackResult.compilation.errors
         : 'without errors');
 
+    if (webpackResult.hasErrors()) {
+        throw new Error('Build failed');
+    }
+
     await renderTemplates(config, viewsPath, distPath);
     console.log('Templates are rendered.');
 }

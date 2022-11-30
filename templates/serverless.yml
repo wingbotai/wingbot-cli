@@ -64,7 +64,7 @@ custom:
             CacheControl: 'max-age=3600'
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs16.x
   region: eu-central-1
   stage: production
   memorySize: 256
@@ -72,12 +72,14 @@ provider:
   stackTags: # Optional CF stack tags
     Company: ${self:custom.company}
 
-  iamRoleStatements: # permissions for all of your functions can be set here
-    - Effect: Allow
-      Action:
-        - "lambda:InvokeFunction"
-      Resource:
-        - "arn:aws:lambda:${self:provider.region}:${self:custom.accountId}:function:${self:custom.prefix}-bot"
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - "lambda:InvokeFunction"
+          Resource:
+            - "arn:aws:lambda:${self:provider.region}:${self:custom.accountId}:function:${self:custom.prefix}-bot"
 
   environment:
     PREFIX: ${self:custom.prefix}

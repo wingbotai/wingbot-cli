@@ -34,6 +34,7 @@ commander
     .option('-c, --csv [output]', 'save results to csv file')
     .option('-a, --all', 'include also recognized examples')
     .option('--min [num]', 'minimal number of examples in set (default: 1)')
+    .option('--minunique <num>', 'minimal number of examples in set (default: 1)')
     .option('--dim <dimensions>', 'vector size (default: 150, lower is faster)')
     .option('--ngrams <ngrams>', 'n-gram size (default: 2)')
     .option('--mincount <mincount>', `minimal word count in utterance (default: ${DEFAULT_MINCOUNT})`)
@@ -128,6 +129,8 @@ console.log('cleaning the data...');
 
 const uniques = new Set();
 
+const minUniqueEvents = (options.minunique && parseInt(options.minunique, 10)) || 1;
+
 data.split('\n')
     .forEach((l) => {
         const i = l.indexOf(',');
@@ -161,16 +164,21 @@ data.split('\n')
 
         // find the score 112,76,0,0.00
         // Total Events,Unique Events,Event Value,Avg. Value
-        let [, eventCount = '1', score = '0.01'] = l.match(/([0-9]+),[^,]+,[^,0-9]*([0-9.]+)$/) || [];
+        let [, eventCount = '1', uniqueEvents = '1', score = '0.01'] = l.match(/([0-9]+),[^,0-9]*([0-9]+)[^,0-9]*,[^,0-9]*([0-9.]+)$/) || [];
         // @ts-ignore
         score = parseFloat(score);
         // @ts-ignore
         eventCount = parseInt(eventCount, 10) || 1;
+        uniqueEvents = parseInt(uniqueEvents, 10) || 1;
 
         // @ts-ignore
         // if (score <= 0.01 && !options.all) {
         //     return;
         // }
+
+        if (uniqueEvents < minUniqueEvents) {
+            return;
+        }
 
         if (algorithm === ALG_KM && uniques.has(s)) {
             return;
@@ -214,24 +222,26 @@ const minExamples = (options.min && parseInt(options.min, 10)) || 1;
         console.log('training...');
         // eslint-disable-next-line no-console
         console.log(` [ngrams: ${wordNgrams}, mincount: ${minCount}, dim: ${dim}]`);
-        await new Promise((resolve, reject) => q.train({
-            dim,
-            output,
-            input,
-            epoch: 15,
-            bucket: 2000000,
-            lr: 0.1,
-            minn: 2,
-            maxn: 8,
-            wordNgrams,
-            minCount
-        }, (err) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve();
-            }
-        }));
+        await new Promise((resolve, reject) => {
+            q.train({
+                dim,
+                output,
+                input,
+                epoch: 15,
+                bucket: 2000000,
+                lr: 0.1,
+                minn: 2,
+                maxn: 8,
+                wordNgrams,
+                minCount
+            }, (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
     }
 
     // eslint-disable-next-line no-console

@@ -3,76 +3,45 @@
  */
 'use strict';
 
-{{#unless universalAnalytics}}
-{{#unless tableStorage}}
+{{#unless wingbotOrchestrator}}
 const wrapRoute = require('../lib/wrapRoute');
 
 // eslint-disable-next-line no-unused-vars
-async function trackEvent (sender, text, url) {
+async function trackEvent (pageId, senderId, text, url) {
     // put the tracking here
 }
 {{/unless}}
-{{/unless}}
-{{#if universalAnalytics}}
-const analytics = require('universal-analytics');
+{{#if wingbotOrchestrator}}
 const { replaceDiacritics } = require('webalize');
+const { channel } = require('../bot');
 const wrapRoute = require('../lib/wrapRoute');
-const config = require('../config');
 
-function trackEvent (sender, text, url) {
-    const tracker = analytics(config.gaCode, sender, { strictCidFormat: false });
+function trackEvent (pageId, senderId, text, url) {
+    const label = replaceDiacritics(text).replace(/\s+/g, ' ').toLowerCase().trim();
 
-    const word = replaceDiacritics(text).replace(/\s+/g, ' ').toLowerCase().trim();
-
-    tracker.event('User: Button - url', url, word);
-
-    return new Promise((r) => tracker.send(r));
-}
-{{/if}}
-{{#if tableStorage}}
-const { replaceDiacritics } = require('webalize');
-const wrapRoute = require('../lib/wrapRoute');
-const { analyticsStorage } = require('../lib/tableStorage');
-const config = require('../config');
-
-async function trackEvent (sender, text, url) {
-
-    const pageId = config.orchestrator
-        ? config.orchestrator.pageId
-        : 'msteams';
-
-    const {
-        sessionId,
-        conversationId
-    } = await analyticsStorage
-        .getOrCreateUserSession(pageId, sender);
-
-    const word = replaceDiacritics(text).replace(/\s+/g, ' ').toLowerCase().trim();
-
-    await analyticsStorage.storeEvent({
+    return channel.trackEvent(pageId, senderId, {
         type: 'conversation',
-        pageId,
-        senderId: sender,
-        conversationId,
-        sessionId,
         category: 'User: Button - url',
         action: url,
-        label: word,
-        value: 1
+        label
     });
 }
 {{/if}}
 
 module.exports.handler = wrapRoute(async (event) => {
-    const { url = null, text = null, sender = null } = event.queryStringParameters || {};
+    const {
+        url, text, senderId, pageId
+    } = event.queryStringParameters || {};
 
-    if (!url || !text || !sender) {
+    if (!url) {
         return {
             statusCode: 404
         };
     }
 
-    await trackEvent(sender, text, url);
+    if (senderId && pageId) {
+        await trackEvent(pageId, senderId, text, url);
+    }
 
     return {
         statusCode: 301,

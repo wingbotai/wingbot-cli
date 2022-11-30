@@ -2,7 +2,9 @@
  * @author wingbot.ai
  */
 'use strict';
-{{#if sentry}}const Sentry = require('@sentry/node');{{/if}}
+{{#if isSentryOrAppInsights}}
+const Sentry = require('@sentry/node');
+const { wingbotVersion } = require('wingbot');{{/if}}
 const config = require('../../config');
 const moduleLoggerFactory = require('./moduleLoggerFactory');
 
@@ -15,6 +17,21 @@ let logger;
 const logger = moduleLoggerFactory(config.verboseLog);
 {{/if}}
 {{#if appInsights}}
+if (config.isProduction) {
+    const { botId, snapshot } = config.wingbot;
+    Sentry.init({
+        environment: config.environment,
+        dsn: `https://${snapshot}@api.wingbot.ai/telemetry/${botId.replace(/\D+/g, '')}`,
+        tunnel: `https://api.wingbot.ai/telemetry/${botId}?snapshot=${encodeURIComponent(snapshot)}`,
+        tracesSampleRate: 1.0,
+        normalizeDepth: 5
+    });
+    Sentry.setTag('bot', config.wingbot.bot);
+    Sentry.setTag('link', `https://designer.wingbot.ai/#//editor/${config.wingbot.botId}`);
+    Sentry.setTag('snapshot', config.wingbot.snapshot);
+    Sentry.setTag('wingbot', wingbotVersion);
+    Sentry.setTag('node', process.version);
+}
 
 if (config.appInsights) {
     // @ts-ignore
@@ -29,6 +46,10 @@ if (config.appInsights) {
             appInsights.defaultClient.trackException({
                 exception
             });
+        }
+
+        if (level === 'error') {
+            Sentry.captureException(exception || new Error(message));
         }
 
         appInsights.defaultClient.trackEvent({
@@ -70,6 +91,12 @@ if (config.sentryDsn) {
         tracesSampleRate: 1.0,
         normalizeDepth: 5
     });
+
+    Sentry.setTag('bot', config.wingbot.bot);
+    Sentry.setTag('link', `https://designer.wingbot.ai/#//editor/${config.wingbot.botId}`);
+    Sentry.setTag('snapshot', config.wingbot.snapshot);
+    Sentry.setTag('wingbot', wingbotVersion);
+    Sentry.setTag('node', process.version);
 
     logger = moduleLoggerFactory(config.verboseLog, ({
         level, message, exception
